@@ -1,3 +1,5 @@
+require 'moduler/dsl/basic'
+
 #
 # Simple, extensible and powerful DSL for creating classes and modules.
 #
@@ -13,4 +15,8 @@ module Moduler
   # take special action.
   #
   NOT_HANDLED = Object.new
+
+  def self.inline(&block)
+    Moduler::DSL::Basic.inline(&block)
+  end
 end
