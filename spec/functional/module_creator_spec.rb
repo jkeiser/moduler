@@ -48,19 +48,19 @@ describe Moduler::Modulemoduler do
     end
   end
 
-  describe '#define_class' do
-    context "Modulemoduler.define_class" do
+  describe '#new_class' do
+    context "Modulemoduler.new_class" do
       it "The module is created and attached to the parent" do
         expect(ContainingModule.const_defined?(:BlahClass)).to eq false
-        Moduler::Modulemoduler.define_class(ContainingModule, :BlahClass)
+        Moduler::Modulemoduler.new_class(ContainingModule, :BlahClass)
         expect(ContainingModule::BlahClass.class).to eq Class
       end
     end
 
-    context "Modulemoduler.new(ContainingModule).define_class(:BlahClass2)" do
+    context "Modulemoduler.new(ContainingModule).new_class(:BlahClass2)" do
       it "The module is created and attached to the parent" do
         expect(ContainingModule.const_defined?(:BlahClass2)).to eq false
-        Moduler::Modulemoduler.new(ContainingModule).define_class(:BlahClass2)
+        Moduler::Modulemoduler.new(ContainingModule).new_class(:BlahClass2)
         expect(ContainingModule::BlahClass2.class).to eq Class
       end
     end
@@ -70,9 +70,9 @@ describe Moduler::Modulemoduler do
         ::ContainingModule.const_set(:ExistingClass, Class.new { attr_reader :x })
       end
 
-      context "And Modulemoduler.define_class targets it" do
+      context "And Modulemoduler.new_class targets it" do
         it "Modulemoduler reopens the module" do
-          Moduler::Modulemoduler.define_class(ContainingModule, :ExistingClass) do
+          Moduler::Modulemoduler.new_class(ContainingModule, :ExistingClass) do
             add_dsl_method(:y) { 1 }
           end
           expect(ContainingModule::ExistingClass.instance_method(:x)).to_not be_nil
@@ -83,7 +83,7 @@ describe Moduler::Modulemoduler do
 
     context "And Modulemoduler.new(ContainingModule).define(Blah) targets it" do
       it "Modulemoduler reopens the module" do
-        Moduler::Modulemoduler.new(ContainingModule).define_class(:ExistingClass) do
+        Moduler::Modulemoduler.new(ContainingModule).new_class(:ExistingClass) do
           add_dsl_method(:z) { 1 }
         end
         expect(ContainingModule::ExistingClass.instance_method(:x)).to_not be_nil

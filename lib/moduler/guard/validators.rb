@@ -1,13 +1,13 @@
+require 'moduler/guard/coercer'
 require 'moduler/errors'
 
 module Moduler
-  module Core
+  module Guard
     module Validators
-      def define_validator(moduler, name, &block)
-        moduler.define_module(name) do
-          include Transform
-
-          def self.coerce(value)
+      def define_validator(name, &block)
+        new_module(name) do |moduler|
+          include Coercer
+          def coerce(value)
             begin
               value = super(value)
             rescue ValidationFailed => e
@@ -19,10 +19,10 @@ module Moduler
               raise ValidationFailed.new(failures)
             end
           end
-        end
+        end.target
       end
 
-      def self.validation_failure(type, facade, message)
+      def validation_failure(type, facade, message)
         { :type => type, :facade => facade, :message => message }
       end
 
@@ -30,11 +30,10 @@ module Moduler
       #
       #
       def required_fields(field_names)
-        define_validator(moduler, module_name("required_fields", field_names)) do |value|
+        define_validator(module_name(:required_fields, *field_names)) do |value|
           return field_names.
               select { |name| !value.has_key?(name) }.
               map    { |name| validation_failure(:required_fields, self, "Missing required field #{name}.") }
-          end
         end
       end
 
@@ -43,7 +42,7 @@ module Moduler
       # [ false, "error message", ... ].
       #
       def validate(validators)
-        define_validator(moduler, module_name("required_fields", field_names)) do |value|
+        define_validator(module_name(:validate, *validators)) do |value|
           failures = []
           validators.each do |validator|
             succeeded, *errors = validator.call(value)
@@ -59,7 +58,7 @@ module Moduler
       # Validates false if the value is not one of the given kinds
       #
       def kind_of(kinds)
-        define_validator(moduler, module_name("required_fields", field_names)) do |value|
+        define_validator(module_name(:kind_of, *kinds)) do |value|
           if !kinds.any? { |k| !value.kind_of?(k) }
             [ "Value must be kind_of?(#{kinds.join(", ")}), but is #{value.class}" ]
           end
@@ -67,17 +66,17 @@ module Moduler
       end
 
       def equal_to(values)
-        define_validator(moduler, module_name("required_fields", field_names)) do |value|
+        define_validator(module_name(:equal_to, *values)) do |value|
           if !values.include?(value)
-            [ "Value must be equal to one of (#{values.map { |v| v.inspect }.join(", ")}), but is #{value.inspect}" ]
+            [ "Value must be equal to one of (#{kind_of.map { |k| k.inspect }.join(", ")}), but is #{value.inspect}" ]
           end
         end
       end
 
       def regexes(regexes)
-        define_validator(moduler, module_name("required_fields", field_names)) do |value|
-          if !kinds.any? { |k| !value.kind_of?(k) }
-            [ "Value must match one of (#{regexes.map { |v| v.inspect }.join(", ")}), but does not: #{value.inspect}" ]
+        define_validator(module_name(:regexes, *regexes)) do |value|
+          if !regexes.any? { |regex| regex.match(value) }
+            [ "Value must match one of (#{regexes.map { |r| r.inspect }.join(", ")}), but does not: #{value.inspect}" ]
           end
         end
       end

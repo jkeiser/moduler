@@ -7,7 +7,7 @@ module Moduler
       include Moduler::Base::ModuleDSL
 
       def initialize(moduler, name, *args, &block)
-        moduler = moduler.create_class(name, HashFacade)
+        moduler = moduler.new_class(name, HashFacade)
         super(moduler, *args, &block)
       end
 

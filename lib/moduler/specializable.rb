@@ -15,10 +15,10 @@ module Moduler
         super()
         extend(base) if base
       end
-      inject(options, &block)
+      dsl_eval(options, &block)
     end
 
-    def inject(options={}, &block)
+    def dsl_eval(options={}, &block)
       options.each do |key, value|
         if respond_to?("#{key}=")
           public_send("#{key}=", value)
