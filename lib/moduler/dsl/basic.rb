@@ -79,8 +79,10 @@ module Moduler
         if target.const_defined?(name)
           raise "Module #{name} already exists under #{target}!"
         end
-        child = Module.new
-        target.const_set(name, child)
+        # This is the only method of creating a class/module that preserves the
+        # name *even* when it's being created inside of a class with no name
+        # (like a metaclass).
+        child = eval "module target::#{name}; self; end"
         moduler = self.class.new(options.merge(target: child, parent: self))
         moduler.raw_eval(&block)
         moduler
@@ -93,8 +95,11 @@ module Moduler
         if target.const_defined?(name)
           raise "Class #{name} already exists under #{target}!"
         end
-        child = superclass ? Class.new(superclass) : Class.new
-        target.const_set(name, child)
+
+        # This is the only method of creating a class/module that preserves the
+        # name *even* when it's being created inside of a class with no name
+        # (like a metaclass).
+        child = eval "class target::#{name}<superclass; self; end"
         moduler = self.class.new(options.merge(target: child, parent: self))
         moduler.raw_eval(&block)
         moduler

@@ -1,7 +1,7 @@
-require 'moduler/guard'
+require 'moduler/facade/guard'
 
 module Moduler
-  module Guard
+  module Facade
     module Transformers
       def on_call(block)
         new_module(module_name(:on_call, block)) do
@@ -50,7 +50,7 @@ module Moduler
 
         def set(value)
           if value.is_a?(LazyValue)
-            raw = value # Set without coercion; the coercion will happen on get.
+            self.raw = value # Set without coercion; the coercion will happen on get.
           else
             super(value)
           end
@@ -60,7 +60,7 @@ module Moduler
           if raw.is_a?(LazyValue)
             value = coerce(raw.call)
             if raw.cache
-              raw = value
+              self.raw = value
               super
             else
               coerce_out(value)

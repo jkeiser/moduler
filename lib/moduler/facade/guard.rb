@@ -1,13 +1,10 @@
-require 'moduler'
-require 'moduler/guard/coercer'
-
 module Moduler
   module Guard
     def get
-      coerce_out(raw)
+      self.class.coerce_out(raw)
     end
     def set(value)
-      raw = coerce(value)
+      self.raw = self.class.coerce(value)
     end
     def call(value = NOT_PASSED, &block)
       if value == NOT_PASSED

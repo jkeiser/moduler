@@ -1,12 +1,16 @@
 require 'moduler'
 
-describe Moduler::DSL::DSL do
+module TestRoot
+end
+
+describe Moduler::DSL::DSL, :focus do
   let :m do
-    Module.new
+    TestRoot.const_set(:M, Module.new)
   end
   let :moduler do
     Moduler::DSL::DSL.new(target: m)
   end
+
   context "When a module has attribute :x" do
     before :each do
       moduler.class_level.attribute :x
@@ -26,9 +30,6 @@ describe Moduler::DSL::DSL do
   context "When a module attribute :x has a guard" do
     before :each do
       moduler.class_level.attribute :x, moduler.kind_of([Symbol, String])
-#      moduler.class_level.dsl_eval do
-#        attribute :x, kind_of([Symbol, String])
-#      end
     end
 
     it "Can get and set x" do

@@ -6,7 +6,7 @@ module Moduler
     # Slaps an array interface on top of the raw value (which subclasses can
     # override).
     #
-    # Assumes the existence of `raw`, `item_access`, `index_guard` and `element_guard`.
+    # Assumes the existence of `raw`, `item_facade`, `index_guard` and `element_guard`.
     #
     module ArrayFacade
       include Enumerable
@@ -15,47 +15,44 @@ module Moduler
         raw.size
       end
       def [](index)
-        item_access.new(raw, index).get
+        item_access(index).get
       end
       def []=(index, value)
-        access = item_access.new(raw, index)
+        access = item_access(index)
         result = access.set(value)
         access.call_if(:on_set, result)
         result
       end
       def delete_at(index)
-        index = index_guard.coerce_out(index) if index_guard
+        index = index_in(index)
         if index < raw.size && index >= -raw.size
-          value = raw.delete_at(index)
-          value = value_guard.coerce_out(value) if value_guard
-          value
+          value_out(raw.delete_at(index))
         end
       end
       def each
         raw.each do |value|
-          value = value_guard.coerce_out(value) if value_guard
-          yield value
+          yield value_out(value)
         end
       end
       def each_with_index
         raw.each_with_index do |value, index|
-          index = index_guard.coerce_out(index) if index_guard
-          value = value_guard.coerce_out(value) if value_guard
-          yield value, index
+          yield value_out(value), index_out(index)
         end
       end
       alias :each_pair :each
 
       module DSL
-        def define_array_facade(name, index_guard, element_guard)
-          new_module(name) do |moduler|
-            item_access = moduler.define_array_item_access(:ItemAccess, index_guard, element_guard)
+        def define_array_facade(name, index_guard, item_guard)
+          new_class(name) do |moduler|
+            item_access = moduler.define_array_item_access(:ItemAccess, index_guard, item_guard)
 
             include ArrayFacade
 
-            define_method(:item_access)   { item_access }
-            define_method(:index_guard)   { index_guard }
-            define_method(:element_guard) { element_guard }
+            define_method(:item_access) { |index| item_access.new(self, index_in(index))}
+            define_method(:index_in)    { |index| index_guard.coerce(index) }
+            define_method(:index_out)   { |index| index_guard.coerce_out(index) }
+            define_method(:value_in)    { |value| item_guard.coerce(value) }
+            define_method(:value_out)   { |value| item_guard.coerce_out(value) }
           end
         end
       end

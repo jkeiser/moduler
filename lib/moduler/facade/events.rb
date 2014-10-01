@@ -1,7 +1,7 @@
-require 'moduler/guard'
+require 'moduler/facade/guard'
 
 module Moduler
-  module Guard
+  module Facade
     module Events
       def self.define_event(event_name)
         define_method(event_name) do |event|

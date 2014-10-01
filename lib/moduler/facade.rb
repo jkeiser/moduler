@@ -1,3 +1,6 @@
+require 'moduler/facade/guard'
+require 'moduler/facade/coercer'
+
 module Moduler
   #
   # A Facade on top of a value.  This provides the basic Facade interface
@@ -14,14 +17,10 @@ module Moduler
   # +coerce_out+ also assumes that new(raw_value) exists.
   #
   module Facade
-    def raw
-      raise NotImplementedError
-    end
-    def raw=
-      raise NotImplementedError
-    end
-    def has_raw?
-      raise NotImplementedError
+    include Guard
+    extend Coercer
+    def self.included(other)
+      other.extend(Coercer)
     end
   end
 end

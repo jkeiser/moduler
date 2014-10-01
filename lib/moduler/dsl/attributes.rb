@@ -1,18 +1,21 @@
 require 'moduler/specializable'
+require 'moduler/facade/accessor'
+require 'moduler/facade'
 
 module Moduler
   module DSL
     module Attributes
-      Moduler.inline { viral_class_methods }
-
-      def attribute(name, guard=nil)
-        access = define_instance_variable_access(module_name(:attribute, name), guard).target
+      def attribute(name, accessor=nil)
+        accessor ||= raw_facade
+        if !accessor.is_a?(Facade::Accessor)
+          accessor = define_instance_variable_access(module_name(:attribute, name), accessor)
+        end
         raw_eval do
           define_method(name) do |*args, &block|
-            access.new(self, name).call(*args, &block)
+            accessor.new(self, name).call(*args, &block)
           end
           define_method("#{name}=") do |value|
-            access.new(self, name).set(value)
+            accessor.new(self, name).set(value)
           end
         end
       end
@@ -40,11 +43,11 @@ module Moduler
         included = []
         extended = []
         guards.each do |guard|
+          next if !guard
           if guard.is_a?(Guard)
             target.include guard
             included << guard
           end
-          puts "#{guard}, #{guard.class}"
           if guard <= Guard::Coercer
             target.extend guard
             extended << guard

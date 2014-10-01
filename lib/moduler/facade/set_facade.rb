@@ -6,45 +6,36 @@ module Moduler
     # Slaps an array interface on top of the raw value (which subclasses can
     # override).
     #
-    # Assumes the existence of raw and item_guard.
+    # Assumes the existence of raw, item_in(item) and item_out(item).
     #
     module SetFacade
-      include Facade
       include Enumerable
 
       def include?(item)
-        item = item_guard.coerce(item) if item_guard
-        raw.include?(item)
+        raw.include?(item_in(item))
       end
       def member?(item)
-        item = item_guard.coerce(item) if item_guard
-        raw.member?(item)
+        raw.member?(item_in(item))
       end
       def add(item)
-        item = item_guard.coerce(item) if item_guard
-        raw.add(item)
+        raw.add(item_in(item))
       end
       def <<(item)
-        item = item_guard.coerce(item) if item_guard
-        raw << item
+        raw << item_in(item)
       end
       def delete(item)
-        item = item_guard.coerce(item) if item_guard
-        raw.delete(item)
+        raw.delete(item_in(item))
       end
       def each(&block)
-        if item_guard
-          raw.each { |item| yield item_guard.coerce(item) }
-        else
-          raw.each(&block)
-        end
+        raw.each { |item| yield item_in(item) }
       end
 
       module DSL
         def define_set_facade(name, item_guard)
-          new_module(name) do |moduler|
+          new_class(name) do
             include SetFacade
-            define_method(:item_guard) { item_guard }
+            define_method(:item_in)  { |item| item_guard.coerce(item) }
+            define_method(:item_out) { |item| item_guard.coerce_out(item) }
           end
         end
       end
