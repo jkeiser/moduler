@@ -13,9 +13,53 @@
     > Type, Struct, Array, Hash, Set
   > Event
 
-Specializable
--------------
-All Moduler classes follow a common "attribute-like" construction pattern.
+Facades
+-------
+Facades are classes that mitigate how users will *use* a raw value.  They are designed to be layered on top of a value, and provide normal access semantics, as well as class-level methods so that the type system can assist with things like default values:
+
+- get(accessor) - get the value from the accessor
+- set(accessor, value) - set the value of the accessor
+- call(accessor, *args, &block) - "call" the value.
+- coerce_in(raw) - transform or validate the value on the way in.  This can be used without the associated cost of creating an accessor.
+- coerce_out(raw) - transform or validate the value on the way out.
+- new(accessor) - create a new instance of the facade, using the accessor as input.  Most classes will simply grab the raw value from the accessor; some will preserve the accessor itself.
+
+Guards
+------
+Guards are objects with static methods to validate or transform values as they head into or out of the system.
+
+They provide these methods:
+- coerce_in(raw) - validate or transform the value on its way in
+- coerce_out(raw) - validate or transform the value on its way out
+
+Accessors
+---------
+Accessors provide access to a raw value in such a way that it can be set or got.
+
+- raw: access to the raw value for superclasses
+
+Creating Facades: Composition
+=============================
+
+In general, you will create facade classes with four classes in your hierarchy:
+1. Facade: the top level base class.  Handles standard get/set/call operations.
+2. User DSL: HashFacade/*Facade: specific types of facade that add array, hash,
+   set or struct semantics to your facade.
+3. Guard: a class that handles standard behavior for your type system.  The most
+   basic one, Moduler::Guard, handles 1-n coercers/validators, default values,
+   and lazy values.
+4. Accessor: the actual physical storage for the value.  This can be as simple
+   as an instance variable, or as complicated as a path or URL.
+
+MyClass.new(property: value, property: value) do
+  <instance dsl>
+  property value
+  property value
+end
+
+The input hash acts just like
+
+These classes are meant to
 
 Guards
 -------

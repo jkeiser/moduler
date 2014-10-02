@@ -3,65 +3,64 @@ require 'moduler/facade'
 module Moduler
   module Facade
     #
-    # Slaps a hash interface on top of the raw value (which subclasses can
+    # Slaps a hash interface on top of the hash value (which subclasses can
     # override).
     #
-    module HashFacade
+    class HashFacade
+      include Facade
       include Enumerable
+
+      def initialize(hash, type)
+        @hash = hash
+        @type = type
+      end
+
+      attr_reader :hash
+      attr_reader :type
+
       def size
-        raw.size
+        hash.size
       end
       def [](key)
-        item_access(key).get
+        key = type.coerce_key(key)
+        type.coerce_value(key, hash.has_key?(key) ? hash[key] : NO_VALUE)
       end
       def []=(key, value)
-        access = item_access(key)
-        result = access.set(value)
-        access.call_if(:on_set, result)
+        key = type.coerce_key(key)
+        self[key] = result = type.coerce_value(index, value)
+        result = type.coerce_value_out(key, result)
+        if type.events[:on_set]
+          type.events[:on_set].fire(:on_set, result)
+        end
         result
       end
       def delete(key)
-        key = key_in(key)
-        if raw.has_key?(key)
-          value_out(key, raw.delete(key))
+        key = type.coerce_key(key)
+        if hash.has_key?(key)
+          type.coerce_value_out(key, hash.delete(key))
         end
       end
       def each(&block)
-        raw.each do |key, value|
-          yield key_out(key), value_out(key, value)
+        hash.each do |key, value|
+          yield type.coerce_key_out(key), type.coerce_value_out(key, value)
         end
       end
       alias :each_pair :each
 
       def has_key?(key)
-        item_access(key).has_raw?
+        item_access(key).has_hash?
       end
       def each_key(&block)
-        raw.each_key { |key| yield key_out(key) }
+        hash.each_key { |key| yield type.coerce_key_out(key) }
       end
       def keys
         each_key.to_a
       end
       def each_value(&block)
-        raw.each_value { |value| yield value_out(key, value) }
+        hash.each_value { |value| yield type.coerce_value_out(key, value) }
       end
       def values
         each_value.to_a
-      end
-
-      module DSL
-        def define_hash_facade(name, key_guard, value_guard)
-          new_class(name) do |moduler|
-            item_access = moduler.define_hash_item_access(:ItemAccess, key_guard, value_guard)
-
-            include HashFacade
-            define_method(:item_access) { |key| item_access.new(self, key_in(key)) }
-            define_method(:key_in)      { |key| key_guard.coerce(key) }
-            define_method(:key_out)     { |key| key_guard.coerce_out(key) }
-            define_method(:value_in)    { |key, value| value_guard.coerce(value) }
-            define_method(:value_out)   { |key, value| value_guard.coerce_out(value) }
-          end
-        end
       end
     end
   end

@@ -1,7 +1,5 @@
-require 'moduler/facade/guard'
-
 module Moduler
-  module Facade
+  module DSL
     module Transformers
       def on_call(block)
         new_module(module_name(:on_call, block)) do

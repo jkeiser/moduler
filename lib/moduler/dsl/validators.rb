@@ -1,8 +1,7 @@
-require 'moduler/facade/coercer'
 require 'moduler/errors'
 
 module Moduler
-  module Facade
+  module DSL
     module Validators
       def define_validator(name, &block)
         new_module(name) do |moduler|
