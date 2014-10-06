@@ -18,7 +18,7 @@ describe Moduler::Scope do
 
       context "And a Bar instance extends a Foo instance" do
         before do
-          Moduler::Scope.extend_instance(bar, foo)
+          Moduler::Scope.bring_into_scope(bar, foo)
         end
 
         it "Setting bar.foo_attr affects foo.foo_attr" do
