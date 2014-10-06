@@ -3,6 +3,75 @@ The Crazytown Project
 
 The Crazytown Project aims to make cookbooks significantly easier to write, use, and customize, by flipping the model so that everything is a resource (recipes are second-level), and making resources incredibly easy to write and use.
 
+Summary
+-------
+
+Make resources
+- Simpler
+- Write inline and anywhere
+- Nested and Scoped
+- Extensible
+- Universal (cookbooks and recipes are resources)
+
+1. Inlineable Resources, Inlineable Recipes
+   resource :httpd do
+     attribute :max_connections, Fixnum
+
+     resource :service do
+     end
+
+     recipe :create do
+       ...
+     end
+   end
+2. Providers And Actions No Longer Exist - Use Recipes Instead, Less Concepts
+   - Provider -> Resource
+   - Action -> Recipe
+   - `converge_by` ->  `update_resource "description" do ... end`
+3. Parseable Cookbook Public Interface: Cookbooks Are Resources
+   - attribute :blah means
+   - "httpd" is top level namespace for httpd cookbook: httpd.service, httpd.config, etc.
+   - "httpd(:path => '/var/opt/blah')"
+   - We know all the resources that can be instantiated, on down the line.
+   - A run list is just a list of the instantiated recipes you want to run (with
+     attributes).
+   - Cookbook interfaces can be emitted
+4. More Flexible Resource Instantiation
+   - name can be defaulted (my_resource do ... end)
+   - a.b.c.d
+   - file '/var/www/x.txt', :mode => 0577
+5. Powerful Attribute Syntax
+   - attribute :addresses, :singular => :address, Array do
+       element_type do
+         attribute :street, String
+         attribute :city, String
+         attribute :state, :equal_to => %w(CO WA TX)
+       end
+     end
+6. Recipe Model More Intelligible
+   - A recipe "handles" resources. A recipe adds a "tree" of resources describing your system, and then its job is to make it happen.  Different recipes handle them differently.  They could:
+     - Run all of them at the end
+     - Pass them directly to the parent recipe to execute
+     - Run them immediately
+     - Run them immediately in parallel
+     - Run the model in a complex way
+   - Recipes are resources.  When you make a recipe resource it's added to your parent recipe.
+7. Nested Scopes
+   - Contained objects have access to parents (github.organization.repository.issue)
+   - Recipes have direct access to their resource (because it is a resource contained in the parent)
+   - "Enter that machine's scope and use its resources to do stuff": `ssh do file ... execute ... end`
+   - Clear model: root scope -> cookbook scope -> resource -> recipe
+8. Specialization
+   - Make your own slightly different copy of a resource
+   - Add defaults to a resource (file mode, owner, group)
+9. Awesome "Driver Model"
+   - file = windows.file or unix.file
+   - machine = aws.region('us-east-1').machine,
+   - Add any actual attributes you want to the specific implementation
+   - Assign the implementation into your cookbook / recipe
+   - Use it
+
+
 - Make resources primary, not recipes (start in resource mode)
 - Make resources definable inline
 
@@ -14,7 +83,7 @@ The Crazytown Project aims to make cookbooks significantly easier to write, use,
     resource :content do
     end
   end
-  
+
   resource :template, :file do
   end
 
@@ -22,7 +91,7 @@ The Crazytown Project aims to make cookbooks significantly easier to write, use,
     attribute :path, types.path
     attribute :config_path, types.path, :default => "conf", :relative_to => path
 
-    resource_attribute :config do
+    resource :config do
       attribute :path, types.path do
         default "httpd.conf"
         relative_to config_path
@@ -106,6 +175,7 @@ Goals
 -----
 - Structured cookbook attributes
 - Documentation for cookbook and resource attributes
+- Structured, analyzable, readable, predictable resources.
 - Structured thinking about resources -> more reusable components
 - Specializable APIs (aws.machine, )
 - User customizations (machine -> small_machine)
@@ -142,6 +212,17 @@ Plans
   - Autoloading sources
   - Knife plugins as resources?
   - Autoloading cookbooks?
+
+A Cookbook Is Code
+------------------
+
+Cookbooks are libraries.  
+The Experience
+--------------
+
+When you sit down to a crazytown cookbook, the first thing you do is open `cookbookname.rb`.  Your blank screen is now in a *resource definition*.  There is no libraries, there is no resources, there is no providers.
+
+###
 
 
 resource
