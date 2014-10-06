@@ -7,7 +7,41 @@ module Moduler
       # facade
 
     class Base
-      # type
+      # type :name, OtherType,   :a => b, :c => d do ... end
+      # type :name => OtherType, :a => b, :c => d do ... end
+      # type OtherType,          :a => b, :c => d do ... end
+      # type :name,              :a => b, :c => d do ... end
+      # type                     :a => b, :c => d do ... end
+      def type(supertype=nil, options={}, &block)
+        supertype, options = type_args
+      end
+
+      protected
+
+      def to_type(type)
+        case type
+        when Moduler::Type
+          type
+
+        when ::Module
+          Moduler::Type.new()
+
+        when ::Array
+          if type.size == 0
+            Moduler::ArrayType.new
+          elsif type.size == 1
+            Moduler::ArrayType.new(element_type => to_type(type[0]))
+          end
+
+        when ::Hash
+          if type.size == 0
+            Moduler::HashType.new
+          elsif type.size == 1
+            Moduler::HashType.new(key_type   => to_type(type[0].key),
+                                  value_type => to_type(type[0].value))
+          end
+        end
+      end
     end
 
     class Type < Base
@@ -38,6 +72,7 @@ module Moduler
     end
 
     class StructType < Type
+      # includes
       # attributes
       # reopen_on_call
     end

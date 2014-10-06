@@ -40,6 +40,11 @@ resource :organization do
 
   recipe :blah do
   end
+
+  test do
+    it "" do
+    end
+  end
 end
 
 attribute :members
@@ -58,9 +63,41 @@ end
 # The +github.patch+ resource (the recipe) is in scope.  "resource" is a
 # property of the recipe.
 #
-recipe :patch do
+recipe :put, :overwrite => [ Boolean, :default => false] do
 
 end
 
 recipe :get do
+end
+
+
+github.organization('myorg').repository('myrepository').put(:overwrite => true)
+
+
+resource :myorg, github.organization('myorg') do
+  full_name 'myorg'
+end
+
+resource :aws do
+  resource :region do
+    resource :machine do
+      attribute :ami
+      attribute :
+    end
+  end
+end
+
+resource :small_machine aws.machine do
+  ami :default => 'ami-2487623467823'
+end
+
+resource :small_machine vagrant.machine do
+  box :default =>
+end
+
+resource :small_machine, machine do
+  machine_options :default => { :blah =>  }
+end
+
+small_machine 'blah' do
 end

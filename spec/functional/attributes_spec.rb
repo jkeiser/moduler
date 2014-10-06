@@ -1,3 +1,4 @@
+require 'support/spec_support'
 require 'moduler'
 
 module TestRoot
