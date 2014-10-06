@@ -1,5 +1,6 @@
 require 'moduler/type'
 require 'moduler/facade/hash_facade'
+
 module Moduler
   class Type
     class HashType < Type

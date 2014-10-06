@@ -7,24 +7,12 @@ module Moduler
       # facade
 
     class Base
-      # type :name, OtherType,   :a => b, :c => d do ... end
-      # type :name => OtherType, :a => b, :c => d do ... end
-      # type OtherType,          :a => b, :c => d do ... end
-      # type :name,              :a => b, :c => d do ... end
-      # type                     :a => b, :c => d do ... end
-      def type(supertype=nil, options={}, &block)
-        supertype, options = type_args
-      end
-
       protected
 
-      def to_type(type)
+      def to_base_type(type)
         case type
         when Moduler::Type
           type
-
-        when ::Module
-          Moduler::Type.new()
 
         when ::Array
           if type.size == 0
@@ -42,6 +30,19 @@ module Moduler
           end
         end
       end
+
+      def to_type(base=nil, *args, &block)
+        type = to_base_type(type)
+
+        if type
+        end
+      end
+
+      # type :name, OtherType,   :a => b, :c => d do ... end
+      # type :name => OtherType, :a => b, :c => d do ... end
+      # type OtherType,          :a => b, :c => d do ... end
+      # type :name,              :a => b, :c => d do ... end
+      # type                     :a => b, :c => d do ... end
     end
 
     class Type < Base

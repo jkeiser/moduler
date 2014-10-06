@@ -8,16 +8,16 @@ module Moduler
   # The module/class is detected based on the block's self (the place the
   # block was created).
   #
-  def self.inline(options={}, &block)
-    Moduler::DSL::DSL.inline(options, &block)
-  end
+  # def self.inline(options={}, &block)
+  #   Moduler::DSL::DSL.inline(options, &block)
+  # end
 
   #
   # Run the Moduler DSL against a separate module or class.
   #
-  def self.dsl_eval(target, options={}, &block)
-    Moduler::DSL::DSL.new(options.merge(target: target), &block)
-  end
+  # def self.dsl_eval(target, options={}, &block)
+  #   Moduler::DSL::DSL.new(options.merge(target: target), &block)
+  # end
 
   #
   # Constant indicating a lack of a value (as opposed to +nil+), so that methods
@@ -38,5 +38,3 @@ module Moduler
   #
   NOT_PASSED = Object.new
 end
-
-require 'moduler/dsl/dsl'

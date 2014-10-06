@@ -1,5 +1,7 @@
-require 'moduler/guard'
+require 'moduler'
+require 'moduler/specializable'
 require 'moduler/lazy_value'
+require 'moduler/event'
 
 module Moduler
   #
@@ -23,18 +25,28 @@ module Moduler
     def initialize(*args, &block)
       @coercers = []
       @coercers_out = []
+      @default_value = NO_VALUE
       @events = {}
+      super
     end
 
-    attr_reader :coercers
-    attr_reader :coercers_out
+    attr_accessor :coercers
+    attr_accessor :coercers_out
+    attr_accessor :default_value
+    attr_accessor :call_proc
+
+    #
+    # A hash of named events the user has registered listeners for.
+    # if !events[:on_set], there are no listeners for on_set.
+    #
+    attr_reader :events
 
     #
     # Transform or validate the value before setting its raw value.
     #
     def coerce(value)
       if coercers && !value.is_a?(LazyValue)
-        coercers.inject(value) { |result,coercer| coercer.coerce(value) }
+        coercers.inject(value) { |result,coercer| coercer.coerce(result) }
       else
         value
       end
@@ -43,36 +55,33 @@ module Moduler
     #
     # Transform or validate the value before getting its raw value.
     #
+    # ==== Returns
+    # The out value, or NO_VALUE.  You will only ever get back NO_VALUE if you
+    # pumped NO_VALUE in.  (And even then, you may get a default value instead.)
+    #
     def coerce_out(value, &cache_proc)
-      if value.is_a?(LazyValue)
+      if value == NO_VALUE
+        value = default_value
+        if value.is_a?(LazyValue)
+          cache = value.cache
+          value = value.call
+          if cache && cache_proc
+            cache_proc.call(value)
+          end
+        end
+      elsif value.is_a?(LazyValue)
         cache = value.cache
-        value = coerce_in(value.call)
+        value = coerce(value.call)
         if cache && cache_proc
           cache_proc.call(value)
         end
       end
-      if coercers_out
-        coercers_out.inject(value) { |result,coercer| coercer.coerce_in(value) }
+
+      if value != NO_VALUE && coercers_out
+        coercers_out.inject(value) { |result,coercer| coercer.coerce_out(result) }
       else
         value
       end
-    end
-
-    #
-    # If the value is missing, this method is called to give the opportunity
-    # to return a default value (and optionally to set the value).
-    #
-    def get_default(&cache_proc)
-      value = self.class.default_value
-      if value.is_a?(LazyValue)
-        cache = value.cache
-        value = coerce_in(value.call)
-        if cache && cache_proc
-          cache_proc.call(value)
-        end
-      end
-
-      coerce_out(value)
     end
 
     #
@@ -99,22 +108,16 @@ module Moduler
     def default_call(context, value = NOT_PASSED, &block)
       if value == NOT_PASSED
         if block
-          context.set(block)
+          coerce_out(context.set(coerce(block)))
         else
-          context.get
+          coerce_out(context.get) { |value| context.set(value) }
         end
       elsif block
         raise "Both value and block passed to attribute!  Only one at a time accepted."
       else
-        context.set(value)
+        coerce_out(context.set(coerce(value)))
       end
     end
-
-    #
-    # A hash of named events the user has registered listeners for.
-    # if !events[:on_set], there are no listeners for on_set.
-    #
-    attr_reader :events
 
     #
     # Add a listener for the given event.
