@@ -7,17 +7,39 @@ module Moduler
   # subclassing in that +x+ has access to foo's *data*, while subclassing only
   # has access to foo's methods.
   #
+  # Features
+  # --------
   # The Scope model has a number of nice characteristics:
   # - It lets you bring in multiple scopes
   # - It uses ruby classes with explicit methods, and so avoid the myriad problems
   #   introduced by typical delegators, which use +method_missing+.
-  # - It is dynamic: changing Foo will affect instances with a Foo in their scope.
+  # - It is dynamic: adding methods to a Scope will be reflected in any instances
+  #   that include it.
   # - It is simple: a +ScopeProxy+ module is added to each +Scope+ class, and has
   #   proxy methods for each method in the class.  Including a Scope means extending
   #   this module and adding the instance you want to talk to in +@__scopes__+.
-  # - It is performant: it uses Ruby for dispatch, avoids metaclasses where
-  #   possible with +set_container+ and +@__scopes__+, creates one module per
-  #   Scope class, and shares a single function body for all proxy methods.
+  #
+  # Performance
+  # -----------
+  # - Method calls to the current instance are zero (extra) cost.
+  # - Method calls to another scope involve these extra steps:
+  #   - 1..n-1 included scopes:
+  #     - scope.class.proxy_module.public_method_defined?(__method__)
+  #     - If only one scope is included, this overhead is never invoked.
+  #     - Since a scope may include other scopes, this can be recursive
+  #       up to the depth of the number of scopes.  The O(m,n) == m*n-1,
+  #       where m is the depth and n is the number of scopes at each
+  #       depth.  Deep scope trees with tons of includes can be
+  #       costly.
+  #
+  # Memory Profile
+  # --------------
+  # - Each Scope instance has:
+  #   - Array of scopes they include (only exists if a scope is included)
+  # - Each *included* Scope instance has:
+  #   - A proxy module with an include for its superclass and an include for
+  #     each new Scope the instance includes
+  #   - A metaclass containing the proxy module
   #
   # Using Scopes
   # ============
@@ -48,48 +70,6 @@ module Moduler
   #   countrymen.wilma = "Wilma"
   #   puts friends.wilma # Prints Wilma
   #
-  # Using Container Scope
-  # =====================
-  #
-  # Extending an instance can be powerful and allow runtime mixing of DSLs.
-  # However, it incurs a cost: any instance you bring your methods into has a
-  # metaclass created for it including the instance.
-  #
-  # In some cases, you know exactly what type of scope you will bring in--in a
-  # containment or subclassing relationship, for example.  You just don't know
-  # exactly what *instance* you will link up to until runtime.  This means you
-  # should already know what methods you will be calling and can include them
-  # in your actual class before runtime.
-  #
-  # To do this, you call +set_container_class(your_class, container_class)+:
-  #
-  # 1. Use +set_container_class+ and +set_container+ to link them up:
-  #   require 'moduler/scope'
-  #
-  #   class Friends
-  #     extend Moduler::Scope
-  #     attr_accessor :fred
-  #     attr_accessor :wilma
-  #   end
-  #
-  #   class Countrymen
-  #     Moduler::Scope.set_container_class(Countrymen, Friends)
-  #     def initialize(friends)
-  #       Moduler::Scope.set_container(self, friends)
-  #     end
-  #     attr_accessor :shaggy
-  #     attr_accessor :thelma
-  #   end
-  #
-  # 2. Use them naturally.
-  #
-  #   friends = Friends.new
-  #   countrymen = Countrymen.new(friends)
-  #   friends.fred = "Fred"
-  #   puts countrymen.fred # Prints Fred
-  #   countrymen.wilma = "Wilma"
-  #   puts friends.wilma # Prints Wilma
-  #
   module Scope
     #
     # Bring another instance into scope in your instance, so that its methods
@@ -112,70 +92,25 @@ module Moduler
     # +extend+ (if override is +false+) and +prepend+ (if override is +true+).
     #
     def self.bring_into_scope(scope, include_scope, override=false)
-      scope_proxy = include_scope.class.scope_proxy
+      # We bring the *instance's* scope_proxy into scope, not just its class;
+      # that means if you mix in other scopes into +include_scope+ after this,
+      # we'll still pick them up.
+      scope_proxy = (class<<include_scope; self; end).scope_proxy
+
       if override
+        # If we're overriding, we want to prepend to the instance's class (which
+        # is how you insert the module *in front of* the scope)
         scope_metaclass = class<<scope; self; end
         scope_metaclass.prepend(scope_proxy)
       else
+        # Otherwise, we extend the proxy (which does an include to the metaclass).
         scope.extend(scope_proxy)
       end
-      scope.instance_eval do
-        @__scopes__ ||= {}
-        @__scopes__[scope_proxy] = include_scope
-      end
-    end
 
-    #
-    # Set the container class for your class.  This is used when you know your
-    # class will always have an instance of +container_class+ in scope.  This
-    # should be accompanied by using +set_container+ in your class's constructor.
-    #
-    # ==== Arguments
-    # [scope_class]
-    # The class whose scope will be expanded (will include the other scope).
-    #
-    # [container_scope_class]
-    # The class whose scope will be included into +scope_class+ instances.
-    #
-    # [override]
-    # Set +true+ to make +container_scope_class+ override any methods in
-    # +scope_class+.  By default, this is +false+, and +scope+ methods will
-    # remain visible even if +include_scope+ has methods with the same name.
-    # This chooses between +include+ (if override is +false+) and +prepend+ (if
-    # override is +true+).
-    #
-    def self.set_container_class(scope_class, container_scope_class, override=false)
-      if override
-        scope_class.prepend(container_scope_class.scope_proxy)
-      else
-        scope_class.include(container_scope_class.scope_proxy)
-      end
-    end
-
-    #
-    # Set the actual container.
-    #
-    # This is generally used in the +initialize+ method after +set_container_class+
-    # has been used to link two classes:
-    #
-    #   class Bar
-    #     Moduler::Scope.set_container_class(Bar, Foo)
-    #     def initialize(foo)
-    #       Moduler::Scope.set_container(self, foo)
-    #     end
-    #   end
-    #
-    # ==== Arguments
-    # [scope]
-    # The scope that will be expanded (methods from container included in scope).
-    #
-    # [container]
-    # The container scope that will be included into +scope+.
-    #
-    def self.set_container(scope, container)
+      # Finally, we add the included scope to scope's @__scopes__ list.
       scope.instance_eval do
-        @__scopes__ ||= {}
-        @__scopes__[container.class.scope_proxy] = container
+        @__scopes__ ||= []
+        @__scopes__.unshift(include_scope) # Add to the beginning
       end
     end
 
@@ -188,10 +123,16 @@ module Moduler
       # Call the same method on our class (in this case, the proxy module calls
       # its class, which is the instance).
       @call_other_scope ||= proc do |*args, &block|
-        # Find the proxy module to which the current method is attached
-        scope_proxy = self.method(__method__).owner
-        # Find the proxy instance
-        @__scopes__[scope_proxy].public_send(__method__, *args, &block)
+        # Find out which scope has it.
+        size = @__scopes__.size
+        @__scopes__.each_with_index do |scope, index|
+          # We find the first proxy module that defines the method (or if we are
+          # at the last proxy, we assume that is the one that defined it).
+          if index == size-1 ||
+             scope.class.proxy_module.public_method_defined?(__method__)
+            return scope.public_send(__method__, *args, &block)
+          end
+        end
       end
     end
 
@@ -220,22 +161,27 @@ module Moduler
     # it under your class and
     #
     def scope_proxy
-      @scope_proxy ||= begin
-        scope_proxy = const_set(:ScopeProxy, Module.new)
+      if !@scope_proxy
+        @scope_proxy = const_set(:ScopeProxy, Module.new)
 
         public_instance_methods(false).each do |method|
-          scope_proxy.send(:define_method, method, Scope.call_other_scope)
+          @scope_proxy.send(:define_method, method, Scope.call_other_scope)
         end
 
-        ancestors.reverse.each do |ancestor|
-          next if ancestor == self
+        to_include = []
+        handled = Set[@scope_proxy]
+        ancestors.each do |ancestor|
           if ancestor.is_a?(Scope)
-            scope_proxy.include(ancestor.scope_proxy)
+            next if handled.include?(ancestor.scope_proxy)
+            to_include << ancestor.scope_proxy
+            handled |= ancestor.scope_proxy.ancestors
           end
         end
-
-        scope_proxy
+        to_include.reverse.each do |m|
+          @scope_proxy.include m
+        end
       end
+      @scope_proxy
     end
 
     #
@@ -275,49 +221,34 @@ module Moduler
     end
 
     #
-    # When a method is made public, put it into the +ScopeProxy+.
+    # NOTE: we cannot intercept public/private/protected, because when we do,
+    # Ruby doesn't actually change the visibility of future methods (even if we
+    # call super from the public/private/protected method).
     #
-    def public(*methods)
-      super
-      methods.each do |method|
-        scope_proxy.send(:define_method, method, Scope.call_other_scope)
-      end
+    # So when you decrease or increase the visibility of a method, the methods
+    # are not added or removed from the proxy class.
+    #
+
+    #
+    # When a you include a Scope module, you become a Scope yourself.
+    #
+    def included(other)
+      other.extend(Moduler::Scope)
+      scope_proxy
     end
 
     #
-    # When a method is made protected, take it out of the +ScopeProxy+.
+    # When a you inherit a Scope module, you become a Scope yourself.
     #
-    # NOTE: this is a bit tricksy.  If +a+ has +b+ and +c+ in scope, making
-    # +c.foo+ private will also hide +b.foo+.  OTOH, it will also hide
-    # +c.superclass.foo+, which is what we want.
-    #
-    def protected(*methods)
-      super
-      methods.each do |method|
-        # We want to undef the method if it is public in the scope proxy, whether
-        # it was defined by *our* scope proxy or an included one.
-        if scope_proxy.public_method_defined?(method)
-          scope_proxy.send(:undef_method, method)
-        end
-      end
+    def inherited(other)
+      other.extend(Moduler::Scope)
     end
 
     #
-    # When a method is made private, take it out of the +ScopeProxy+.
+    # When a you prepend a Scope module, you become a Scope yourself.
     #
-    # NOTE: this is a bit tricksy.  If +a+ has +b+ and +c+ in scope, making
-    # +c.foo+ private will also hide +b.foo+.  OTOH, it will also hide
-    # +c.superclass.foo+, which is what we want.
-    #
-    def private(*methods)
-      super
-      methods.each do |method|
-        # We want to undef the method if it is public in the scope proxy, whether
-        # it was defined by *our* scope proxy or an included one.
-        if scope_proxy.public_method_defined?(method)
-          scope_proxy.send(:undef_method, method)
-        end
-      end
+    def prepended(other)
+      other.extend(Moduler::Scope)
     end
   end
 end
