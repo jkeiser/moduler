@@ -6,7 +6,7 @@ module Moduler
     # Slaps a set interface on top of the raw value (which subclasses can
     # override).
     #
-    module SetFacade
+    class SetFacade
       include Facade
       include Enumerable
 

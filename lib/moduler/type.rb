@@ -32,8 +32,20 @@ module Moduler
 
     attr_accessor :coercers
     attr_accessor :coercers_out
-    attr_accessor :default_value
     attr_accessor :call_proc
+
+    #
+    # The default value gets set the same way as the value would--you can use
+    # the same expressions you would otherwise.
+    #
+    def default_value(*args, &block)
+      if args.size == 0 && !block && !instance_variable_defined(:@default_value)
+        NO_VALUE
+      else
+        default_call(DefaultValueContext.new(self), *args, &block)
+      end
+    end
+    attr_writer :default_value
 
     #
     # A hash of named events the user has registered listeners for.
@@ -60,28 +72,42 @@ module Moduler
     # pumped NO_VALUE in.  (And even then, you may get a default value instead.)
     #
     def coerce_out(value, &cache_proc)
-      if value == NO_VALUE
-        value = default_value
-        if value.is_a?(LazyValue)
-          cache = value.cache
-          value = value.call
-          if cache && cache_proc
-            cache_proc.call(value)
-          end
-        end
-      elsif value.is_a?(LazyValue)
-        cache = value.cache
-        value = coerce(value.call)
-        if cache && cache_proc
-          cache_proc.call(value)
-        end
-      end
+      value = raw_value(value, &cache_proc)
 
       if value != NO_VALUE && coercers_out
         coercers_out.inject(value) { |result,coercer| coercer.coerce_out(result) }
       else
         value
       end
+    end
+
+    def raw_value(value, &cache_proc)
+      if value == NO_VALUE
+        raw_default_value(&cache_proc)
+
+      elsif value.is_a?(LazyValue)
+        cache = value.cache
+        value = coerce(value.call)
+        if cache && cache_proc
+          cache_proc.call(value)
+        end
+        value
+
+      else
+        value
+      end
+    end
+
+    def raw_default_value(&cache_proc)
+      value = default_value
+      if value.is_a?(LazyValue)
+        cache = value.cache
+        value = coerce(value.call)
+        if cache && cache_proc
+          cache_proc.call(value)
+        end
+      end
+      value
     end
 
     #
@@ -143,6 +169,25 @@ module Moduler
       {
         :on_set => Event
       }
+    end
+
+    #
+    # Used in default_value
+    #
+    class DefaultValueContext
+      def initialize(type)
+        @type = type
+      end
+      def set(value)
+        type.instance_variable_set(:@default_value, value)
+      end
+      def get
+        if type.instance_variable_defined?(:@default_value)
+          type.instance_variable_get(:@default_value)
+        else
+          NO_VALUE
+        end
+      end
     end
   end
 end

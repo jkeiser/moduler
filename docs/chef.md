@@ -94,8 +94,14 @@ chef.path:
   -
   - computed
     - `dsl`: DSL to access the given paths
-- source: Extend this with your custom path source (scp, file, etc.)
-  recipe:
+- source: A source of text data.  Extend this with your custom source.
+  - get(content_id=nil)
+  - content
+  - Initializable with "path"
+  - relative_to
+- entry: A traversable directory.
+  - delete
+- recipe:
   - put(path, path_entry, recurse)
   - get(path, path_entry, recurse)
   - delete(path, path_entry, recurse)
