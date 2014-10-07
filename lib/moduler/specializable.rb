@@ -20,8 +20,8 @@ module Moduler
 
     def dsl_eval(options={}, &block)
       options.each do |key, value|
-        if respond_to?("#{key}=")
-          public_send("#{key}=", value)
+        if respond_to?(:"#{key}=")
+          public_send(:"#{key}=", value)
         else
           public_send(key, value)
         end

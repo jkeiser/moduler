@@ -90,14 +90,14 @@ describe Moduler::Type::StructType do
   end
 
   context "After adding a struct field" do
-    let(:foo_struct) { type.facade_class }
-    let(:instance) { foo_struct.new({}) }
-    let(:struct) { type.field_types[0].facade_class }
     before do
       field_type = Moduler::Type::StructType.new
       field_type.field_types[:bar] = Moduler::Type.new
       type.field_types[:foo] = field_type
     end
+    let(:foo_struct) { type.facade_class }
+    let(:instance) { foo_struct.new({}) }
+    let(:struct) { type.field_types[:foo].facade_class }
 
     it "The resulting class has the field getter and setter" do
       expect(type.facade_class.instance_methods(false)).to eq [ :foo, :foo= ]
@@ -122,7 +122,7 @@ describe Moduler::Type::StructType do
       expect(instance.foo).to eq struct.new(bar: 10)
     end
     it "Setter with both a value and a block works" do
-      expect(instance.foo(bar: 10) { bar = bar * 2 }).to eq struct.new(bar: 20)
+      expect(instance.foo(bar: 10) { bar bar * 2 }).to eq struct.new(bar: 20)
     end
     it "Sending multiple values throws an exception" do
       expect { instance.foo({bar: 10}, {bar: 20}) }.to raise_error ArgumentError

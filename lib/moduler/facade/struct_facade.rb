@@ -9,6 +9,9 @@ module Moduler
         @hash = hash
         super(*args, &block)
       end
+      def ==(other)
+        @hash == other.instance_variable_get(:@hash)
+      end
     end
   end
 end

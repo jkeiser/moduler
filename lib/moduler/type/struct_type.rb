@@ -35,6 +35,7 @@ module Moduler
         if !@facade_class
           self.facade_class = Class.new
         end
+        @facade_class
       end
 
       def facade_class=(value)
@@ -66,6 +67,11 @@ module Moduler
           return super
         end
 
+        if args[0].is_a?(LazyValue)
+          context.set(args[0])
+          return args[0]
+        end
+
         if args[0].is_a?(facade_class)
           # If we've been passed a compatible struct class as an argument, we
           # set the value to the struct
@@ -75,11 +81,13 @@ module Moduler
           value = raw_value(context.get) { |v| context.set(v) }
           if value == NO_VALUE
             value = facade_class.new({})
+            context.set(value)
           end
         else
           value = raw_default_value { |v| context.set(v) }
           if value == NO_VALUE
             value = facade_class.new({})
+            context.set(value)
           end
         end
         value.dsl_eval(*args, &block)
@@ -88,9 +96,13 @@ module Moduler
 
       def coerce(struct)
         if struct.is_a?(Hash)
-          struct = facade_class.new.dsl_eval(struct)
+          result = facade_class.new({})
+          result.dsl_eval(struct)
+          struct = result
         elsif struct.is_a?(Proc)
-          struct = facade_class.new.dsl_eval(&struct)
+          result = facade_class.new({})
+          result.dsl_eval(&struct)
+          struct = result
         end
         super(struct)
       end
