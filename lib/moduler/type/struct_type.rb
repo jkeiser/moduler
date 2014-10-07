@@ -42,7 +42,8 @@ module Moduler
         @facade_class.include(Moduler::Facade::StructFacade)
         field_types.each do |name, field_type|
           @facade_class.send(:define_method, name) do |*args, &block|
-            field_type.call(StructFieldContext.new(@hash, name), *args, &block)
+            result = field_type.call(StructFieldContext.new(@hash, name), *args, &block)
+            result == NO_VALUE ? nil : result
           end
           @facade_class.send(:define_method, "#{name}=") do |value|
             @hash[name] = field_type.coerce(value)

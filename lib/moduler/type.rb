@@ -39,13 +39,15 @@ module Moduler
     # the same expressions you would otherwise.
     #
     def default_value(*args, &block)
-      if args.size == 0 && !block && !instance_variable_defined(:@default_value)
+      if args.size == 0 && !block && @default_value == NO_VALUE
         NO_VALUE
       else
         default_call(DefaultValueContext.new(self), *args, &block)
       end
     end
-    attr_writer :default_value
+    def default_value=(value)
+      @default_value = coerce(value)
+    end
 
     #
     # A hash of named events the user has registered listeners for.
@@ -75,10 +77,9 @@ module Moduler
       value = raw_value(value, &cache_proc)
 
       if value != NO_VALUE && coercers_out
-        coercers_out.inject(value) { |result,coercer| coercer.coerce_out(result) }
-      else
-        value
+        value = coercers_out.inject(value) { |result,coercer| coercer.coerce_out(result) }
       end
+      value
     end
 
     def raw_value(value, &cache_proc)
@@ -99,7 +100,7 @@ module Moduler
     end
 
     def raw_default_value(&cache_proc)
-      value = default_value
+      value = @default_value
       if value.is_a?(LazyValue)
         cache = value.cache
         value = coerce(value.call)
@@ -136,6 +137,7 @@ module Moduler
         if block
           value = block
         else
+          value = context.get
           return coerce_out(context.get) { |value| context.set(value) }
         end
       elsif block
@@ -184,11 +186,11 @@ module Moduler
         @type = type
       end
       def set(value)
-        type.instance_variable_set(:@default_value, value)
+        @type.instance_variable_set(:@default_value, value)
       end
       def get
-        if type.instance_variable_defined?(:@default_value)
-          type.instance_variable_get(:@default_value)
+        if @type.instance_variable_defined?(:@default_value)
+          @type.instance_variable_get(:@default_value)
         else
           NO_VALUE
         end

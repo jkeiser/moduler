@@ -20,6 +20,9 @@ describe Moduler::Type::StructType do
     it "The resulting class has the field getter and setter" do
       expect(type.facade_class.instance_methods(false)).to eq [ :foo, :foo= ]
     end
+    it "The default getter returns nil" do
+      expect(instance.foo).to eq nil
+    end
     it "The = setter and getter work" do
       expect(instance.foo = 10).to eq 10
       expect(instance.foo).to eq 10
@@ -58,6 +61,9 @@ describe Moduler::Type::StructType do
     it "The resulting class has the field getter and setter" do
       expect(type.facade_class.instance_methods(false)).to eq [ :foo, :foo= ]
     end
+    it "The default getter returns nil" do
+      expect(instance.foo).to eq nil
+    end
     it "The setter and getter work" do
       instance.foo = 10
       expect(instance.foo).to eq 60
@@ -82,6 +88,47 @@ describe Moduler::Type::StructType do
       expect { instance.foo(100, 200) }.to raise_error ArgumentError
     end
   end
+
+  context "After adding a struct field" do
+    let(:foo_struct) { type.facade_class }
+    let(:instance) { foo_struct.new({}) }
+    let(:struct) { type.field_types[0].facade_class }
+    before do
+      field_type = Moduler::Type::StructType.new
+      field_type.field_types[:bar] = Moduler::Type.new
+      type.field_types[:foo] = field_type
+    end
+
+    it "The resulting class has the field getter and setter" do
+      expect(type.facade_class.instance_methods(false)).to eq [ :foo, :foo= ]
+    end
+    it "The default getter returns nil" do
+      expect(instance.foo).to eq nil
+    end
+    it "The setter and getter work" do
+      instance.foo = { bar: 10 }
+      expect(instance.foo).to eq struct.new(bar: 10)
+    end
+    it "The method setter works" do
+      expect(instance.foo bar: 10).to eq struct.new(bar: 10)
+      expect(instance.foo).to eq struct.new(bar: 10)
+    end
+    it "Lazy value set works" do
+      expect(instance.foo LazyValue.new { { bar: 10 } }).to be_kind_of(LazyValue)
+      expect(instance.foo).to eq struct.new(bar: 10)
+    end
+    it "Default block setter sets struct properties" do
+      expect(instance.foo { bar 10 }).to eq struct.new(bar: 10)
+      expect(instance.foo).to eq struct.new(bar: 10)
+    end
+    it "Setter with both a value and a block works" do
+      expect(instance.foo(bar: 10) { bar = bar * 2 }).to eq struct.new(bar: 20)
+    end
+    it "Sending multiple values throws an exception" do
+      expect { instance.foo({bar: 10}, {bar: 20}) }.to raise_error ArgumentError
+    end
+  end
+
   # Reopening a class
   # Inheritance from the class
   # Inheriting *to* the class

@@ -104,10 +104,10 @@ describe Moduler::Type do
       end
 
       it "When NO_VALUE is passed, and a default_value is specified, coercers_out are run but coercers are not" do
-        type.default_value = 100
         type.coercers << MultiplyCoercer.new(2)
         type.coercers_out << MultiplyCoercerOut.new(3)
-        expect(type.coerce_out(NO_VALUE)).to eq 300
+        type.default_value = 100
+        expect(type.coerce_out(NO_VALUE)).to eq 600
       end
 
       it "When NO_VALUE is passed, and a lazy default_value is specified, it is returned" do
@@ -122,10 +122,10 @@ describe Moduler::Type do
         type.coercers << MultiplyCoercer.new(2)
         type.coercers_out << MultiplyCoercerOut.new(3)
 
-        expect(type.coerce_out(NO_VALUE) { |v| cache=v }).to eq 300
-        expect(cache).to eq 100
-        expect(type.coerce_out(cache)).to eq 300
-        expect(cache).to eq 100
+        expect(type.coerce_out(NO_VALUE) { |v| cache=v }).to eq 600
+        expect(cache).to eq 200
+        expect(type.coerce_out(cache)).to eq 600
+        expect(cache).to eq 200
         expect(run).to eq 1
       end
 
@@ -136,9 +136,9 @@ describe Moduler::Type do
         type.coercers << MultiplyCoercer.new(2)
         type.coercers_out << MultiplyCoercerOut.new(3)
 
-        expect(type.coerce_out(NO_VALUE) { |v| cache=v }).to eq 300
+        expect(type.coerce_out(NO_VALUE) { |v| cache=v }).to eq 600
         expect(cache).to eq 0
-        expect(type.coerce_out(NO_VALUE) { |v| cache=v }).to eq 300
+        expect(type.coerce_out(NO_VALUE) { |v| cache=v }).to eq 600
         expect(cache).to eq 0
         expect(run).to eq 2
       end
@@ -150,9 +150,9 @@ describe Moduler::Type do
         type.coercers << MultiplyCoercer.new(2)
         type.coercers_out << MultiplyCoercerOut.new(3)
 
-        expect(type.coerce_out(NO_VALUE)).to eq 300
+        expect(type.coerce_out(NO_VALUE)).to eq 600
         expect(cache).to eq 0
-        expect(type.coerce_out(NO_VALUE)).to eq 300
+        expect(type.coerce_out(NO_VALUE)).to eq 600
         expect(cache).to eq 0
         expect(run).to eq 2
       end
@@ -258,10 +258,10 @@ describe Moduler::Type do
         end
 
         it "type.call() with default_value runs coercers_out but not coercers" do
-          type.default_value = 100
           type.coercers << MultiplyCoercer.new(2)
           type.coercers_out << MultiplyCoercerOut.new(3)
-          expect(type.call(value)).to eq 300
+          type.default_value = 100
+          expect(type.call(value)).to eq 600
         end
 
         it "type.call() with lazy default_value caches and returns the default value" do
@@ -274,8 +274,8 @@ describe Moduler::Type do
           type.default_value = Moduler::LazyValue.new { 100 }
           type.coercers << MultiplyCoercer.new(2)
           type.coercers_out << MultiplyCoercerOut.new(3)
-          expect(type.call(value)).to eq 300
-          expect(value.get).to eq 100
+          expect(type.call(value)).to eq 600
+          expect(value.get).to eq 200
         end
 
         it "type.call() with lazy default_value and no cache returns the default value and does not cache" do
