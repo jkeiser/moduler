@@ -122,9 +122,9 @@ module Moduler
     #
     # Add a listener for the given event.
     #
-    def add_listener(event, &block)
-      events[event] ||= possible_events[event].new
-      events[event].add_listener(&block)
+    def register(event, &block)
+      events[event] ||= possible_events[event].new(event)
+      events[event].register(&block)
     end
 
     #

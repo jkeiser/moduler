@@ -313,5 +313,12 @@ describe Moduler::Type do
     end
   end
   describe "on_set" do
+    it "When on_set listeners are added, the event fires to them" do
+      blah = []
+      type.register(:on_set) { |x, &block| blah << x*block.call }
+      type.register(:on_set) { |x, &block| blah << x+block.call }
+      type.events[:on_set].fire(2) { 3 }
+      expect(blah).to eq [ 6, 5 ]
+    end
   end
 end

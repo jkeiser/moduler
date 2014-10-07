@@ -49,9 +49,9 @@ module Moduler
     #
     # Fire this event.  Calls all listeners with the given arguments.
     #
-    def fire(*args)
+    def fire(*args, &block)
       listeners.each do |listener|
-        listener.call(*args)
+        listener.call(*args, &block)
       end
       if options[:single_event]
         unregister_all
