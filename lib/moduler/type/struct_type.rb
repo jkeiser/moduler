@@ -46,6 +46,8 @@ module Moduler
           end
           @facade_class.send(:define_method, "#{name}=") do |value|
             @hash[name] = field_type.coerce(value)
+            # NOTE: Ruby doesn't let you return a value here anyway--it will always
+            # return the passed-in value to the user.
           end
         end
       end

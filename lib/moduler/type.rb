@@ -134,15 +134,20 @@ module Moduler
     def default_call(context, value = NOT_PASSED, &block)
       if value == NOT_PASSED
         if block
-          coerce_out(context.set(coerce(block)))
+          value = block
         else
-          coerce_out(context.get) { |value| context.set(value) }
+          return coerce_out(context.get) { |value| context.set(value) }
         end
       elsif block
         raise ArgumentError, "Both value and block passed to attribute!  Only one at a time accepted."
-      else
-        coerce_out(context.set(coerce(value)))
       end
+
+      value = coerce(value)
+      value = context.set(value)
+      if !value.is_a?(LazyValue)
+        value = coerce_out(value) { |value| context.set(value) }
+      end
+      value
     end
 
     #
