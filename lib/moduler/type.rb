@@ -139,7 +139,7 @@ module Moduler
           coerce_out(context.get) { |value| context.set(value) }
         end
       elsif block
-        raise "Both value and block passed to attribute!  Only one at a time accepted."
+        raise ArgumentError, "Both value and block passed to attribute!  Only one at a time accepted."
       else
         coerce_out(context.set(coerce(value)))
       end
