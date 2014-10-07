@@ -8,7 +8,15 @@ module Moduler
       attr_accessor :element_type
 
       def facade_class
-        ArrayFacade
+        Moduler::Facade::ArrayFacade
+      end
+
+      def restore_facade(raw_value)
+        facade_class.new(raw_value, self)
+      end
+
+      def new_facade(value)
+        facade_class.new(coerce(value), self)
       end
 
       def coerce(array)
@@ -23,10 +31,22 @@ module Moduler
       end
 
       def coerce_key(index)
-        index_type ? index_type.coerce(index) : index
+        if index_type
+          index_type.coerce(index)
+        else
+          index
+        end
       end
 
-      def coerce_item(raw_index, value)
+      def coerce_key_range(range)
+        if index_type
+          Range.new(index_type.coerce(index.begin), index_type.coerce(index.end), index.exclude_end)
+        else
+          range
+        end
+      end
+
+      def coerce_value(raw_index, value)
         element_type ? element_type.coerce(value) : value
       end
 
@@ -34,8 +54,9 @@ module Moduler
         index_type ? index_type.coerce_out(index) : index
       end
 
-      def coerce_item_out(raw_index, value)
-        element_type ? element_type.coerce_out(value) : value
+      def coerce_value_out(raw_index, value)
+        result = element_type ? element_type.coerce_out(value) : value
+        result == NO_VALUE ? nil : result
       end
 
       def item_type_for(raw_index)

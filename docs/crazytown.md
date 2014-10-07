@@ -25,8 +25,7 @@ Make resources
      end
    end
 2. Providers And Actions No Longer Exist - Use Recipes Instead, Less Concepts
-   - Provider -> Resource
-   - Action -> Recipe
+   - Provider+Action both go away, but are roughly replaced by Recipe
    - `converge_by` ->  `update_resource "description" do ... end`
 3. Parseable Cookbook Public Interface: Cookbooks Are Resources
    - attribute :blah means
@@ -71,6 +70,31 @@ Make resources
    - Assign the implementation into your cookbook / recipe
    - Use it
 
+Principles
+- Low cost to move
+  - Recipes work exactly the same
+  - Resource syntax nearly identical to LWRP resource
+  - "Chef 12 cookbooks" and "Chef 13 cookbooks" can use each other's resources and recipes
+- Low cost to go from writing recipes to writing resources
+  - Introduce as few concepts as possible
+- Pleasing to Rubyists: drops you as close to Ruby as possible without exposing it.
+  - Definitions like "resource" open up a class run in the resource's class.  "recipe" runs in the recipe's instance.
+- Easy to debug
+  - Error messages
+  - Backtraces should make sense, particularly the top line
+  - Wipe +method_missing+ from the face of the earth
+  - Logging takes a front seat
+- Testable
+  - Nothing you reference is static.  Config and logging are instances.
+  - Resources can be created and used without an underlying system
+- Easy to reason about
+  - System built out of resources: cookbook sync, policy load, recipe run
+  - Reduced number of concepts overall
+    - No providers or actions
+    - Attributes are reified
+    - Recipes and cookbooks are resources with some behavior
+  - Everything is a resource (referenceable, instantiable, specializable, contains attributes+subresources)
+  - Resources describe themselves and are inspectable
 
 - Make resources primary, not recipes (start in resource mode)
 - Make resources definable inline
