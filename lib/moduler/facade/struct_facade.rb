@@ -10,7 +10,10 @@ module Moduler
         super(*args, &block)
       end
       def ==(other)
-        @hash == other.instance_variable_get(:@hash)
+        other.is_a?(self.class) && @hash == other.instance_variable_get(:@hash)
+      end
+      def to_hash
+        @hash
       end
     end
   end

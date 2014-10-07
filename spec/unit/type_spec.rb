@@ -5,8 +5,18 @@ require 'moduler/type/coercer_out'
 require 'moduler/lazy_value'
 
 describe Moduler::Type do
-  let(:type) { Moduler::Type.new }
+  let(:type) do
+    type = Moduler::Type.new
+    type.register(:on_set) do |v|
+      expect(v.type).to eq type
+      on_set << v.value
+    end
+    type
+  end
   NO_VALUE = Moduler::NO_VALUE
+  def on_set
+    @on_set ||= []
+  end
 
   class MultiplyCoercer
     extend Moduler::Type::Coercer
@@ -47,6 +57,8 @@ describe Moduler::Type do
   end
 
   describe "coerce" do
+    after { expect(on_set).to eq [] }
+
     it "By default, coerce returns the input value" do
       expect(type.coerce(100)).to eq 100
       expect(type.coerce(nil)).to be_nil
@@ -77,6 +89,8 @@ describe Moduler::Type do
   end
 
   describe "coerce_out" do
+    after { expect(on_set).to eq [] }
+
     it "By default, coerce_out returns the input value" do
       expect(type.coerce_out(100)).to eq 100
       expect(type.coerce_out(nil)).to be_nil
@@ -94,6 +108,8 @@ describe Moduler::Type do
     end
 
     context "default values" do
+      after { expect(on_set).to eq [] }
+
       it "When NO_VALUE is passed, and no default_value is specified, NO_VALUE is returned" do
         expect(type.coerce_out(NO_VALUE)).to eq NO_VALUE
       end
@@ -159,6 +175,7 @@ describe Moduler::Type do
     end
 
     context "Lazy value" do
+      after { expect(on_set).to eq [] }
 
       it "When given a lazy value, by default, the value is returned and cached" do
         cache = 0
@@ -241,6 +258,7 @@ describe Moduler::Type do
     context "default_call" do
       context "When value is NO_VALUE" do
         before { value.set(NO_VALUE) }
+        after { expect(on_set).to eq [] }
 
         it "type.call() is called with no arguments" do
           expect(type.call(value)).to eq NO_VALUE
@@ -288,6 +306,7 @@ describe Moduler::Type do
       it "type.call(value) sets the value" do
         expect(type.call(value, 100)).to eq 100
         expect(value.get).to eq 100
+        expect(on_set).to eq [ 100 ]
       end
 
       it "type.call(value) runs coercers and returns a value with coercers_out" do
@@ -295,12 +314,14 @@ describe Moduler::Type do
         type.coercers_out << MultiplyCoercerOut.new(3)
         expect(type.call(value, 100)).to eq 600
         expect(value.get).to eq 200
+        expect(on_set).to eq [ 600 ]
       end
 
       it "type.call(&block) sets the value to the block" do
         block = proc { 100 }
         expect(type.call(value, &block)).to eq block
         expect(value.get).to eq block
+        expect(on_set).to eq [ block ]
       end
 
       it "type.call(&block) with coercers and coercers_out sets the value to the block" do
@@ -309,16 +330,8 @@ describe Moduler::Type do
         type.coercers_out << WrapMultiplyCoercerOut.new(3)
         expect(type.call(value, &block).call).to eq 600
         expect(value.get.call).to eq 200
+        expect(on_set.map { |x| x.call }).to eq [ 600 ]
       end
-    end
-  end
-  describe "on_set" do
-    it "When on_set listeners are added, the event fires to them" do
-      blah = []
-      type.register(:on_set) { |x, &block| blah << x*block.call }
-      type.register(:on_set) { |x, &block| blah << x+block.call }
-      type.events[:on_set].fire(2) { 3 }
-      expect(blah).to eq [ 6, 5 ]
     end
   end
 end

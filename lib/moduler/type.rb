@@ -146,8 +146,11 @@ module Moduler
 
       value = coerce(value)
       value = context.set(value)
-      if !value.is_a?(LazyValue)
+      if value.is_a?(LazyValue)
+        fire_on_set_raw(value)
+      else
         value = coerce_out(value) { |value| context.set(value) }
+        fire_on_set(value)
       end
       value
     end
@@ -176,6 +179,45 @@ module Moduler
       {
         :on_set => Event
       }
+    end
+
+    #
+    # Fire the on_set handler.
+    #
+    # ==== Block
+    #
+    # The passed block is passed the type as an argument and is expected to
+    # return an OnSetContext instance.
+    #
+    # ==== Example
+    #
+    #   type.fire_on_set_raw(@hash[:foo])
+    #
+    def fire_on_set(value, is_raw=false)
+      if events[:on_set]
+        events[:on_set].fire(OnSetContext.new(self, value, is_raw))
+      end
+    end
+
+    def fire_on_set_raw(value)
+      fire_on_set(value, true)
+    end
+
+    class OnSetContext
+      def initialize(type, value, is_raw)
+        @type = type
+        @value = value
+        @is_raw = is_raw
+      end
+
+      attr_reader :type
+      def value
+        if @is_raw
+          @value = type.coerce_out(@value)
+          @is_raw = false
+        end
+        @value
+      end
     end
 
     #

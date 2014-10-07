@@ -3,6 +3,10 @@ module Moduler
   # An Event can be listened to by multiple listeners, and when it fires, all
   # listeners' procs are called.
   #
+  # TODO complex event sets
+  # TODO subscription matching
+  # TODO subscriptions requesting +self+ context (and global on/off/disabled for default)
+  #
   class Event
     #
     # Create a new Event.
