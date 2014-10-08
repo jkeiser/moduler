@@ -107,7 +107,11 @@ module Moduler
         array.map { |value| type.coerce_value_out(nil, value) }
       end
       def ==(other)
-        to_a == other.to_a
+        if other.is_a?(Array) || other.is_a?(ArrayType)
+          to_a == other.to_a
+        else
+          false
+        end
       end
       def &(other)
         to_a & other.to_a

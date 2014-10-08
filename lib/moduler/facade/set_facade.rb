@@ -3,7 +3,7 @@ require 'moduler/facade'
 module Moduler
   module Facade
     #
-    # Slaps a set interface on top of the raw value (which subclasses can
+    # Slaps a set interface on top of the set value (which subclasses can
     # override).
     #
     class SetFacade
@@ -18,23 +18,49 @@ module Moduler
       attr_reader :set
       attr_reader :type
 
+      def ==(other)
+        if other.is_a?(Set) || other.is_a?(SetFacade)
+          to_set == other.to_set
+        else
+          false
+        end
+      end
+      def to_set
+        Set.new(each)
+      end
+      def size
+        set.size
+      end
+      def to_a
+        set.map { |item| type.coerce_item(item) }
+      end
       def include?(item)
-        raw.include?(type.coerce_item(item))
+        set.include?(type.coerce_item(item))
       end
       def member?(item)
-        raw.member?(type.coerce_item(item))
+        set.member?(type.coerce_item(item))
       end
       def add(item)
-        raw.add(type.coerce_item(item))
+        set.add(type.coerce_item(item))
+        self
+      end
+      def add?(item)
+        set.add?(type.coerce_item(item)) ? self : nil
       end
       def <<(item)
-        raw << type.coerce_item(item)
+        set << type.coerce_item(item)
       end
       def delete(item)
-        raw.delete(type.coerce_item(item))
+        set.delete(type.coerce_item(item))
       end
-      def each(&block)
-        raw.each { |item| yield type.coerce_item_out(item) }
+      def each
+        if block_given?
+          set.each { |item| yield type.coerce_item_out(item) }
+        else
+          Enumerator.new do |y|
+            set.each { |item| y.yield type.coerce_item_out(item) }
+          end
+        end
       end
     end
   end

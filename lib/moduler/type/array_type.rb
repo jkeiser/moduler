@@ -19,17 +19,31 @@ module Moduler
         facade_class.new(raw_value, self)
       end
 
+      #
+      # We store arrays internally as arrays, and slap facades on them when the
+      # user requests them.
+      #
       def coerce(array)
         if array.is_a?(facade_class)
           array = array.raw
-        else
+        elsif element_type
           array = array.map { |value| coerce_value(nil, value) }
+        else
+          array = array.to_a
         end
         super(array)
       end
 
+      #
+      # When the user requests the array, we give them a facade to protect the
+      # values, assuming there is any index_type or element_type to protect.
+      #
       def coerce_out(array)
-        facade_class.new(super, self)
+        if index_type || element_type
+          facade_class.new(super, self)
+        else
+          super
+        end
       end
 
       def coerce_key(index)

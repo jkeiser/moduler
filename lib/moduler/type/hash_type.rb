@@ -19,15 +19,34 @@ module Moduler
         facade_class.new(raw_value, self)
       end
 
+      #
+      # We store hashes internally as hashes, and slap facades on them when the
+      # user requests them.
+      #
       def coerce(hash)
         if hash.is_a?(facade_class)
           hash = hash.raw
+        elsif key_type || value_type
+          hash = hash.inject({}) do |result,(key,value)|
+            result[key_type.coerce(key)] = value_type.coerce(value)
+            result
+          end
+        else
+          hash = hash.to_hash
         end
         super(hash)
       end
 
+      #
+      # When the user requests a hash, we give them a facade (assuming there is
+      # a key or value type on this thing).
+      #
       def coerce_out(hash)
-        facade_class.new(super, self)
+        if key_type || value_type
+          facade_class.new(super, self)
+        else
+          super
+        end
       end
 
       def coerce_key(key)

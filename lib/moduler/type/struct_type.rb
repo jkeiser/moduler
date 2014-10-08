@@ -136,6 +136,10 @@ module Moduler
         value
       end
 
+      #
+      # We store structs internally with the actual hash class.  TODO consider
+      # just leaving them hashes and slapping up the facade when needed ...
+      #
       def coerce(struct)
         if struct.is_a?(Hash)
           result = facade_class.new({})

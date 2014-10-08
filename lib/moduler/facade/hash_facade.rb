@@ -19,10 +19,11 @@ module Moduler
       attr_reader :type
 
       def ==(other)
-        if !other.respond_to?(:to_hash)
-          return false
+        if other.is_a?(Hash) || other.is_a?(HashFacade)
+          to_hash == other.to_hash
+        else
+          false
         end
-        to_hash == other.to_hash
       end
       def to_hash
         # TODO don't coerce unless it's dirty
