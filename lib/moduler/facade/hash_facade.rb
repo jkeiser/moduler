@@ -26,10 +26,14 @@ module Moduler
         end
       end
       def to_hash
-        # TODO don't coerce unless it's dirty
-        hash.inject({}) do |result,(key,value)|
-          result[type.coerce_key_out(key)] = type.coerce_value_out(key, value)
-          result
+        if type.coerce_keys_out? || type.coerce_values_out?
+          # TODO don't coerce unless it's dirty
+          hash.inject({}) do |result,(key,value)|
+            result[type.coerce_key_out(key)] = type.coerce_value_out(key, value)
+            result
+          end
+        else
+          hash
         end
       end
       def size
@@ -37,16 +41,16 @@ module Moduler
       end
       def [](key)
         key = type.coerce_key(key)
-        type.coerce_value_out(key, hash.has_key?(key) ? hash[key] : NO_VALUE)
+        if hash.has_key?(key)
+          type.coerce_value_out(key, hash[key])
+        end
       end
       def []=(key, value)
         key = type.coerce_key(key)
         result = type.coerce_value(key, value)
         hash[key] = result
         result = type.coerce_value_out(key, result)
-        if type.events[:on_set]
-          type.events[:on_set].fire(:on_set, result)
-        end
+        type.fire_on_set(result)
         result
       end
       def delete(key)
@@ -56,16 +60,20 @@ module Moduler
         end
       end
       def each
-        if block_given?
-          hash.each do |key, value|
-            yield type.coerce_key_out(key), type.coerce_value_out(key, value)
-          end
-        else
-          Enumerator.new do |y|
+        if type.coerce_keys_out? || type.coerce_values_out?
+          if block_given?
             hash.each do |key, value|
-              y.yield type.coerce_key_out(key), type.coerce_value_out(key, value)
+              yield type.coerce_key_out(key), type.coerce_value_out(key, value)
+            end
+          else
+            Enumerator.new do |y|
+              hash.each do |key, value|
+                y.yield type.coerce_key_out(key), type.coerce_value_out(key, value)
+              end
             end
           end
+        else
+          hash.each
         end
       end
       alias :each_pair :each
@@ -75,24 +83,36 @@ module Moduler
         hash.has_key?(key)
       end
       def each_key
-        if block_given?
-          hash.each_key { |key| yield type.coerce_key_out(key) }
+        if type.coerce_keys_out?
+          if block_given?
+            hash.each_key { |key| yield type.coerce_key_out(key) }
+          else
+            Enumerator.new { |y| hash.each_key { |key| y << type.coerce_key_out(key) } }
+          end
         else
-          Enumerator.new { |y| hash.each_key { |key| y << type.coerce_key_out(key) } }
+          hash.each_key
         end
       end
       def keys
-        each_key.to_a
+        type.coerce_keys_out? ? each_key.to_a : hash.keys
       end
       def each_value
-        if block_given?
-          hash.each_value { |value| yield type.coerce_value_out(nil, value) }
+        if type.coerce_values_out?
+          if block_given?
+            hash.each_value { |value| yield type.coerce_value_out(nil, value) }
+          else
+            Enumerator.new { |y| hash.each_value { |value| y << type.coerce_value_out(nil, value) } }
+          end
         else
-          Enumerator.new { |y| hash.each_value { |value| y << type.coerce_value_out(nil, value) } }
+          hash.each_value
         end
       end
       def values
-        each_value.to_a
+        if type.coerce_values_out?
+          each_value.to_a
+        else
+          hash.values
+        end
       end
     end
   end

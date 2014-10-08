@@ -57,6 +57,14 @@ module Moduler
         value_type ? value_type.coerce(value) : value
       end
 
+      def coerce_keys_out?
+        key_type && key_type.coercers_out
+      end
+
+      def coerce_values_out?
+        !!value_type # Defaults and lazy values come into play :/
+      end
+
       def coerce_key_out(key)
         key_type ? key_type.coerce_out(key) : key
       end
