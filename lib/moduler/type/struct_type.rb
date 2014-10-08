@@ -123,7 +123,7 @@ module Moduler
           # Reopen the struct (or create it)
           value = raw_value(context.get) { |v| context.set(v) }
         else
-          value = raw_default_value { |v| context.set(v) }
+          value = raw_default { |v| context.set(v) }
         end
         if value == NO_VALUE
           value = construction_start_value

@@ -23,7 +23,7 @@ module Moduler
     include Moduler::Specializable
 
     def initialize(*args, &block)
-      @default_value = NO_VALUE
+      @default = NO_VALUE
       @events = {}
       super
     end
@@ -85,7 +85,7 @@ module Moduler
 
     def raw_value(value, &cache_proc)
       if value == NO_VALUE
-        raw_default_value(&cache_proc)
+        raw_default(&cache_proc)
 
       elsif value.is_a?(LazyValue)
         cache = value.cache
@@ -100,8 +100,8 @@ module Moduler
       end
     end
 
-    def raw_default_value(&cache_proc)
-      value = @default_value
+    def raw_default(&cache_proc)
+      value = @default
       if value.is_a?(LazyValue)
         cache = value.cache
         value = coerce(value.call)
@@ -186,15 +186,15 @@ module Moduler
     # The default value gets set the same way as the value would--you can use
     # the same expressions you would otherwise.
     #
-    def default_value(*args, &block)
-      if args.size == 0 && !block && @default_value == NO_VALUE
+    def default(*args, &block)
+      if args.size == 0 && !block && @default == NO_VALUE
         NO_VALUE
       else
         default_call(DefaultValueContext.new(self), *args, &block)
       end
     end
-    def default_value=(value)
-      @default_value = coerce(value)
+    def default=(value)
+      @default = coerce(value)
     end
 
     #
@@ -269,18 +269,18 @@ module Moduler
     end
 
     #
-    # Used in default_value
+    # Used in default
     #
     class DefaultValueContext
       def initialize(type)
         @type = type
       end
       def set(value)
-        @type.instance_variable_set(:@default_value, value)
+        @type.instance_variable_set(:@default, value)
       end
       def get
-        if @type.instance_variable_defined?(:@default_value)
-          @type.instance_variable_get(:@default_value)
+        if @type.instance_variable_defined?(:@default)
+          @type.instance_variable_get(:@default)
         else
           NO_VALUE
         end

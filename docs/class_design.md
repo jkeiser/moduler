@@ -140,7 +140,7 @@ When you add a default value into the stack, it looks like this:
 >     if has_raw?
 >       super
 >     else
->       coerce_out(default_value)
+>       coerce_out(default)
 >     end
 >   end
 > end
