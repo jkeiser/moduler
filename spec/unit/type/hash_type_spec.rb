@@ -1,6 +1,8 @@
 require 'support/spec_support'
 require 'moduler/lazy_value'
 require 'moduler/type/hash_type'
+require 'moduler/type/coercer'
+require 'moduler/type/coercer_out'
 
 describe Moduler::Type::HashType do
   LazyValue = Moduler::LazyValue
@@ -93,8 +95,87 @@ describe Moduler::Type::HashType do
       let(:hash) { instance }
     end
   end
-  context "With a key type" do
+
+  class HashStringCoercer
+    include Moduler::Type::Coercer
+    include Moduler::Type::CoercerOut
+
+    def coerce(value)
+      value.to_s
+    end
+    def coerce_out(value)
+      value.to_sym
+    end
   end
+
+  context "With a key type" do
+    before do
+      type.key_type = Moduler::Type.new(
+        coercer:     HashStringCoercer.new,
+        coercer_out: HashStringCoercer.new
+      )
+    end
+
+    include_context "it behaves exactly like a normal hash" do
+      let(:hash) { instance }
+      after { hash.hash.each_key { |k| expect(k).to be_kind_of(String) } }
+    end
+
+    it "Stores keys internally modified" do
+      expect(hash.hash).to eq({ 'a' => 1, 'b' => 2, 'c' => 3 })
+    end
+  end
+
+  class HashNumberMultiplier
+    include Moduler::Type::Coercer
+    include Moduler::Type::CoercerOut
+
+    def coerce(value)
+      value*2
+    end
+    def coerce_out(value)
+      value/2
+    end
+  end
+
   context "With a value type" do
+    before do
+      type.value_type = Moduler::Type.new(
+        coercer:     HashNumberMultiplier.new,
+        coercer_out: HashNumberMultiplier.new
+      )
+    end
+
+    include_context "it behaves exactly like a normal hash" do
+      let(:hash) { instance }
+      after { hash.hash.each_value { |v| expect(v%2).to eq 0 } }
+    end
+
+    it "Stores values internally modified" do
+      expect(hash.hash).to eq({ :a => 2, :b => 4, :c => 6 })
+    end
+  end
+
+  context "With both a key and a value type" do
+    before do
+      type.key_type = Moduler::Type.new(
+        coercer:     HashStringCoercer.new,
+        coercer_out: HashStringCoercer.new
+      )
+      type.value_type = Moduler::Type.new(
+        coercer:     HashNumberMultiplier.new,
+        coercer_out: HashNumberMultiplier.new
+      )
+    end
+
+    include_context "it behaves exactly like a normal hash" do
+      let(:hash) { instance }
+      after { hash.hash.each_key { |k| expect(k).to be_kind_of(String) } }
+      after { hash.hash.each_value { |v| expect(v%2).to eq 0 } }
+    end
+
+    it "Stores keys internally modified" do
+      expect(hash.hash).to eq({ 'a' => 2, 'b' => 4, 'c' => 6 })
+    end
   end
 end

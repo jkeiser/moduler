@@ -28,7 +28,9 @@ module Moduler
           hash = hash.raw
         elsif key_type || value_type
           hash = hash.inject({}) do |result,(key,value)|
-            result[key_type.coerce(key)] = value_type.coerce(value)
+            key = key_type.coerce(key) if key_type
+            value = value_type.coerce(value) if value_type
+            result[key] = value
             result
           end
         else
