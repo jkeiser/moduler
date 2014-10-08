@@ -11,12 +11,12 @@ module Moduler
         Moduler::Facade::ArrayFacade
       end
 
-      def restore_facade(raw_value)
-        facade_class.new(raw_value, self)
-      end
-
       def new_facade(value)
         facade_class.new(coerce(value), self)
+      end
+
+      def restore_facade(raw_value)
+        facade_class.new(raw_value, self)
       end
 
       def coerce(array)

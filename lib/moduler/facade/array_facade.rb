@@ -18,13 +18,29 @@ module Moduler
         array.size
       end
       def each
-        array.each_with_index do |value, index|
-          yield type.coerce_value_out(index, value)
+        if block_given?
+          array.each_with_index do |value, index|
+            yield type.coerce_value_out(index, value)
+          end
+        else
+          Enumerator.new do |y|
+            array.each_with_index do |value, index|
+              y.yield type.coerce_value_out(index, value)
+            end
+          end
         end
       end
       def each_with_index
-        array.each_with_index do |value, index|
-          yield type.coerce_value_out(index, value), type.coerce_key_out(index)
+        if block_given?
+          array.each_with_index do |value, index|
+            yield type.coerce_value_out(index, value), type.coerce_key_out(index)
+          end
+        else
+          Enumerator.new do |y|
+            array.each_with_index do |value, index|
+              y.yield type.coerce_value_out(index, value), type.coerce_key_out(index)
+            end
+          end
         end
       end
       def [](index)
@@ -87,7 +103,7 @@ module Moduler
       end
 
       def to_a
-        # TODO don't copy arrays unless there are lazy values/coercer_outs 
+        # TODO don't copy arrays unless there are lazy values/coercer_outs
         array.map { |value| type.coerce_value_out(nil, value) }
       end
       def ==(other)

@@ -26,9 +26,9 @@ Make resources
    end
 2. Providers And Actions No Longer Exist - Use Recipes Instead, Less Concepts
    - Provider+Action both go away, but are roughly replaced by Recipe
-   - `converge_by` ->  `update_resource "description" do ... end`
+   - `converge_by` -> `update_resource "description" do ... end`
 3. Parseable Cookbook Public Interface: Cookbooks Are Resources
-   - attribute :blah means
+   - attribute :blah means "My cookbook accepts this "
    - "httpd" is top level namespace for httpd cookbook: httpd.service, httpd.config, etc.
    - "httpd(:path => '/var/opt/blah')"
    - We know all the resources that can be instantiated, on down the line.

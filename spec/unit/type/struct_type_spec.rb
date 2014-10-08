@@ -51,14 +51,14 @@ describe Moduler::Type::StructType do
   context "After adding a field with type coercion" do
     let(:field_type) { Moduler::Type.new }
     let(:instance) { type.restore_facade({}) }
+    let(:on_set) { [] }
     before do
       field_type = Moduler::Type.new
       field_type.coercers << MultiplyCoercer.new(2)
       field_type.coercers_out << MultiplyCoercerOut.new(3)
-      @on_set = []
       field_type.register(:on_set) do |v|
         expect(v.type).to eq field_type
-        @on_set << v.value
+        on_set << v.value
       end
       type.field_types[:foo] = field_type
     end
@@ -101,15 +101,15 @@ describe Moduler::Type::StructType do
   end
 
   context "After adding a struct field" do
+    let(:on_set) { [] }
     before do
       field_type = Moduler::Type::StructType.new
       field_type.field_types[:bar] = Moduler::Type.new
       type.field_types[:foo] = field_type
 
-      @on_set = []
       field_type.register(:on_set) do |v|
         expect(v.type).to eq field_type
-        @on_set << v.value
+        on_set << v.value
       end
     end
     let(:foo_struct) { type.facade_class }
@@ -118,45 +118,45 @@ describe Moduler::Type::StructType do
 
     it "The resulting class has the field getter and setter" do
       expect(type.facade_class.instance_methods(false)).to eq [ :foo, :foo= ]
-      expect(@on_set).to eq []
+      expect(on_set).to eq []
     end
     it "The default getter returns nil" do
       expect(instance.foo).to eq nil
-      expect(@on_set).to eq []
+      expect(on_set).to eq []
     end
     it "Set to a foo_struct value works" do
       value = struct.new(bar: 10)
       instance.foo = value
       expect(instance.foo.object_id).to eq value.object_id
-      expect(@on_set).to eq [ struct.new(bar: 10) ]
+      expect(on_set).to eq [ struct.new(bar: 10) ]
     end
     it "The setter and getter work" do
       instance.foo = { bar: 10 }
       expect(instance.foo).to eq struct.new(bar: 10)
-      expect(@on_set).to eq [ struct.new(bar: 10) ]
+      expect(on_set).to eq [ struct.new(bar: 10) ]
     end
     it "The method setter works" do
       expect(instance.foo bar: 10).to eq struct.new(bar: 10)
       expect(instance.foo).to eq struct.new(bar: 10)
-      expect(@on_set).to eq [ struct.new(bar: 10) ]
+      expect(on_set).to eq [ struct.new(bar: 10) ]
     end
     it "Lazy value set works" do
       expect(instance.foo LazyValue.new { { bar: 10 } }).to be_kind_of(LazyValue)
       expect(instance.foo).to eq struct.new(bar: 10)
-      expect(@on_set).to eq [ struct.new(bar: 10) ]
+      expect(on_set).to eq [ struct.new(bar: 10) ]
     end
     it "Default block setter sets struct properties" do
       expect(instance.foo { bar 10 }).to eq struct.new(bar: 10)
       expect(instance.foo).to eq struct.new(bar: 10)
-      expect(@on_set).to eq [ struct.new(bar: 10) ]
+      expect(on_set).to eq [ struct.new(bar: 10) ]
     end
     it "Setter with both a value and a block works" do
       expect(instance.foo(bar: 10) { bar bar * 2 }).to eq struct.new(bar: 20)
-      expect(@on_set).to eq [ struct.new(bar: 20) ]
+      expect(on_set).to eq [ struct.new(bar: 20) ]
     end
     it "Sending multiple values throws an exception" do
       expect { instance.foo({bar: 10}, {bar: 20}) }.to raise_error ArgumentError
-      expect(@on_set).to eq []
+      expect(on_set).to eq []
     end
   end
 

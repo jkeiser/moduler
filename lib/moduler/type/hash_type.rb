@@ -8,7 +8,15 @@ module Moduler
       attr_accessor :value_type
 
       def facade_class
-        HashFacade
+        Moduler::Facade::HashFacade
+      end
+
+      def new_facade(value)
+        facade_class.new(coerce(value), self)
+      end
+
+      def restore_facade(raw_value)
+        facade_class.new(raw_value, self)
       end
 
       def coerce(hash)
@@ -27,7 +35,7 @@ module Moduler
       end
 
       def coerce_value(raw_key, value)
-        field_types[raw_key] ? field_types[raw_key].coerce(value) : value
+        value_type ? value_type.coerce(value) : value
       end
 
       def coerce_key_out(key)
@@ -35,7 +43,8 @@ module Moduler
       end
 
       def coerce_value_out(raw_key, value)
-        field_types[raw_key] ? field_types[raw_key].coerce_out(value) : value
+        result = value_type ? value_type.coerce_out(value) : value
+        result == NO_VALUE ? nil : result
       end
 
       def item_type_for(raw_key)
