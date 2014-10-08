@@ -22,6 +22,8 @@ module Moduler
       def coerce(array)
         if array.is_a?(facade_class)
           array = array.raw
+        else
+          array = array.map { |value| coerce_value(nil, value) }
         end
         super(array)
       end
@@ -40,7 +42,7 @@ module Moduler
 
       def coerce_key_range(range)
         if index_type
-          Range.new(index_type.coerce(index.begin), index_type.coerce(index.end), index.exclude_end)
+          Range.new(index_type.coerce(range.begin), index_type.coerce(range.end))
         else
           range
         end

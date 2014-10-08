@@ -1,5 +1,4 @@
 require 'moduler/facade'
-require 'moduler/specializable'
 
 module Moduler
   module Facade
@@ -14,16 +13,6 @@ module Moduler
 
       attr_reader :array
       attr_reader :type
-
-      def ==(other)
-        if !(other.is_a?(ArrayFacade) || other.is_a?(Array))
-          return false
-        end
-
-        return false if size != other.size
-        return false if zip(other).any? { |a,b| a != b }
-        return true
-      end
 
       def size
         array.size
@@ -47,6 +36,10 @@ module Moduler
           index = type.coerce_key(index)
           type.coerce_value_out(index, array[index])
         end
+      end
+      def at(index)
+        index = type.coerce_key(index)
+        type.coerce_value_out(index, array[index])
       end
 
       def []=(index, value)
@@ -88,10 +81,46 @@ module Moduler
         value = type.coerce_value(index, value)
         type.coerce_out( @array.insert(index, value) )
       end
-
       def delete_at(index)
         index = type.coerce_key(index)
         type.coerce_value_out(index, array.delete_at(index))
+      end
+
+      def to_a
+        # TODO don't copy arrays unless there are lazy values/coercer_outs 
+        array.map { |value| type.coerce_value_out(nil, value) }
+      end
+      def ==(other)
+        to_a == other.to_a
+      end
+      def &(other)
+        to_a & other.to_a
+      end
+      def |(other)
+        to_a | other.to_a
+      end
+      def +(other)
+        to_a + other.to_a
+      end
+      def -(other)
+        to_a - other.to_a
+      end
+
+      def assoc(obj)
+        if type.element_type.respond_to?(:coerce_value)
+          obj = type.element_type.coerce_value(nil, obj)
+        end
+        type.coerce_value_out(array.assoc(obj))
+      end
+
+      def bsearch(&block)
+        result = array.bsearch { |v| block.call(type.coerce_value_out(v)) }
+        type.coerce_out(result)
+      end
+
+      def clear
+        array.clear
+        type.coerce_out(array)
       end
     end
   end
