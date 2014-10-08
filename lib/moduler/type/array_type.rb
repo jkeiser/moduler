@@ -4,8 +4,8 @@ require 'moduler/facade/array_facade'
 module Moduler
   class Type
     class ArrayType < Type
-      attr_accessor :index_type
-      attr_accessor :element_type
+      type_attribute :index_type
+      type_attribute :element_type
 
       def facade_class
         Moduler::Facade::ArrayFacade

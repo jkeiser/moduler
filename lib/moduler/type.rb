@@ -286,5 +286,125 @@ module Moduler
         end
       end
     end
+
+
+    #
+    # Methods for type DSL construction
+    #
+
+    def self.attribute(name)
+      module_eval <<-EOM
+      def #{name}(value = NOT_PASSED)
+        if value == NOT_PASSED
+          @#{name}
+        else
+          @#{name} = value
+        end
+      end
+      def #{name}=(value)
+        @#{name} = value
+      end
+      EOM
+    end
+
+    def self.type_attribute(name)
+      module_eval <<-EOM
+      def #{name}(base_type = NOT_PASSED, *args, &block)
+        if base_type == NOT_PASSED && !block
+          @#{name}
+        else
+          @#{name} = to_type(base_type, *args, &block)
+        end
+      end
+      def #{name}=(type)
+        @#{name} = type
+      end
+      EOM
+    end
+
+    #
+    # Pure DSL methods
+    #
+
+    #
+    # Given a type like Array[String] or Hash[String => Symbol] or ArrayType,
+    # resolve it to a system type.
+    #
+    def to_base_type(type)
+      case type
+      when Moduler::Type
+        type
+
+      when ::Array
+        if type.size == 0
+          Moduler::Type::ArrayType.new
+        elsif type.size == 1
+          Moduler::Type::ArrayType.new(element_type => to_type(type[0]))
+        end
+
+      when ::Hash
+        if type.size == 0
+          Moduler::Type::HashType.new
+        elsif type.size == 1
+          Moduler::Type::HashType.new(key_type   => to_type(type[0].key),
+                                      value_type => to_type(type[0].value))
+        end
+      end
+    end
+
+    def to_type(base=NOT_PASSED, *args, &block)
+      if base != NOT_PASSED
+        type = to_base_type(base)
+        if !type
+          args.unshift(base)
+        end
+      end
+
+      if args.size > 0 || block
+        (type || Moduler::Type.new).specialize(*args, &block)
+      else
+        type
+      end
+    end
+
+    def lazy(cache=true, &block)
+      Moduler::LazyValue.new(cache, &block)
+    end
+
+    # TODO move the pure DSL into a module or something so it can be mixed
+    attribute :required
+    def equal_to(*values)
+      add_validator(Moduler::Type::Validator::EqualTo.new(*values))
+    end
+    def kind_of(*kinds)
+      add_validator(Moduler::Type::Validator::KindOf.new(*kinds))
+    end
+    def regex(*regexes)
+      add_validator(Moduler::Type::Validator::Regexes.new(*regexes))
+    end
+    def cannot_be(*truthy_things)
+      add_validator(Moduler::Type::Validator::CannotBe.new(*truthy_things))
+    end
+    def respond_to(*method_names)
+      add_validator(Moduler::Type::Validator::RespondTo.new(*method_names))
+    end
+    def callbacks(callbacks)
+      add_validator(ModulerType::Validator::ValidateProc.new do |value|
+        callbacks.select do |message, callback|
+          callback.call(value) != true
+        end.map do |message, callback|
+          validation_failure("Value #{value} #{message}!")
+        end
+      end)
+    end
+    def add_validator(validator)
+      if @validator.is_a?(Moduler::Type::Validator::CompoundValidator)
+        @validator.validators << validator
+      elsif @validator
+        @validator = Moduler::Type::Validator::CompoundValidator(@validator, validator)
+      else
+        @validator = validator
+      end
+    end
   end
 end

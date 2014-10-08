@@ -5,7 +5,7 @@ require 'set'
 module Moduler
   class Type
     class SetType < Type
-      attr_accessor :item_type
+      type_attribute :item_type
 
       def facade_class
         Moduler::Facade::SetFacade

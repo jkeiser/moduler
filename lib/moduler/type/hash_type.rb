@@ -4,8 +4,8 @@ require 'moduler/facade/hash_facade'
 module Moduler
   class Type
     class HashType < Type
-      attr_accessor :key_type
-      attr_accessor :value_type
+      type_attribute :key_type
+      type_attribute :value_type
 
       def facade_class
         Moduler::Facade::HashFacade

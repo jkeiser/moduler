@@ -1,13 +1,31 @@
 require 'moduler/type'
+require 'moduler/type/validator/cannot_be'
 require 'moduler/type/validator/equal_to'
 require 'moduler/type/validator/kind_of'
 require 'moduler/type/validator/regexes'
 require 'moduler/type/validator/required_fields'
+require 'moduler/type/validator/respond_to'
 require 'moduler/type/validator/validate_proc'
 require 'moduler/errors'
 
 describe Moduler::Type::Validator do
   let(:type) { Moduler::Type.new }
+
+  context "With cannot_be(:nil,:frozen,:terrible)" do
+    before { type.validator = Moduler::Type::Validator::CannotBe.new(:nil,:frozen,:terrible) }
+    it "'hi' matches" do
+      expect(type.coerce('hi')).to eq 'hi'
+    end
+    it "frozen 'hi' does not match" do
+      s = 'hi'
+      s.freeze
+      expect { type.coerce(s) }.to raise_error(Moduler::ValidationFailed)
+    end
+    it "nil does not match" do
+      expect { type.coerce(nil) }.to raise_error(Moduler::ValidationFailed)
+    end
+  end
+
   context "With equal_to(1,2,nil)" do
     before { type.validator = Moduler::Type::Validator::EqualTo.new(1,2,nil) }
     it "1 matches" do
@@ -23,6 +41,7 @@ describe Moduler::Type::Validator do
       expect { type.coerce(3) }.to raise_error(Moduler::ValidationFailed)
     end
   end
+
   context "With kind_of(Symbol,String,NilClass)" do
     before { type.validator = Moduler::Type::Validator::KindOf.new(Symbol,String,NilClass) }
     it "'1' matches" do
@@ -61,6 +80,22 @@ describe Moduler::Type::Validator do
     end
     it "Object.new does not match" do
       expect { type.coerce(Object.new) }.to raise_error(Moduler::ValidationFailed)
+    end
+  end
+
+  context "With respond_to(:pop, 'abs')" do
+    before { type.validator = Moduler::Type::Validator::RespondTo.new(:include?,'size') }
+    it "[1,2] matches" do
+      expect(type.coerce([1,2])).to eq [1,2]
+    end
+    it "'hi' matches" do
+      expect(type.coerce('hi')).to eq 'hi'
+    end
+    it "1 does not match" do
+      expect { type.coerce(1) }.to raise_error(Moduler::ValidationFailed)
+    end
+    it "nil does not match" do
+      expect { type.coerce(nil) }.to raise_error(Moduler::ValidationFailed)
     end
   end
 

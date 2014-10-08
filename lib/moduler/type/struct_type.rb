@@ -168,6 +168,10 @@ module Moduler
       def self.possible_events
         super.merge(:on_struct_updated => Event)
       end
+
+      def attribute(name, base_type=nil, *args, &block)
+        field_types[name] = to_type(base_type, *args, &block)
+      end
     end
   end
 end
