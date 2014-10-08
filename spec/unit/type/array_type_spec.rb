@@ -153,7 +153,7 @@ describe Moduler::Type::ArrayType do
     end
   end
   context "With an element type" do
-    class MultiplyCoercer
+    class ArrayTypeMultiplyCoercer
       def initialize(amount)
         @amount = amount
       end
@@ -167,8 +167,8 @@ describe Moduler::Type::ArrayType do
     end
     before do
       type.element_type = Moduler::Type.new(
-        coercers:     [ MultiplyCoercer.new(2) ],
-        coercers_out: [ MultiplyCoercer.new(5) ]
+        coercers:     [ ArrayTypeMultiplyCoercer.new(2) ],
+        coercers_out: [ ArrayTypeMultiplyCoercer.new(5) ]
       )
     end
 
@@ -312,7 +312,7 @@ describe Moduler::Type::ArrayType do
   context "With on_set" do
   end
   context "With an index type" do
-    class IndexCoercer
+    class ArrayTypeIndexCoercer
       def initialize(amount)
         @amount = amount
       end
@@ -325,7 +325,7 @@ describe Moduler::Type::ArrayType do
       end
     end
     before do
-      type.index_type = Moduler::Type.new(:coercers => [ IndexCoercer.new(1) ], :coercers_out => [ IndexCoercer.new(1) ])
+      type.index_type = Moduler::Type.new(:coercers => [ ArrayTypeIndexCoercer.new(1) ], :coercers_out => [ ArrayTypeIndexCoercer.new(1) ])
     end
 
     let(:array) { instance }
