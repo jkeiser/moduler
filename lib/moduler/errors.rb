@@ -37,14 +37,13 @@ module Moduler
   class ValidationFailed < ModulerError
     def initialize(failures, message=nil)
       @failures = failures
+      message = "Validation failed: #{failures.map { |f| f['message'] }.join("\n")}"
+      failures.each do |failure|
+        failure[message]
+      end
       super(message)
     end
 
     attr_reader :failures
-
-    def +(other)
-      self.failures += other.failures
-      self
-    end
   end
 end

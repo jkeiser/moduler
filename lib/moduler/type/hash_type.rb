@@ -58,7 +58,7 @@ module Moduler
       end
 
       def coerce_keys_out?
-        key_type && key_type.coercers_out
+        key_type && key_type.coercer_out
       end
 
       def coerce_values_out?

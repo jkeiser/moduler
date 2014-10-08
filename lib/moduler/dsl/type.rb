@@ -31,10 +31,21 @@ module Moduler
         end
       end
 
-      def to_type(base=nil, *args, &block)
-        type = to_base_type(type)
+      def to_type(base=NOT_PASSED, *args, &block)
+        if base == NOT_PASSED
+          type = Moduler::Type.new
+        else
+          type = to_base_type(base)
+          if !type
+            args.unshift(base)
+            type = Moduler::Type.new
+          end
+        end
 
-        if type
+        if args.size > 0 || block
+          type.specialize(*args, &block)
+        else
+          type
         end
       end
 
@@ -47,6 +58,9 @@ module Moduler
 
     class Type < Base
       # default_value
+      def default_value(*args, &block)
+        
+      end
       # required
       # coercions
       # validation attributes

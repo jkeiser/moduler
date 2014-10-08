@@ -54,8 +54,8 @@ describe Moduler::Type::StructType do
     let(:on_set) { [] }
     before do
       field_type = Moduler::Type.new
-      field_type.coercers << MultiplyCoercer.new(2)
-      field_type.coercers_out << MultiplyCoercerOut.new(3)
+      field_type.coercer = MultiplyCoercer.new(2)
+      field_type.coercer_out = MultiplyCoercerOut.new(3)
       field_type.register(:on_set) do |v|
         expect(v.type).to eq field_type
         on_set << v.value

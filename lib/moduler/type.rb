@@ -23,46 +23,47 @@ module Moduler
     include Moduler::Specializable
 
     def initialize(*args, &block)
-      @coercers = []
-      @coercers_out = []
       @default_value = NO_VALUE
       @events = {}
       super
     end
 
-    attr_accessor :coercers
-    attr_accessor :coercers_out
-    attr_accessor :call_proc
-
     #
-    # The default value gets set the same way as the value would--you can use
-    # the same expressions you would otherwise.
+    # Base type methods
     #
-    def default_value(*args, &block)
-      if args.size == 0 && !block && @default_value == NO_VALUE
-        NO_VALUE
-      else
-        default_call(DefaultValueContext.new(self), *args, &block)
-      end
-    end
-    def default_value=(value)
-      @default_value = coerce(value)
-    end
-
-    #
-    # A hash of named events the user has registered listeners for.
-    # if !events[:on_set], there are no listeners for on_set.
-    #
-    attr_reader :events
 
     #
     # Transform or validate the value before setting its raw value.
     #
     def coerce(value)
-      if coercers && !value.is_a?(LazyValue)
-        coercers.inject(value) { |result,coercer| coercer.coerce(result) }
-      else
+      if value.is_a?(LazyValue)
+        # Leave lazy values alone until we retrieve them
         value
+      else
+        validate(value) if validator
+        coercer ? coercer.coerce(value) : value
+      end
+    end
+
+    #
+    # Run the validator against the value, throwing a ValidationError if there
+    # are issues.
+    #
+    # Generally, you should be running coerce(), as it is possible for coerce
+    # methods to do some validation.
+    #
+    def validate(value)
+      if validator
+        result = validator.validate(value)
+        if result.is_a?(Array)
+          if result.size > 0
+            raise ValidationFailed.new(result)
+          end
+        elsif result.is_a?(Hash)
+          raise ValidationFailed.new([result])
+        elsif result == false
+          raise ValidationFailed.new([ Validator.default_validation_failure(validator, value) ])
+        end
       end
     end
 
@@ -76,8 +77,8 @@ module Moduler
     def coerce_out(value, &cache_proc)
       value = raw_value(value, &cache_proc)
 
-      if value != NO_VALUE && coercers_out
-        value = coercers_out.inject(value) { |result,coercer| coercer.coerce_out(result) }
+      if value != NO_VALUE && coercer_out
+        value = coercer_out.coerce_out(value)
       end
       value
     end
@@ -154,6 +155,53 @@ module Moduler
       end
       value
     end
+
+    #
+    # Core DSL
+    #
+
+    #
+    # Proc to be called when this value is call()ed.  Takes place of the default
+    # get/set algorithm when the user says foo.bar <value> or foo.bar do ... end
+    # or even foo.bar <values> do ... end
+    #
+    attr_accessor :call_proc
+
+    #
+    # Coercer that will be run when the user gives us a value to store.
+    #
+    attr_accessor :coercer
+
+    #
+    # Coercer that will be run when the user retrieves a value.
+    #
+    attr_accessor :coercer_out
+
+    #
+    # A Validator to validate the value.  Will be run on the value before coercion.
+    #
+    attr_accessor :validator
+
+    #
+    # The default value gets set the same way as the value would--you can use
+    # the same expressions you would otherwise.
+    #
+    def default_value(*args, &block)
+      if args.size == 0 && !block && @default_value == NO_VALUE
+        NO_VALUE
+      else
+        default_call(DefaultValueContext.new(self), *args, &block)
+      end
+    end
+    def default_value=(value)
+      @default_value = coerce(value)
+    end
+
+    #
+    # A hash of named events the user has registered listeners for.
+    # if !events[:on_set], there are no listeners for on_set.
+    #
+    attr_reader :events
 
     #
     # Add a listener for the given event.

@@ -87,8 +87,8 @@ describe Moduler::Type::SetType do
     end
     before do
       type.item_type = Moduler::Type.new(
-        coercers:     [ SetTypeMultiplyCoercer.new(2) ],
-        coercers_out: [ SetTypeMultiplyCoercer.new(5) ]
+        coercer:     SetTypeMultiplyCoercer.new(2),
+        coercer_out: SetTypeMultiplyCoercer.new(5)
       )
     end
     let(:set) { instance }

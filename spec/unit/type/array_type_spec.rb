@@ -167,8 +167,8 @@ describe Moduler::Type::ArrayType do
     end
     before do
       type.element_type = Moduler::Type.new(
-        coercers:     [ ArrayTypeMultiplyCoercer.new(2) ],
-        coercers_out: [ ArrayTypeMultiplyCoercer.new(5) ]
+        coercer:     ArrayTypeMultiplyCoercer.new(2),
+        coercer_out: ArrayTypeMultiplyCoercer.new(5)
       )
     end
 
@@ -325,7 +325,10 @@ describe Moduler::Type::ArrayType do
       end
     end
     before do
-      type.index_type = Moduler::Type.new(:coercers => [ ArrayTypeIndexCoercer.new(1) ], :coercers_out => [ ArrayTypeIndexCoercer.new(1) ])
+      type.index_type = Moduler::Type.new(
+        coercer: ArrayTypeIndexCoercer.new(1),
+        coercer_out: ArrayTypeIndexCoercer.new(1)
+      )
     end
 
     let(:array) { instance }
