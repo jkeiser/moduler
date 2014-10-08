@@ -3,8 +3,6 @@ require 'moduler/lazy_value'
 require 'moduler/type/array_type'
 
 describe Moduler::Type::ArrayType do
-  LazyValue = Moduler::LazyValue
-
   shared_context "it behaves exactly like a normal array" do
     it "size works" do
       expect(array.size).to eq 3

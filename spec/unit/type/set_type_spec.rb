@@ -3,8 +3,6 @@ require 'moduler/lazy_value'
 require 'moduler/type/set_type'
 
 describe Moduler::Type::SetType do
-  LazyValue = Moduler::LazyValue
-
   class SetMultiplyCoercer
     def coerce(value)
       value * 2

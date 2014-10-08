@@ -20,6 +20,14 @@ module Moduler
         { :validator => self, :value => value, :message => message }
       end
 
+      def self.validation_failure(value, message, validator=nil)
+        if validator
+          { :validator => validator, :value => value, :message => message }
+        else
+          { :value => value, :message => message }
+        end
+      end
+
       #
       # Validate this value.
       #

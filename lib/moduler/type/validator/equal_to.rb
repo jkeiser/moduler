@@ -6,7 +6,7 @@ module Moduler
       class EqualTo
         include Validator
 
-        def initialize(values)
+        def initialize(*values)
           @values = values
         end
 

@@ -6,8 +6,6 @@ require 'moduler/type/coercer_out'
 require 'moduler/lazy_value'
 
 describe Moduler::Type::StructType do
-  LazyValue = Moduler::LazyValue
-
   let(:type) { Moduler::Type::StructType.new }
   context "With no modifications" do
     it "The resulting class has no instance methods" do
@@ -32,7 +30,7 @@ describe Moduler::Type::StructType do
       expect(instance.foo).to eq 10
     end
     it "Lazy value set works" do
-      expect(instance.foo LazyValue.new { 100 }).to be_kind_of(LazyValue)
+      expect(instance.foo Moduler::LazyValue.new { 100 }).to be_kind_of(Moduler::LazyValue)
       expect(instance.foo).to eq 100
     end
     it "Default block setter works" do
@@ -81,7 +79,7 @@ describe Moduler::Type::StructType do
       expect(on_set).to eq [ 60 ]
     end
     it "Lazy value set works" do
-      expect(instance.foo LazyValue.new { 100 }).to be_kind_of(LazyValue)
+      expect(instance.foo Moduler::LazyValue.new { 100 }).to be_kind_of(Moduler::LazyValue)
       expect(instance.foo).to eq 600
       expect(on_set).to eq [ 600 ]
     end
@@ -141,7 +139,7 @@ describe Moduler::Type::StructType do
       expect(on_set).to eq [ struct.new(bar: 10) ]
     end
     it "Lazy value set works" do
-      expect(instance.foo LazyValue.new { { bar: 10 } }).to be_kind_of(LazyValue)
+      expect(instance.foo Moduler::LazyValue.new { { bar: 10 } }).to be_kind_of(Moduler::LazyValue)
       expect(instance.foo).to eq struct.new(bar: 10)
       expect(on_set).to eq [ struct.new(bar: 10) ]
     end

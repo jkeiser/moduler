@@ -59,7 +59,7 @@ module Moduler
           if result.size > 0
             raise ValidationFailed.new(result)
           end
-        elsif result.is_a?(Hash)
+        elsif result.is_a?(Hash) || result.is_a?(String)
           raise ValidationFailed.new([result])
         elsif result == false
           raise ValidationFailed.new([ Validator.default_validation_failure(validator, value) ])

@@ -5,8 +5,6 @@ require 'moduler/type/coercer'
 require 'moduler/type/coercer_out'
 
 describe Moduler::Type::HashType do
-  LazyValue = Moduler::LazyValue
-
   shared_context "it behaves exactly like a normal hash" do
     it "size works" do
       expect(hash.size).to eq 3

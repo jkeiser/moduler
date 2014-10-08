@@ -21,6 +21,8 @@ module Moduler
             local_result = validator.validate(value)
             if local_result.is_a?(Array)
               result += local_result
+            elsif local_result.is_a?(Hash) || local_result.is_a?(String)
+              result << local_result
             elsif local_result == false
               result << Validator.default_validation_failure(validator, value)
             end

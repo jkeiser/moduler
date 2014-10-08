@@ -6,8 +6,8 @@ module Moduler
       class ValidateProc
         include Validator
 
-        def initialize(validate_proc)
-          @validate_proc = validate_proc
+        def initialize(validate_proc=nil, &block)
+          @validate_proc = block || validate_proc
         end
 
         attr_accessor :validate_proc

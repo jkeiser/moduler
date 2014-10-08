@@ -37,10 +37,7 @@ module Moduler
   class ValidationFailed < ModulerError
     def initialize(failures, message=nil)
       @failures = failures
-      message = "Validation failed: #{failures.map { |f| f['message'] }.join("\n")}"
-      failures.each do |failure|
-        failure[message]
-      end
+      message = "Validation failed: #{failures.map { |f| f.is_a?(Hash) ? f[:message] : f }.join("\n")}"
       super(message)
     end
 
