@@ -1,0 +1,11 @@
+rvm: 2.1.3
+
+gemfile: Gemfile
+
+script: bundle exec rake spec
+
+matrix:
+  include:
+    - rvm: jruby-19mode
+    - rvm: 2.0.0
+    - rvm: 1.9.3
