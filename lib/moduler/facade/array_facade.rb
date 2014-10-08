@@ -75,15 +75,18 @@ module Moduler
 
       def <<(value)
         value = type.coerce_value(nil, value)
-        type.coerce_out( @array << value )
+        array << value
+        self
       end
       def unshift(value)
         value = type.coerce_value(nil, value)
-        type.coerce_out( @array.unshift(value) )
+        array.unshift(value)
+        self
       end
       def push(value)
         value = type.coerce_value(nil, value)
-        type.coerce_out( @array.push(value) )
+        array.push(value)
+        self
       end
       def shift
         type.coerce_value_out(nil, @array.shift)
@@ -95,7 +98,8 @@ module Moduler
       def insert(index, value)
         index = type.coerce_key(index)
         value = type.coerce_value(index, value)
-        type.coerce_out( @array.insert(index, value) )
+        array.insert(index, value)
+        self
       end
       def delete_at(index)
         index = type.coerce_key(index)
@@ -140,7 +144,7 @@ module Moduler
 
       def clear
         array.clear
-        type.coerce_out(array)
+        self
       end
     end
   end

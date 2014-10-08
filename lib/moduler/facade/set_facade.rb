@@ -32,7 +32,7 @@ module Moduler
         set.size
       end
       def to_a
-        set.map { |item| type.coerce_item(item) }
+        set.map { |item| type.coerce_item_out(item) }
       end
       def include?(item)
         set.include?(type.coerce_item(item))
@@ -49,9 +49,11 @@ module Moduler
       end
       def <<(item)
         set << type.coerce_item(item)
+        self
       end
       def delete(item)
         set.delete(type.coerce_item(item))
+        self
       end
       def each
         if block_given?

@@ -27,6 +27,7 @@ module Moduler
         if set.is_a?(facade_class)
           set = set.set
         elsif item_type
+          set = set.to_set
           set.map! { |item| coerce_item(item) }
         else
           set = set.to_set
