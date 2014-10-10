@@ -7,7 +7,9 @@ require 'moduler/lazy_value'
 require 'moduler/base/attribute'
 require 'moduler/base/value_context'
 require 'moduler/validation/coercer'
+require 'moduler/validation/coercer_out'
 require 'moduler/validation/validator'
+require 'moduler/event'
 require 'moduler/errors'
 
 module Moduler
@@ -23,7 +25,6 @@ module Moduler
       def self.empty
         @empty ||= self.new
       end
-
 
       def self.emit_attribute(target, name, *args, &block)
         if args.size > 0 || block
@@ -77,8 +78,20 @@ module Moduler
         end
       end
 
+      #
+      # Transform or validate the value before getting its raw value.
+      #
+      # ==== Returns
+      # The out value, or NO_VALUE.  You will only ever get back NO_VALUE if you
+      # pumped NO_VALUE in.  (And even then, you may get a default value instead.)
+      #
       def coerce_out(value, &cache_proc)
-        raw_value(value, &cache_proc)
+        value = raw_value(value, &cache_proc)
+
+        if value != NO_VALUE && coercer_out
+          value = coercer_out.coerce_out(value)
+        end
+        value
       end
 
       def raw_value(value, &cache_proc)
@@ -179,10 +192,73 @@ module Moduler
       #   type.fire_on_set(@hash[:foo])
       #
       def fire_on_set(value, is_raw=false)
+        if events && events[:on_set]
+          events[:on_set].fire(OnSetContext.new(self, value, is_raw))
+        end
       end
 
       def fire_on_set_raw(value)
+        fire_on_set(value, true)
       end
+
+      class OnSetContext
+        def initialize(type, value, is_raw)
+          @type = type
+          @value = value
+          @is_raw = is_raw
+        end
+
+        attr_reader :type
+        def value
+          if @is_raw
+            @value = type.coerce_out(@value)
+            @is_raw = false
+          end
+          @value
+        end
+      end
+
+      #
+      # Add a listener for the given event.
+      #
+      def register(event, &block)
+        events[event] ||= possible_events[event].new(event)
+        events[event].register(&block)
+      end
+
+      #
+      # The list of possible events for this Type.
+      #
+      # By default, this is just the list of possible_events from the Type class.
+      #
+      def possible_events
+        self.class.possible_events
+      end
+
+      #
+      # The list of possible events for types in this Type class.
+      #
+      def self.possible_events
+        {
+          :on_set => Event
+        }
+      end
+
+      def add_validator(validator)
+        if @validator.is_a?(Moduler::Validation::Validator::CompoundValidator)
+          @validator.validators << validator
+        elsif @validator
+          @validator = Moduler::Validation::Validator::CompoundValidator(@validator, validator)
+        else
+          @validator = validator
+        end
+      end
+
+      #
+      # A hash of named events the user has registered listeners for.
+      # if !events[:on_set], there are no listeners for on_set.
+      #
+      attribute :events
 
       #
       # Coercer that will be run when the user gives us a value to store.
@@ -193,6 +269,11 @@ module Moduler
       # A Validator to validate the value.  Will be run on the value before coercion.
       #
       attribute :validator
+
+      #
+      # Coercer that will be run when the user retrieves a value.
+      #
+      attribute :coercer_out
 
       #
       # The default value gets set the same way as the value would--you can use
@@ -229,9 +310,8 @@ module Moduler
       attribute :call_proc, Proc
       attribute :coercer, Validation::Coercer
       attribute :validator, Validation::Validator
+      attribute :coercer_out, Validation::CoercerOut
+      attribute :events, Hash[Symbol => Event]
     end
   end
 end
-
-
-# This is the
