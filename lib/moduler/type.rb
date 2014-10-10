@@ -57,41 +57,6 @@ module Moduler
     end
 
     #
-    # Transform or validate the value before setting its raw value.
-    #
-    def coerce(value)
-      if value.is_a?(LazyValue)
-        # Leave lazy values alone until we retrieve them
-        value
-      else
-        validate(value) if validator
-        coercer ? coercer.coerce(value) : value
-      end
-    end
-
-    #
-    # Run the validator against the value, throwing a ValidationError if there
-    # are issues.
-    #
-    # Generally, you should be running coerce(), as it is possible for coerce
-    # methods to do some validation.
-    #
-    def validate(value)
-      if validator
-        result = validator.validate(value)
-        if result.is_a?(Array)
-          if result.size > 0
-            raise ValidationFailed.new(result)
-          end
-        elsif result.is_a?(Hash) || result.is_a?(String)
-          raise ValidationFailed.new([result])
-        elsif result == false
-          raise ValidationFailed.new([ Validation::Validator.default_validation_failure(validator, value) ])
-        end
-      end
-    end
-
-    #
     # Transform or validate the value before getting its raw value.
     #
     # ==== Returns
@@ -136,19 +101,9 @@ module Moduler
     attr_accessor :call_proc
 
     #
-    # Coercer that will be run when the user gives us a value to store.
-    #
-    attr_accessor :coercer
-
-    #
     # Coercer that will be run when the user retrieves a value.
     #
     attr_accessor :coercer_out
-
-    #
-    # A Validator to validate the value.  Will be run on the value before coercion.
-    #
-    attr_accessor :validator
 
     #
     # The default value gets set the same way as the value would--you can use

@@ -67,9 +67,9 @@ module Moduler
               type = type_type
             elsif type < base_type.class
               # TODO bring kind_of back when basic validation is supported--perhaps with direct instantiation
-              type_type.specialize(start_with: type)#, kind_of: type)
+              type_type#.specialize(start_with: type, kind_of: type)
             else
-              base_type.specialize#(kind_of: type)
+              base_type#.specialize(kind_of: type)
             end
           end
         end

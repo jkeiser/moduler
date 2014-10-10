@@ -6,6 +6,8 @@ require 'moduler/attributable'
 require 'moduler/lazy_value'
 require 'moduler/base/attribute'
 require 'moduler/base/value_context'
+require 'moduler/validation/coercer'
+require 'moduler/validation/validator'
 
 module Moduler
   module Base
@@ -22,8 +24,12 @@ module Moduler
       end
 
       def self.emit_attribute(target, name, *args, &block)
-        type = type_type.call(ValueContext.new, *args, &block)
-        Attribute.emit_attribute(target, name, type == NO_VALUE ? nil : type)
+        if args.size > 0 || block
+          type = type_type.call(ValueContext.new, *args, &block)
+          Attribute.emit_attribute(target, name, type == NO_VALUE ? nil : type)
+        else
+          Attribute.emit_attribute(target, name)
+        end
       end
 
       def self.attribute(name, *args, &block)
@@ -34,8 +40,39 @@ module Moduler
         Attribute.emit_attribute(target, name, self)
       end
 
+      #
+      # Transform or validate the value before setting its raw value.
+      #
       def coerce(value)
-        value
+        if value.is_a?(LazyValue)
+          # Leave lazy values alone until we retrieve them
+          value
+        else
+          validate(value) if validator
+          coercer ? coercer.coerce(value) : value
+        end
+      end
+
+      #
+      # Run the validator against the value, throwing a ValidationError if there
+      # are issues.
+      #
+      # Generally, you should be running coerce(), as it is possible for coerce
+      # methods to do some validation.
+      #
+      def validate(value)
+        if validator
+          result = validator.validate(value)
+          if result.is_a?(Array)
+            if result.size > 0
+              raise ValidationFailed.new(result)
+            end
+          elsif result.is_a?(Hash) || result.is_a?(String)
+            raise ValidationFailed.new([result])
+          elsif result == false
+            raise ValidationFailed.new([ Validation::Validator.default_validation_failure(validator, value) ])
+          end
+        end
       end
 
       def coerce_out(value)
@@ -113,12 +150,37 @@ module Moduler
 
       def fire_on_set_raw(value)
       end
+
+      #
+      # Coercer that will be run when the user gives us a value to store.
+      #
+      attribute :coercer
+
+      #
+      # A Validator to validate the value.  Will be run on the value before coercion.
+      #
+      attribute :validator
+
+
+      #
+      # Interlude
+      #
+      # This is where we load the other types in prep for being able to use attributes.
+      #
+      require 'moduler/base/type/type_type'
+      require 'moduler/base/type/hash_type'
+      require 'moduler/base/type/array_type'
+      require 'moduler/base/type/set_type'
+      require 'moduler/base/type/struct_type'
+
+      #
+      # Redefinition
+      #
+      attribute :coercer, Validation::Coercer
+      attribute :validator, Validation::Validator
     end
   end
 end
 
-require 'moduler/base/type/type_type'
-require 'moduler/base/type/hash_type'
-require 'moduler/base/type/array_type'
-require 'moduler/base/type/set_type'
-require 'moduler/base/type/struct_type'
+
+# This is the
