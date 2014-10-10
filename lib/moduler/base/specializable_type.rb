@@ -1,4 +1,6 @@
 require 'moduler/base/attribute'
+require 'moduler/validation/validator/equal_to'
+require 'moduler/validation/validator/kind_of'
 
 module Moduler
   module Base
@@ -41,7 +43,7 @@ module Moduler
         fire_on_set(value)
         value
       end
-
+      # Provide defaults (that ought to be overridden)
       def start_with
         Type.empty
       end

@@ -5,8 +5,6 @@ module Moduler
   module Base
     class Type
       class TypeType < Type
-        include Moduler::Base::Mix::TypeType
-
         def base_type
           Type.empty
         end
@@ -24,6 +22,17 @@ module Moduler
         end
         def struct_type
           StructType.empty
+        end
+
+        include Moduler::Base::Mix::TypeType
+
+        attribute :start_with do
+          default self.class.type_type.base_type
+          validator Validation::Validator::KindOf.new(Type)
+        end
+        attribute :reopen_on_call do
+          default false
+          validator Validation::Validator::EqualTo.new(true, false)
         end
       end
     end

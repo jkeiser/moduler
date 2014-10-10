@@ -21,7 +21,7 @@ describe Moduler::Type do
   end
 
   class MultiplyCoercer
-    extend Moduler::Validation::Coercer
+    include Moduler::Validation::Coercer
     def initialize(n)
       @n = n
     end
@@ -30,7 +30,7 @@ describe Moduler::Type do
     end
   end
   class MultiplyCoercerOut
-    extend Moduler::Validation::CoercerOut
+    include Moduler::Validation::CoercerOut
     def initialize(n)
       @n = n
     end
@@ -40,7 +40,7 @@ describe Moduler::Type do
   end
 
   class WrapMultiplyCoercer
-    extend Moduler::Validation::Coercer
+    include Moduler::Validation::Coercer
     def initialize(n)
       @n = n
     end
@@ -49,7 +49,7 @@ describe Moduler::Type do
     end
   end
   class WrapMultiplyCoercerOut
-    extend Moduler::Validation::CoercerOut
+    include Moduler::Validation::CoercerOut
     def initialize(n)
       @n = n
     end

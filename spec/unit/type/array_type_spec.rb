@@ -1,6 +1,8 @@
 require 'support/spec_support'
 require 'moduler/lazy_value'
 require 'moduler/type/array_type'
+require 'moduler/validation/coercer'
+require 'moduler/validation/coercer_out'
 
 describe Moduler::Type::ArrayType do
   shared_context "it behaves exactly like a normal array" do
@@ -278,6 +280,8 @@ describe Moduler::Type::ArrayType do
   end
 
   class ArrayMultiplyCoercer
+    include Moduler::Validation::Coercer
+    include Moduler::Validation::CoercerOut
     def coerce(value)
       value * 2
     end
@@ -287,6 +291,8 @@ describe Moduler::Type::ArrayType do
   end
 
   class ArrayTypeIndexCoercer
+    include Moduler::Validation::Coercer
+    include Moduler::Validation::CoercerOut
     def initialize(amount)
       @amount = amount
     end

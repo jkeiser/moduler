@@ -29,31 +29,7 @@ module Moduler
   class Type < Base::Type
     def initialize(*args, &block)
       @hash = { :events => {} }
-      @default = NO_VALUE
       super
-    end
-
-    #
-    # Core DSL
-    #
-    def raw_value(value, &cache_proc)
-      if value == NO_VALUE
-        raw_default(&cache_proc)
-      else
-        super
-      end
-    end
-
-    def raw_default(&cache_proc)
-      value = @default
-      if value.is_a?(LazyValue)
-        cache = value.cache
-        value = coerce(value.call)
-        if cache && cache_proc
-          cache_proc.call(value)
-        end
-      end
-      value
     end
 
     #
@@ -64,7 +40,7 @@ module Moduler
     # pumped NO_VALUE in.  (And even then, you may get a default value instead.)
     #
     def coerce_out(value, &cache_proc)
-      value = raw_value(value, &cache_proc)
+      value = super
 
       if value != NO_VALUE && coercer_out
         value = coercer_out.coerce_out(value)
@@ -104,21 +80,6 @@ module Moduler
     # Coercer that will be run when the user retrieves a value.
     #
     attr_accessor :coercer_out
-
-    #
-    # The default value gets set the same way as the value would--you can use
-    # the same expressions you would otherwise.
-    #
-    def default(*args, &block)
-      if args.size == 0 && !block && @default == NO_VALUE
-        NO_VALUE
-      else
-        default_call(DefaultValueContext.new(self), *args, &block)
-      end
-    end
-    def default=(value)
-      @default = coerce(value)
-    end
 
     #
     # Fire the on_set handler.
@@ -165,25 +126,6 @@ module Moduler
           @is_raw = false
         end
         @value
-      end
-    end
-
-    #
-    # Used in default
-    #
-    class DefaultValueContext
-      def initialize(type)
-        @type = type
-      end
-      def set(value)
-        @type.instance_variable_set(:@default, value)
-      end
-      def get
-        if @type.instance_variable_defined?(:@default)
-          @type.instance_variable_get(:@default)
-        else
-          NO_VALUE
-        end
       end
     end
 

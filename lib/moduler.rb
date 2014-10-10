@@ -29,6 +29,9 @@ module Moduler
       def to_s
         "NO_VALUE"
       end
+      def inspect
+        "NO_VALUE#{super}"
+      end
     end
     obj
   end
@@ -42,6 +45,9 @@ module Moduler
     class<<obj
       def to_s
         "NOT_HANDLED"
+      end
+      def inspect
+        "NOT_HANDLED#{super}"
       end
     end
     obj
@@ -57,6 +63,9 @@ module Moduler
     class<<obj
       def to_s
         "NOT_PASSED"
+      end
+      def inspect
+        "NOT_PASSED#{super}"
       end
     end
     obj

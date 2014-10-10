@@ -52,8 +52,8 @@ describe Moduler::Type::StructType do
     let(:on_set) { [] }
     before do
       attribute = Moduler::Type.new
-      attribute.coercer = MultiplyCoercer.new(2)
-      attribute.coercer_out = MultiplyCoercerOut.new(3)
+      attribute.coercer = StructMultiplyCoercer.new(2)
+      attribute.coercer_out = StructMultiplyCoercer.new(3)
       attribute.register(:on_set) do |v|
         expect(v.type).to eq attribute
         on_set << v.value
@@ -165,19 +165,14 @@ describe Moduler::Type::StructType do
   # Methods in existing module
   # Methods in existing class
 
-  class MultiplyCoercer
-    extend Moduler::Validation::Coercer
+  class StructMultiplyCoercer
+    include Moduler::Validation::Coercer
+    include Moduler::Validation::CoercerOut
     def initialize(n)
       @n = n
     end
     def coerce(value)
       value*@n
-    end
-  end
-  class MultiplyCoercerOut
-    extend Moduler::Validation::CoercerOut
-    def initialize(n)
-      @n = n
     end
     def coerce_out(value)
       value*@n

@@ -8,6 +8,7 @@ require 'moduler/base/attribute'
 require 'moduler/base/value_context'
 require 'moduler/validation/coercer'
 require 'moduler/validation/validator'
+require 'moduler/errors'
 
 module Moduler
   module Base
@@ -22,6 +23,7 @@ module Moduler
       def self.empty
         @empty ||= self.new
       end
+
 
       def self.emit_attribute(target, name, *args, &block)
         if args.size > 0 || block
@@ -75,12 +77,15 @@ module Moduler
         end
       end
 
-      def coerce_out(value)
-        value
+      def coerce_out(value, &cache_proc)
+        raw_value(value, &cache_proc)
       end
 
       def raw_value(value, &cache_proc)
-        if value.is_a?(LazyValue)
+        if value == NO_VALUE
+          raw_default(&cache_proc)
+
+        elsif value.is_a?(LazyValue)
           cache = value.cache
           value = coerce(value.call)
           if cache && cache_proc
@@ -91,6 +96,18 @@ module Moduler
         else
           value
         end
+      end
+
+      def raw_default(&cache_proc)
+        value = @hash[:default] || NO_VALUE
+        if value.is_a?(LazyValue)
+          cache = value.cache
+          value = coerce(value.call)
+          if cache && cache_proc
+            cache_proc.call(value)
+          end
+        end
+        value
       end
 
       def call(context, *args, &block)
@@ -106,7 +123,6 @@ module Moduler
           if block
             value = block
           else
-            value = context.get
             return coerce_out(context.get) { |value| context.set(value) }
           end
         elsif block
@@ -161,6 +177,23 @@ module Moduler
       #
       attribute :validator
 
+      #
+      # The default value gets set the same way as the value would--you can use
+      # the same expressions you would otherwise.
+      #
+      # TODO when call_proc is around, maybe we can make this better ...
+      def default(*args, &block)
+        context = Attribute::StructFieldContext.new(@hash, :default)
+        # Short circuit "no default value for default" so we don't loop
+        if args.size == 0 && !block && context.get == NO_VALUE
+          NO_VALUE
+        else
+          default_call(context, *args, &block)
+        end
+      end
+      def default=(value)
+        @hash[:default] = coerce(value)
+      end
 
       #
       # Interlude

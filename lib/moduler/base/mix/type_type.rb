@@ -67,18 +67,18 @@ module Moduler
               type = type_type
             elsif type < base_type.class
               # TODO bring kind_of back when basic validation is supported--perhaps with direct instantiation
-              type_type#.specialize(start_with: type, kind_of: type)
+              type_type.specialize do
+                start_with type.empty
+                validator Validation::Validator::KindOf.new(type)
+              end
             else
-              base_type#.specialize(kind_of: type)
+              base_type.specialize do
+                validator Validation::Validator::KindOf.new(type)
+              end
             end
           end
         end
-        def start_with
-          base_type
-        end
-        def reopen_on_call
-          true
-        end
+
         def start_construction_from?(value)
           coerce?(value)
         end

@@ -1,9 +1,14 @@
 require 'support/spec_support'
 require 'moduler/lazy_value'
 require 'moduler/type/set_type'
+require 'moduler/validation/coercer'
+require 'moduler/validation/coercer_out'
 
 describe Moduler::Type::SetType do
   class SetMultiplyCoercer
+    include Moduler::Validation::Coercer
+    include Moduler::Validation::CoercerOut
+
     def coerce(value)
       value * 2
     end
