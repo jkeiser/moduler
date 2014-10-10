@@ -65,7 +65,7 @@ module Moduler
       end)
     end
 
-    attribute :required#, :equal_to => [true, false], :default => false
+    attribute :required, :equal_to => [true, false], :default => false
   end
 end
 
