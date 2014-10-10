@@ -27,14 +27,14 @@ module Moduler
         end
 
         # Figure out if we want to specialize a value, or start anew
-        value = start_construction_from?(args[0])
+        value = specialize_from?(args[0])
         if value
           args.shift
         elsif reopen_on_call
           value = raw_value(context.get) { |v| context.set(v) }
-          value = start_with if value == NO_VALUE
+          value = specialize_from if value == NO_VALUE
         else
-          value = start_with
+          value = specialize_from
         end
 
         value = value.specialize(*args, &block)
@@ -44,7 +44,7 @@ module Moduler
         value
       end
       # Provide defaults (that ought to be overridden)
-      def start_with
+      def specialize_from
         Type.empty
       end
       def reopen_on_call

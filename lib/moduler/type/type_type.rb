@@ -23,7 +23,7 @@ module Moduler
         StructType.empty
       end
 
-      def start_with
+      def specialize_from
         Type.new
       end
       def reopen_on_call
@@ -32,7 +32,7 @@ module Moduler
 
       include Moduler::Base::Mix::TypeType
 
-      attribute :start_with do
+      attribute :specialize_from do
         default self.class.type_type.base_type
         validator Validation::Validator::KindOf.new(Type)
       end

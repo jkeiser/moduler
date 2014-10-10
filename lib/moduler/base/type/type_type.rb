@@ -26,7 +26,7 @@ module Moduler
 
         include Moduler::Base::Mix::TypeType
 
-        attribute :start_with do
+        attribute :specialize_from do
           default self.class.type_type.base_type
           validator Validation::Validator::KindOf.new(Type)
         end

@@ -7,6 +7,7 @@ module Moduler
       include Moduler::Base::Mix::HashType
       attribute :key_type, Type
       attribute :value_type, Type
+      attribute :singular, Symbol
     end
   end
 end

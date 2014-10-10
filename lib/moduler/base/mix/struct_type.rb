@@ -13,7 +13,7 @@ module Moduler
         # Attributes:
         # attributes
         # reopens_on_call
-        # start_with
+        # specialize_from
 
         def facade_class
           if !@facade_class
@@ -50,13 +50,13 @@ module Moduler
           coerce(value)
         end
 
-        def start_construction_from?(value)
+        def specialize_from?(value)
           if value.is_a?(facade_class)
             facade_class.new({})
           end
         end
 
-        def start_with
+        def specialize_from
           facade_class.new({})
         end
         def reopen_on_call

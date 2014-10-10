@@ -7,6 +7,7 @@ module Moduler
       include Moduler::Base::Mix::ArrayType
       attribute :index_type, Type
       attribute :element_type, Type
+      attribute :singular, Symbol
     end
   end
 end

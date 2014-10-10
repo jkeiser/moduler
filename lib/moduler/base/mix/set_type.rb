@@ -64,6 +64,43 @@ module Moduler
           super.merge(:on_set_updated => Event)
         end
       end
+
+      #
+      # Handle singular form:
+      # address :street => ... do ... end
+      # zipcode 80917
+      #
+      def emit_attribute(target, name)
+        super
+        if @hash[:singular]
+          target.send(:define_method, @hash[:singular]) do |*args, &block|
+            key = type.coerce_key(args.shift)
+            context = SetAddContext.new(@hash, name)
+            if element_type
+              element_type.call(context, *args, &block)
+            else
+              # Call the empty type
+              self.class.type_type.base_type.call(context, *args, &block)
+            end
+          end
+        end
+      end
+
+      class SetAddContext
+        def initialize(attributes, name)
+          @attributes = attributes
+          @name = name
+        end
+
+        def get
+          NO_VALUE
+        end
+
+        def set(value)
+          @attributes[@name] ||= Set.new
+          @attributes[@name] << value
+        end
+      end
     end
   end
 end

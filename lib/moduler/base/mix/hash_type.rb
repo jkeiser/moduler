@@ -87,6 +87,69 @@ module Moduler
         def self.possible_events
           super.merge(:on_hash_updated => Event)
         end
+
+        #
+        # Handle singular form:
+        # address :home, :street => ... do ... end
+        # zipcode :home, 80917
+        # zipcode :home => 80917, :work => 80918
+        #
+        def emit_attribute(target, name)
+          super
+          if @hash[:singular]
+            target.send(:define_method, @hash[:singular]) do |*args, &block|
+              if args.size == 0
+                raise ArgumentError, "#{singular} requires at least one argument: #{singular} <key>, <value> or #{singular} <key> => <value>, <key> => <value> ..."
+              end
+
+              # The plural value
+              if args[0].is_a?(Hash) && args.size == 1 && !block
+                # If we get a hash, we merge in the values
+                if args[0].size > 0
+                  @hash[name] ||= {}
+                  attribute_value = @hash[name]
+                  args[0].each do |key,value|
+                    key = type.coerce_key(key)
+                    value = type.coerce_value(value)
+                    attribute_value[key] = value
+                    value_type.fire_on_set_raw(value) if value_type
+                  end
+                end
+              else
+                # If we get :key, ... do ... end, we do the standard get/set with it.
+                key = type.coerce_key(args.shift)
+                context = HashValueContext.new(@hash, name, key)
+                if value_type
+                  value_type.call(context, *args, &block)
+                else
+                  # Call the empty type
+                  self.class.type_type.base_type.call(context, *args, &block)
+                end
+              end
+            end
+          end
+        end
+
+        class HashValueContext
+          def initialize(attributes, name, key)
+            @attributes = attributes
+            @name = name
+            @key  = key
+          end
+
+          def get
+            if @attributes[@name] && @attributes[@name].has_key?(@key)
+              @attributes[@name][@key]
+            else
+              NO_VALUE
+            end
+          end
+
+          def set(value)
+            @attributes[@name] ||= {}
+            @attributes[@name][@key] = value
+          end
+        end
       end
     end
   end
