@@ -49,34 +49,6 @@ module Moduler
     end
 
     #
-    # The proc to instance_eval on +call+.
-    #
-    def call(context, *args, &block)
-      if call_proc
-        if block
-          context.define_method(:call_proc, call_proc)
-          result = context.call_proc(context, *args, &block)
-        else
-          result = context.instance_exec(context, *args, &call_proc)
-        end
-        if result == NOT_HANDLED
-          result = default_call(context, *args, &block)
-        end
-        result
-      else
-        # Default "call" semantics (get/set)
-        default_call(context, *args, &block)
-      end
-    end
-
-    #
-    # Proc to be called when this value is call()ed.  Takes place of the default
-    # get/set algorithm when the user says foo.bar <value> or foo.bar do ... end
-    # or even foo.bar <values> do ... end
-    #
-    attr_accessor :call_proc
-
-    #
     # Coercer that will be run when the user retrieves a value.
     #
     attr_accessor :coercer_out

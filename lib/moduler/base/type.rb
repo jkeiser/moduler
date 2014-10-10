@@ -110,8 +110,25 @@ module Moduler
         value
       end
 
+      #
+      # The proc to instance_eval on +call+.
+      #
       def call(context, *args, &block)
-        default_call(context, *args, &block)
+        if @hash[:call_proc]
+          if block
+            context.define_method(:call_proc, @hash[:call_proc])
+            result = context.call_proc(context, *args, &block)
+          else
+            result = context.instance_exec(context, *args, &@hash[:call_proc])
+          end
+          if result == NOT_HANDLED
+            result = default_call(context, *args, &block)
+          end
+          result
+        else
+          # Default "call" semantics (get/set)
+          default_call(context, *args, &block)
+        end
       end
 
       #
@@ -209,6 +226,7 @@ module Moduler
       #
       # Redefinition
       #
+      attribute :call_proc, Proc
       attribute :coercer, Validation::Coercer
       attribute :validator, Validation::Validator
     end
