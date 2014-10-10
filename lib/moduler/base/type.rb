@@ -14,7 +14,7 @@ module Moduler
       include Moduler::Attributable
 
       def self.type_type
-        Base::TypeType.empty
+        Base::Type::TypeType.empty
       end
 
       def self.empty
@@ -86,8 +86,39 @@ module Moduler
         end
         value
       end
+
+      #
+      # Fire the on_set handler.
+      #
+      # ==== Arguments
+      #
+      # [value]
+      # The value that was set.
+      # [is_raw]
+      # If +true+, the value is considered the *stored* value and will be coerce_out'd
+      # before the user gets it.  If +false+, the value is considered the coerced
+      # value, and no coercion will happen.
+      #
+      # ==== Block
+      #
+      # The passed block is passed the type as an argument and is expected to
+      # return an OnSetContext instance.
+      #
+      # ==== Example
+      #
+      #   type.fire_on_set(@hash[:foo])
+      #
+      def fire_on_set(value, is_raw=false)
+      end
+
+      def fire_on_set_raw(value)
+      end
     end
   end
 end
 
-require 'moduler/base/type_type'
+require 'moduler/base/type/type_type'
+require 'moduler/base/type/hash_type'
+require 'moduler/base/type/array_type'
+require 'moduler/base/type/set_type'
+require 'moduler/base/type/struct_type'

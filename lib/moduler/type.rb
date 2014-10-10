@@ -321,3 +321,4 @@ end
 require 'moduler/type/hash_type'
 require 'moduler/type/array_type'
 require 'moduler/type/set_type'
+require 'moduler/type/struct_type'
