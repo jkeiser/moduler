@@ -271,6 +271,9 @@ describe Moduler::Type do
         def set(value)
           @value = value
         end
+        def to_s
+          "CallValue #{super}"
+        end
       end.new
     end
     context "default_call" do

@@ -4,8 +4,8 @@ require 'moduler/facade/array_facade'
 module Moduler
   class Type
     class ArrayType < Type
-      type_attribute :index_type
-      type_attribute :element_type
+      attribute :index_type, Type
+      attribute :element_type, Type
 
       def facade_class
         Moduler::Facade::ArrayFacade
@@ -25,7 +25,7 @@ module Moduler
       #
       def coerce(array)
         if array.is_a?(facade_class)
-          array = array.raw
+          array = array.array
         elsif element_type
           array = array.map { |value| coerce_value(nil, value) }
         else
@@ -39,10 +39,16 @@ module Moduler
       # values, assuming there is any index_type or element_type to protect.
       #
       def coerce_out(array)
+        array = super
+        if array == NO_VALUE
+          array = []
+          cache_proc.call(array)
+        end
+
         if index_type || element_type
-          facade_class.new(super, self)
+          facade_class.new(array, self)
         else
-          super
+          array
         end
       end
 

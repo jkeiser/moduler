@@ -5,7 +5,7 @@ require 'set'
 module Moduler
   class Type
     class SetType < Type
-      type_attribute :item_type
+      attribute :item_type, Type
 
       def facade_class
         Moduler::Facade::SetFacade
@@ -39,9 +39,15 @@ module Moduler
       # When the user requests a set, we give them a facade (assuming there is
       # an item type on this thing).
       #
-      def coerce_out(set)
+      def coerce_out(set, &cache_proc)
+        set = super
+        if set == NO_VALUE
+          set = Set.new
+          cache_proc.call(set)
+        end
+
         if item_type
-          facade_class.new(super, self)
+          facade_class.new(set, self)
         else
           set
         end

@@ -1,21 +1,21 @@
+require 'moduler/scope'
+
 module Moduler
   #
   # A Specializable thing.
   #
   module Specializable
-    def initialize(base=nil, options={}, &block)
-      # If the user passed a hash for base, we assume they passed just options
-      # and no base.
-      if base.is_a?(Hash) && options == {}
-        base, options = nil, base
-      end
-      if base.is_a?(Class) && self.is_a?(Class)
-        super(base)
+    def initialize(*args, &block)
+      case args[0]
+      when Class
+        super(args.shift)
+      when Moduler::Scope
+        Scope.bring_into_scope(args.shift)
+        super()
       else
         super()
-        extend(base) if base
       end
-      dsl_eval(options, &block)
+      dsl_eval(*args, &block)
     end
 
     def dsl_eval(options={}, &block)
@@ -29,8 +29,8 @@ module Moduler
       instance_eval(&block) if block
     end
 
-    def specialize(options={}, &block)
-      self.class.new(self, options, &block)
+    def specialize(*args, &block)
+      self.class.new(self, *args, &block)
     end
   end
 end

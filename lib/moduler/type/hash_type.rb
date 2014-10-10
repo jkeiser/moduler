@@ -4,8 +4,8 @@ require 'moduler/facade/hash_facade'
 module Moduler
   class Type
     class HashType < Type
-      type_attribute :key_type
-      type_attribute :value_type
+      attribute :key_type, Type
+      attribute :value_type, Type
 
       def facade_class
         Moduler::Facade::HashFacade
@@ -25,7 +25,7 @@ module Moduler
       #
       def coerce(hash)
         if hash.is_a?(facade_class)
-          hash = hash.raw
+          hash = hash.hash
         elsif key_type || value_type
           hash = hash.inject({}) do |result,(key,value)|
             key = key_type.coerce(key) if key_type
@@ -43,11 +43,17 @@ module Moduler
       # When the user requests a hash, we give them a facade (assuming there is
       # a key or value type on this thing).
       #
-      def coerce_out(hash)
+      def coerce_out(hash, &cache_proc)
+        hash = super
+        if hash == NO_VALUE
+          hash = {}
+          cache_proc.call(hash)
+        end
+
         if key_type || value_type
-          facade_class.new(super, self)
+          facade_class.new(hash, self)
         else
-          super
+          hash
         end
       end
 

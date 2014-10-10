@@ -11,6 +11,9 @@ module Moduler
         Class.new do
           include Coercer
           define_method(:coerce, &block)
+          def to_s
+            "Coercer #{super}"
+          end
         end.new
       end
     end

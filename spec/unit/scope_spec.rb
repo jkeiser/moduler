@@ -258,6 +258,13 @@ describe Moduler::Scope do
       Class.new do
         extend Moduler::Scope
 
+        def to_s
+          "PrivateProtectedTestClass:#{super}"
+        end
+        def inspect
+          "PrivateProtectedTestClass:#{super}"
+        end
+
         private
         def private1
         end

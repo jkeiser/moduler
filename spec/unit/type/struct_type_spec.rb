@@ -9,14 +9,14 @@ describe Moduler::Type::StructType do
   let(:type) { Moduler::Type::StructType.new }
   context "With no modifications" do
     it "The resulting class has no instance methods" do
-      expect(type.facade_class.instance_methods(false).size).to eq 0
+      expect(type.facade_class.instance_methods(false)).to eq [ :to_s, :inspect ]
     end
   end
   context "After adding a field" do
-    before { type.field_types[:foo] = Moduler::Type.new }
+    before { type.attributes[:foo] = Moduler::Type.new }
     let(:instance) { type.restore_facade({}) }
     it "The resulting class has the field getter and setter" do
-      expect(type.facade_class.instance_methods(false)).to eq [ :foo, :foo= ]
+      expect(type.facade_class.instance_methods(false)).to eq [ :to_s, :inspect, :foo, :foo= ]
     end
     it "The default getter returns nil" do
       expect(instance.foo).to eq nil
@@ -47,22 +47,22 @@ describe Moduler::Type::StructType do
   end
 
   context "After adding a field with type coercion" do
-    let(:field_type) { Moduler::Type.new }
+    let(:attribute) { Moduler::Type.new }
     let(:instance) { type.restore_facade({}) }
     let(:on_set) { [] }
     before do
-      field_type = Moduler::Type.new
-      field_type.coercer = MultiplyCoercer.new(2)
-      field_type.coercer_out = MultiplyCoercerOut.new(3)
-      field_type.register(:on_set) do |v|
-        expect(v.type).to eq field_type
+      attribute = Moduler::Type.new
+      attribute.coercer = MultiplyCoercer.new(2)
+      attribute.coercer_out = MultiplyCoercerOut.new(3)
+      attribute.register(:on_set) do |v|
+        expect(v.type).to eq attribute
         on_set << v.value
       end
-      type.field_types[:foo] = field_type
+      type.attributes[:foo] = attribute
     end
 
     it "The resulting class has the field getter and setter" do
-      expect(type.facade_class.instance_methods(false)).to eq [ :foo, :foo= ]
+      expect(type.facade_class.instance_methods(false)).to eq [ :to_s, :inspect, :foo, :foo= ]
     end
     it "The default getter returns nil" do
       expect(instance.foo).to eq nil
@@ -101,21 +101,21 @@ describe Moduler::Type::StructType do
   context "After adding a struct field" do
     let(:on_set) { [] }
     before do
-      field_type = Moduler::Type::StructType.new
-      field_type.field_types[:bar] = Moduler::Type.new
-      type.field_types[:foo] = field_type
+      attribute = Moduler::Type::StructType.new
+      attribute.attributes[:bar] = Moduler::Type.new
+      type.attributes[:foo] = attribute
 
-      field_type.register(:on_set) do |v|
-        expect(v.type).to eq field_type
+      attribute.register(:on_set) do |v|
+        expect(v.type).to eq attribute
         on_set << v.value
       end
     end
     let(:foo_struct) { type.facade_class }
     let(:instance) { type.restore_facade({}) }
-    let(:struct) { type.field_types[:foo].facade_class }
+    let(:struct) { type.attributes[:foo].facade_class }
 
     it "The resulting class has the field getter and setter" do
-      expect(type.facade_class.instance_methods(false)).to eq [ :foo, :foo= ]
+      expect(type.facade_class.instance_methods(false)).to eq [ :to_s, :inspect, :foo, :foo= ]
       expect(on_set).to eq []
     end
     it "The default getter returns nil" do
@@ -130,6 +130,7 @@ describe Moduler::Type::StructType do
     end
     it "The setter and getter work" do
       instance.foo = { bar: 10 }
+      struct.new(bar: 10)
       expect(instance.foo).to eq struct.new(bar: 10)
       expect(on_set).to eq [ struct.new(bar: 10) ]
     end

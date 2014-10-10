@@ -1,7 +1,7 @@
 require 'moduler'
-require 'moduler/specializable'
 require 'moduler/lazy_value'
 require 'moduler/event'
+require 'moduler/base/type'
 
 module Moduler
   #
@@ -17,20 +17,37 @@ module Moduler
   # - HashType:
   # - StructType:
   # - SetType:
-  # - PathSetType: governs a type
+  # - TypeType: requires a Type.
   #
-  class Type
-    include Moduler::Specializable
-
+  class Type < Base::Type
     def initialize(*args, &block)
+      @hash = { :events => {} }
       @default = NO_VALUE
-      @events = {}
       super
     end
 
     #
-    # Base type methods
+    # Core DSL
     #
+    def raw_value(value, &cache_proc)
+      if value == NO_VALUE
+        raw_default(&cache_proc)
+      else
+        super
+      end
+    end
+
+    def raw_default(&cache_proc)
+      value = @default
+      if value.is_a?(LazyValue)
+        cache = value.cache
+        value = coerce(value.call)
+        if cache && cache_proc
+          cache_proc.call(value)
+        end
+      end
+      value
+    end
 
     #
     # Transform or validate the value before setting its raw value.
@@ -83,35 +100,6 @@ module Moduler
       value
     end
 
-    def raw_value(value, &cache_proc)
-      if value == NO_VALUE
-        raw_default(&cache_proc)
-
-      elsif value.is_a?(LazyValue)
-        cache = value.cache
-        value = coerce(value.call)
-        if cache && cache_proc
-          cache_proc.call(value)
-        end
-        value
-
-      else
-        value
-      end
-    end
-
-    def raw_default(&cache_proc)
-      value = @default
-      if value.is_a?(LazyValue)
-        cache = value.cache
-        value = coerce(value.call)
-        if cache && cache_proc
-          cache_proc.call(value)
-        end
-      end
-      value
-    end
-
     #
     # The proc to instance_eval on +call+.
     #
@@ -119,46 +107,24 @@ module Moduler
       if call_proc
         if block
           context.define_method(:call_proc, call_proc)
-          context.call_proc(*args, &block)
+          result = context.call_proc(context, *args, &block)
         else
-          context.instance_exec(*args, &call_proc)
+          result = context.instance_exec(context, *args, &call_proc)
         end
+        if result == NOT_HANDLED
+          result = default_call(context, *args, &block)
+        end
+        result
       else
-        # Default "call" semantics
+        # Default "call" semantics (get/set)
         default_call(context, *args, &block)
       end
     end
 
-    #
-    # Standard call semantics: +blah+ is get, +blah value+ is set,
-    # +blah do ... end+ is "set to proc"
-    #
-    def default_call(context, value = NOT_PASSED, &block)
-      if value == NOT_PASSED
-        if block
-          value = block
-        else
-          value = context.get
-          return coerce_out(context.get) { |value| context.set(value) }
-        end
-      elsif block
-        raise ArgumentError, "Both value and block passed to attribute!  Only one at a time accepted."
-      end
-
-      value = coerce(value)
-      value = context.set(value)
-      if value.is_a?(LazyValue)
-        fire_on_set_raw(value)
-      else
-        value = coerce_out(value) { |value| context.set(value) }
-        fire_on_set(value)
-      end
-      value
+    def self.type_type
+      Moduler::Type::TypeType.empty
     end
-
-    #
-    # Core DSL
-    #
+    require 'moduler/type/type_type'
 
     #
     # Proc to be called when this value is call()ed.  Takes place of the default
@@ -198,39 +164,16 @@ module Moduler
     end
 
     #
-    # A hash of named events the user has registered listeners for.
-    # if !events[:on_set], there are no listeners for on_set.
-    #
-    attr_reader :events
-
-    #
-    # Add a listener for the given event.
-    #
-    def register(event, &block)
-      events[event] ||= possible_events[event].new(event)
-      events[event].register(&block)
-    end
-
-    #
-    # The list of possible events for this Type.
-    #
-    # By default, this is just the list of possible_events from the Type class.
-    #
-    def possible_events
-      self.class.possible_events
-    end
-
-    #
-    # The list of possible events for types in this Type class.
-    #
-    def self.possible_events
-      {
-        :on_set => Event
-      }
-    end
-
-    #
     # Fire the on_set handler.
+    #
+    # ==== Arguments
+    #
+    # [value]
+    # The value that was set.
+    # [is_raw]
+    # If +true+, the value is considered the *stored* value and will be coerce_out'd
+    # before the user gets it.  If +false+, the value is considered the coerced
+    # value, and no coercion will happen.
     #
     # ==== Block
     #
@@ -239,10 +182,10 @@ module Moduler
     #
     # ==== Example
     #
-    #   type.fire_on_set_raw(@hash[:foo])
+    #   type.fire_on_set(@hash[:foo])
     #
     def fire_on_set(value, is_raw=false)
-      if events[:on_set]
+      if events && events[:on_set]
         events[:on_set].fire(OnSetContext.new(self, value, is_raw))
       end
     end
@@ -287,92 +230,22 @@ module Moduler
       end
     end
 
-
-    #
-    # Methods for type DSL construction
-    #
-
-    def self.attribute(name)
-      module_eval <<-EOM
-      def #{name}(value = NOT_PASSED)
-        if value == NOT_PASSED
-          @#{name}
-        else
-          @#{name} = value
-        end
-      end
-      def #{name}=(value)
-        @#{name} = value
-      end
-      EOM
-    end
-
-    def self.type_attribute(name)
-      module_eval <<-EOM
-      def #{name}(base_type = NOT_PASSED, *args, &block)
-        if base_type == NOT_PASSED && !block
-          @#{name}
-        else
-          @#{name} = to_type(base_type, *args, &block)
-        end
-      end
-      def #{name}=(type)
-        @#{name} = type
-      end
-      EOM
-    end
+    require 'moduler/type/validator/compound_validator'
+    require 'moduler/type/validator/equal_to'
+    require 'moduler/type/validator/kind_of'
+    require 'moduler/type/validator/regexes'
+    require 'moduler/type/validator/cannot_be'
+    require 'moduler/type/validator/respond_to'
+    require 'moduler/type/validator/validate_proc'
 
     #
     # Pure DSL methods
     #
-
-    #
-    # Given a type like Array[String] or Hash[String => Symbol] or ArrayType,
-    # resolve it to a system type.
-    #
-    def to_base_type(type)
-      case type
-      when Moduler::Type
-        type
-
-      when ::Array
-        if type.size == 0
-          Moduler::Type::ArrayType.new
-        elsif type.size == 1
-          Moduler::Type::ArrayType.new(element_type => to_type(type[0]))
-        end
-
-      when ::Hash
-        if type.size == 0
-          Moduler::Type::HashType.new
-        elsif type.size == 1
-          Moduler::Type::HashType.new(key_type   => to_type(type[0].key),
-                                      value_type => to_type(type[0].value))
-        end
-      end
-    end
-
-    def to_type(base=NOT_PASSED, *args, &block)
-      if base != NOT_PASSED
-        type = to_base_type(base)
-        if !type
-          args.unshift(base)
-        end
-      end
-
-      if args.size > 0 || block
-        (type || Moduler::Type.new).specialize(*args, &block)
-      else
-        type
-      end
-    end
-
     def lazy(cache=true, &block)
       Moduler::LazyValue.new(cache, &block)
     end
 
     # TODO move the pure DSL into a module or something so it can be mixed
-    attribute :required
     def equal_to(*values)
       add_validator(Moduler::Type::Validator::EqualTo.new(*values))
     end
@@ -406,5 +279,45 @@ module Moduler
         @validator = validator
       end
     end
+
+    attribute :required#, :equal_to => [true, false], :default => false
+
+    #
+    # A hash of named events the user has registered listeners for.
+    # if !events[:on_set], there are no listeners for on_set.
+    #
+    attribute :events#
+    # TODO make the dup stuff work
+    attribute :events, :default => LazyValue.new { {}.dup }
+
+    #
+    # Add a listener for the given event.
+    #
+    def register(event, &block)
+      events[event] ||= possible_events[event].new(event)
+      events[event].register(&block)
+    end
+
+    #
+    # The list of possible events for this Type.
+    #
+    # By default, this is just the list of possible_events from the Type class.
+    #
+    def possible_events
+      self.class.possible_events
+    end
+
+    #
+    # The list of possible events for types in this Type class.
+    #
+    def self.possible_events
+      {
+        :on_set => Event
+      }
+    end
   end
 end
+
+require 'moduler/type/hash_type'
+require 'moduler/type/array_type'
+require 'moduler/type/set_type'

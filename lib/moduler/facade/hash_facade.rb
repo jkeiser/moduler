@@ -50,7 +50,7 @@ module Moduler
         result = type.coerce_value(key, value)
         hash[key] = result
         result = type.coerce_value_out(key, result)
-        type.fire_on_set(result)
+        type.value_type.fire_on_set(result) if type.value_type
         result
       end
       def delete(key)

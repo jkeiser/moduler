@@ -1,14 +1,14 @@
 require 'moduler/facade'
+require 'moduler/specializable'
+require 'moduler/attributable'
 
 module Moduler
   module Facade
     module StructFacade
       include Facade
       include Specializable
-      def initialize(hash, *args, &block)
-        @hash = hash
-        super(*args, &block)
-      end
+      include Attributable
+
       def ==(other)
         other.is_a?(self.class) && @hash == other.instance_variable_get(:@hash)
       end
