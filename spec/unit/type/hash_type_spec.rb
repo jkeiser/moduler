@@ -1,8 +1,8 @@
 require 'support/spec_support'
 require 'moduler/lazy_value'
 require 'moduler/type/hash_type'
-require 'moduler/type/coercer'
-require 'moduler/type/coercer_out'
+require 'moduler/validation/coercer'
+require 'moduler/validation/coercer_out'
 
 describe Moduler::Type::HashType do
   shared_context "it behaves exactly like a normal hash" do
@@ -95,8 +95,8 @@ describe Moduler::Type::HashType do
   end
 
   class HashStringCoercer
-    include Moduler::Type::Coercer
-    include Moduler::Type::CoercerOut
+    include Moduler::Validation::Coercer
+    include Moduler::Validation::CoercerOut
 
     def coerce(value)
       value.to_s
@@ -125,8 +125,8 @@ describe Moduler::Type::HashType do
   end
 
   class HashNumberMultiplier
-    include Moduler::Type::Coercer
-    include Moduler::Type::CoercerOut
+    include Moduler::Validation::Coercer
+    include Moduler::Validation::CoercerOut
 
     def coerce(value)
       value*2

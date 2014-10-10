@@ -79,7 +79,7 @@ module Moduler
         elsif result.is_a?(Hash) || result.is_a?(String)
           raise ValidationFailed.new([result])
         elsif result == false
-          raise ValidationFailed.new([ Validator.default_validation_failure(validator, value) ])
+          raise ValidationFailed.new([ Validation::Validator.default_validation_failure(validator, value) ])
         end
       end
     end
@@ -230,13 +230,13 @@ module Moduler
       end
     end
 
-    require 'moduler/type/validator/compound_validator'
-    require 'moduler/type/validator/equal_to'
-    require 'moduler/type/validator/kind_of'
-    require 'moduler/type/validator/regexes'
-    require 'moduler/type/validator/cannot_be'
-    require 'moduler/type/validator/respond_to'
-    require 'moduler/type/validator/validate_proc'
+    require 'moduler/validation/validator/compound_validator'
+    require 'moduler/validation/validator/equal_to'
+    require 'moduler/validation/validator/kind_of'
+    require 'moduler/validation/validator/regexes'
+    require 'moduler/validation/validator/cannot_be'
+    require 'moduler/validation/validator/respond_to'
+    require 'moduler/validation/validator/validate_proc'
 
     #
     # Pure DSL methods
@@ -247,22 +247,22 @@ module Moduler
 
     # TODO move the pure DSL into a module or something so it can be mixed
     def equal_to(*values)
-      add_validator(Moduler::Type::Validator::EqualTo.new(*values))
+      add_validator(Moduler::Validation::Validator::EqualTo.new(*values))
     end
     def kind_of(*kinds)
-      add_validator(Moduler::Type::Validator::KindOf.new(*kinds))
+      add_validator(Moduler::Validation::Validator::KindOf.new(*kinds))
     end
     def regex(*regexes)
-      add_validator(Moduler::Type::Validator::Regexes.new(*regexes))
+      add_validator(Moduler::Validation::Validator::Regexes.new(*regexes))
     end
     def cannot_be(*truthy_things)
-      add_validator(Moduler::Type::Validator::CannotBe.new(*truthy_things))
+      add_validator(Moduler::Validation::Validator::CannotBe.new(*truthy_things))
     end
     def respond_to(*method_names)
-      add_validator(Moduler::Type::Validator::RespondTo.new(*method_names))
+      add_validator(Moduler::Validation::Validator::RespondTo.new(*method_names))
     end
     def callbacks(callbacks)
-      add_validator(ModulerType::Validator::ValidateProc.new do |value|
+      add_validator(ModulerValidation::Validator::ValidateProc.new do |value|
         callbacks.select do |message, callback|
           callback.call(value) != true
         end.map do |message, callback|
@@ -271,10 +271,10 @@ module Moduler
       end)
     end
     def add_validator(validator)
-      if @validator.is_a?(Moduler::Type::Validator::CompoundValidator)
+      if @validator.is_a?(Moduler::Validation::Validator::CompoundValidator)
         @validator.validators << validator
       elsif @validator
-        @validator = Moduler::Type::Validator::CompoundValidator(@validator, validator)
+        @validator = Moduler::Validation::Validator::CompoundValidator(@validator, validator)
       else
         @validator = validator
       end

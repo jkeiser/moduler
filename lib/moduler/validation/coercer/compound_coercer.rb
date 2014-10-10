@@ -1,7 +1,7 @@
-require 'moduler/type/coercer'
+require 'moduler/validation/coercer'
 
 module Moduler
-  class Type
+  module Validation
     module Coercer
       class CompoundCoercer
         include Coercer

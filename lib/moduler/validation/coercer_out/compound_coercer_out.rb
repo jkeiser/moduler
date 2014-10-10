@@ -1,7 +1,7 @@
-require 'moduler/type/coercer_out'
+require 'moduler/validation/coercer_out'
 
 module Moduler
-  class Type
+  module Validation
     module CoercerOut
       class CompoundCoercerOut
         include CoercerOut

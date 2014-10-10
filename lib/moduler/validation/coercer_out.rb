@@ -1,18 +1,18 @@
 require 'moduler/type'
 
 module Moduler
-  class Type
-    module Coercer
-      def coerce(value)
+  module Validation
+    module CoercerOut
+      def coerce_out(value)
         raise NotImplementedError
       end
 
       def self.create(&block)
         Class.new do
-          include Coercer
-          define_method(:coerce, &block)
+          include CoercerOut
+          define_method(:coerce_out, &block)
           def to_s
-            "Coercer #{super}"
+            "CoercerOut #{super}"
           end
         end.new
       end

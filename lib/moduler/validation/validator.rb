@@ -1,7 +1,7 @@
 require 'moduler/type'
 
 module Moduler
-  class Type
+  module Validation
     #
     # A Validator instance can validate values.
     #

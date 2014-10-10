@@ -1,18 +1,18 @@
 require 'moduler/type'
-require 'moduler/type/validator/cannot_be'
-require 'moduler/type/validator/equal_to'
-require 'moduler/type/validator/kind_of'
-require 'moduler/type/validator/regexes'
-require 'moduler/type/validator/required_fields'
-require 'moduler/type/validator/respond_to'
-require 'moduler/type/validator/validate_proc'
+require 'moduler/validation/validator/cannot_be'
+require 'moduler/validation/validator/equal_to'
+require 'moduler/validation/validator/kind_of'
+require 'moduler/validation/validator/regexes'
+require 'moduler/validation/validator/required_fields'
+require 'moduler/validation/validator/respond_to'
+require 'moduler/validation/validator/validate_proc'
 require 'moduler/errors'
 
-describe Moduler::Type::Validator do
+describe Moduler::Validation::Validator do
   let(:type) { Moduler::Type.new }
 
   context "With cannot_be(:nil,:frozen,:terrible)" do
-    before { type.validator = Moduler::Type::Validator::CannotBe.new(:nil,:frozen,:terrible) }
+    before { type.validator = Moduler::Validation::Validator::CannotBe.new(:nil,:frozen,:terrible) }
     it "'hi' matches" do
       expect(type.coerce('hi')).to eq 'hi'
     end
@@ -27,7 +27,7 @@ describe Moduler::Type::Validator do
   end
 
   context "With equal_to(1,2,nil)" do
-    before { type.validator = Moduler::Type::Validator::EqualTo.new(1,2,nil) }
+    before { type.validator = Moduler::Validation::Validator::EqualTo.new(1,2,nil) }
     it "1 matches" do
       expect(type.coerce(1)).to eq 1
     end
@@ -43,7 +43,7 @@ describe Moduler::Type::Validator do
   end
 
   context "With kind_of(Symbol,String,NilClass)" do
-    before { type.validator = Moduler::Type::Validator::KindOf.new(Symbol,String,NilClass) }
+    before { type.validator = Moduler::Validation::Validator::KindOf.new(Symbol,String,NilClass) }
     it "'1' matches" do
       expect(type.coerce('1')).to eq '1'
     end
@@ -59,7 +59,7 @@ describe Moduler::Type::Validator do
   end
 
   context "With regexes('a*b', /c*d$/)" do
-    before { type.validator = Moduler::Type::Validator::Regexes.new('a*b', /c*d$/) }
+    before { type.validator = Moduler::Validation::Validator::Regexes.new('a*b', /c*d$/) }
     it "'aaaaab' matches" do
       expect(type.coerce('aaaaab')).to eq 'aaaaab'
     end
@@ -84,7 +84,7 @@ describe Moduler::Type::Validator do
   end
 
   context "With respond_to(:pop, 'abs')" do
-    before { type.validator = Moduler::Type::Validator::RespondTo.new(:include?,'size') }
+    before { type.validator = Moduler::Validation::Validator::RespondTo.new(:include?,'size') }
     it "[1,2] matches" do
       expect(type.coerce([1,2])).to eq [1,2]
     end
@@ -100,7 +100,7 @@ describe Moduler::Type::Validator do
   end
 
   context "With required_fields('a', :b, 3, nil)" do
-    before { type.validator = Moduler::Type::Validator::RequiredFields.new('a', :b, 3, nil) }
+    before { type.validator = Moduler::Validation::Validator::RequiredFields.new('a', :b, 3, nil) }
     it "{'a' => 1, :b => 2, 3 => 3, nil => 4} matches" do
       expect(type.coerce({'a' => 1, :b => 2, 3 => 3, nil => 4})).
         to eq({'a' => 1, :b => 2, 3 => 3, nil => 4})
@@ -128,7 +128,7 @@ describe Moduler::Type::Validator do
 
   context "validate procs" do
     context "With a validator proc that returns true or false" do
-      before { type.validator = Moduler::Type::Validator::ValidateProc.new { |v| v >= 2 } }
+      before { type.validator = Moduler::Validation::Validator::ValidateProc.new { |v| v >= 2 } }
       it "2 matches" do
         expect(type.coerce(2)).to be 2
       end
@@ -139,7 +139,7 @@ describe Moduler::Type::Validator do
 
     context "With a validator proc that returns a failure string" do
       before do
-        type.validator = Moduler::Type::Validator::ValidateProc.new do |v|
+        type.validator = Moduler::Validation::Validator::ValidateProc.new do |v|
           v < 2 ? "Proc failed!" : nil
         end
       end
@@ -153,7 +153,7 @@ describe Moduler::Type::Validator do
 
     context "With a validator proc that returns an array of failure string" do
       before do
-        type.validator = Moduler::Type::Validator::ValidateProc.new do |v|
+        type.validator = Moduler::Validation::Validator::ValidateProc.new do |v|
           v < 2 ? [ "Proc failed!" ] : []
         end
       end
@@ -167,8 +167,8 @@ describe Moduler::Type::Validator do
 
     context "With a validator proc that returns a failure" do
       before do
-        type.validator = Moduler::Type::Validator::ValidateProc.new do |v|
-          v < 2 ? Moduler::Type::Validator.validation_failure(v, "Proc failed!") : nil
+        type.validator = Moduler::Validation::Validator::ValidateProc.new do |v|
+          v < 2 ? Moduler::Validation::Validator.validation_failure(v, "Proc failed!") : nil
         end
       end
       it "2 matches" do
@@ -181,8 +181,8 @@ describe Moduler::Type::Validator do
 
     context "With a validator proc that returns an array of failures" do
       before do
-        type.validator = Moduler::Type::Validator::ValidateProc.new do |v|
-          v < 2 ? [ Moduler::Type::Validator.validation_failure(v, "Proc failed!") ] : []
+        type.validator = Moduler::Validation::Validator::ValidateProc.new do |v|
+          v < 2 ? [ Moduler::Validation::Validator.validation_failure(v, "Proc failed!") ] : []
         end
       end
       it "2 matches" do

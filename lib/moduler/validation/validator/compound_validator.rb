@@ -1,7 +1,7 @@
-require 'moduler/type/validator'
+require 'moduler/validation/validator'
 
 module Moduler
-  class Type
+  module Validation
     module Validator
       #
       # Runs through a number of validators, appending their results.

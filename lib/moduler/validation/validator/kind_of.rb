@@ -1,7 +1,7 @@
-require 'moduler/type/validator'
+require 'moduler/validation/validator'
 
 module Moduler
-  class Type
+  module Validation
     module Validator
       class KindOf
         include Validator

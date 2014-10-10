@@ -1,8 +1,8 @@
 require 'support/spec_support'
 require 'moduler/type'
 require 'moduler/type/struct_type'
-require 'moduler/type/coercer'
-require 'moduler/type/coercer_out'
+require 'moduler/validation/coercer'
+require 'moduler/validation/coercer_out'
 require 'moduler/lazy_value'
 
 describe Moduler::Type::StructType do
@@ -166,7 +166,7 @@ describe Moduler::Type::StructType do
   # Methods in existing class
 
   class MultiplyCoercer
-    extend Moduler::Type::Coercer
+    extend Moduler::Validation::Coercer
     def initialize(n)
       @n = n
     end
@@ -175,7 +175,7 @@ describe Moduler::Type::StructType do
     end
   end
   class MultiplyCoercerOut
-    extend Moduler::Type::CoercerOut
+    extend Moduler::Validation::CoercerOut
     def initialize(n)
       @n = n
     end

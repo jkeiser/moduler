@@ -1,10 +1,10 @@
 require 'support/spec_support'
 require 'moduler/type'
-require 'moduler/type/coercer'
-require 'moduler/type/coercer_out'
+require 'moduler/validation/coercer'
+require 'moduler/validation/coercer_out'
 require 'moduler/lazy_value'
-require 'moduler/type/coercer/compound_coercer'
-require 'moduler/type/coercer_out/compound_coercer_out'
+require 'moduler/validation/coercer/compound_coercer'
+require 'moduler/validation/coercer_out/compound_coercer_out'
 
 describe Moduler::Type do
   let(:type) do
@@ -21,7 +21,7 @@ describe Moduler::Type do
   end
 
   class MultiplyCoercer
-    extend Moduler::Type::Coercer
+    extend Moduler::Validation::Coercer
     def initialize(n)
       @n = n
     end
@@ -30,7 +30,7 @@ describe Moduler::Type do
     end
   end
   class MultiplyCoercerOut
-    extend Moduler::Type::CoercerOut
+    extend Moduler::Validation::CoercerOut
     def initialize(n)
       @n = n
     end
@@ -40,7 +40,7 @@ describe Moduler::Type do
   end
 
   class WrapMultiplyCoercer
-    extend Moduler::Type::Coercer
+    extend Moduler::Validation::Coercer
     def initialize(n)
       @n = n
     end
@@ -49,7 +49,7 @@ describe Moduler::Type do
     end
   end
   class WrapMultiplyCoercerOut
-    extend Moduler::Type::CoercerOut
+    extend Moduler::Validation::CoercerOut
     def initialize(n)
       @n = n
     end
@@ -72,7 +72,7 @@ describe Moduler::Type do
     end
 
     it "When multiple coercers are specified, their values stack" do
-      type.coercer = Moduler::Type::Coercer::CompoundCoercer.new(
+      type.coercer = Moduler::Validation::Coercer::CompoundCoercer.new(
         MultiplyCoercer.new(2),
         MultiplyCoercer.new(3)
       )
@@ -106,7 +106,7 @@ describe Moduler::Type do
     end
 
     it "When multiple coerce_outs are specified, their values stack" do
-      type.coercer_out = Moduler::Type::CoercerOut::CompoundCoercerOut.new(
+      type.coercer_out = Moduler::Validation::CoercerOut::CompoundCoercerOut.new(
         MultiplyCoercerOut.new(2),
         MultiplyCoercerOut.new(3)
       )
@@ -211,11 +211,11 @@ describe Moduler::Type do
       end
 
       it "When given a lazy value, both coercers and out coercers are run and the intermediate value is cached" do
-        type.coercer = Moduler::Type::Coercer::CompoundCoercer.new(
+        type.coercer = Moduler::Validation::Coercer::CompoundCoercer.new(
           MultiplyCoercer.new(2),
           MultiplyCoercer.new(3)
         )
-        type.coercer_out = Moduler::Type::CoercerOut::CompoundCoercerOut.new(
+        type.coercer_out = Moduler::Validation::CoercerOut::CompoundCoercerOut.new(
           MultiplyCoercerOut.new(5),
           MultiplyCoercerOut.new(7)
         )
@@ -229,11 +229,11 @@ describe Moduler::Type do
       end
 
       it "When given a lazy value and no cache_proc, both coercers and out coercers are run" do
-        type.coercer = Moduler::Type::Coercer::CompoundCoercer.new(
+        type.coercer = Moduler::Validation::Coercer::CompoundCoercer.new(
           MultiplyCoercer.new(2),
           MultiplyCoercer.new(3)
         )
-        type.coercer_out = Moduler::Type::CoercerOut::CompoundCoercerOut.new(
+        type.coercer_out = Moduler::Validation::CoercerOut::CompoundCoercerOut.new(
           MultiplyCoercerOut.new(5),
           MultiplyCoercerOut.new(7)
         )
@@ -244,11 +244,11 @@ describe Moduler::Type do
       end
 
       it "When given a non-caching lazy value, both coercers and out coercers are run and nothing is cached" do
-        type.coercer = Moduler::Type::Coercer::CompoundCoercer.new(
+        type.coercer = Moduler::Validation::Coercer::CompoundCoercer.new(
           MultiplyCoercer.new(2),
           MultiplyCoercer.new(3)
         )
-        type.coercer_out = Moduler::Type::CoercerOut::CompoundCoercerOut.new(
+        type.coercer_out = Moduler::Validation::CoercerOut::CompoundCoercerOut.new(
           MultiplyCoercerOut.new(5),
           MultiplyCoercerOut.new(7)
         )
