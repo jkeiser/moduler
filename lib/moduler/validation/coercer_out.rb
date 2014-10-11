@@ -1,5 +1,3 @@
-require 'moduler/type'
-
 module Moduler
   module Validation
     module CoercerOut

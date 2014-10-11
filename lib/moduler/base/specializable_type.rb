@@ -26,6 +26,12 @@ module Moduler
           return args[0]
         end
 
+        if args[0] == nil
+          context.set(args[0])
+          fire_on_set(args[0])
+          return args[0]
+        end
+
         # Figure out if we want to specialize a value, or start anew
         value = specialize_from?(args[0])
         if value

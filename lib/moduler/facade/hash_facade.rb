@@ -11,6 +11,9 @@ module Moduler
       include Enumerable
 
       def initialize(hash, type)
+        if !hash
+          raise "omg"
+        end
         @hash = hash
         @type = type
       end

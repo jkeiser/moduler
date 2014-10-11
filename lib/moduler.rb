@@ -1,5 +1,6 @@
 #
-# Simple, extensible and powerful DSL for creating classes and modules.
+# Simple, extensible and powerful DSL for creating validated, highly structured
+# "struct" classes in Ruby.
 #
 module Moduler
   #
@@ -8,16 +9,35 @@ module Moduler
   # The module/class is detected based on the block's self (the place the
   # block was created).
   #
-  # def self.inline(options={}, &block)
-  #   Moduler::DSL::DSL.inline(options, &block)
-  # end
+  def self.inline(*args, &block)
+    if !block
+      raise "Moduler.inline must be passed a block!"
+    end
+    type = Moduler::TypeDSL.type_system.struct_type.specialize(*args, &block)
+    type.facade_class = block.binding.eval('self')
+  end
 
   #
-  # Run the Moduler DSL against a separate module or class.
+  # Create a struct with the given name in the current namespace.
   #
-  # def self.dsl_eval(target, options={}, &block)
-  #   Moduler::DSL::DSL.new(options.merge(target: target), &block)
-  # end
+  def self.struct(name, *args, &block)
+    if !block
+      raise "Moduler.inline must be passed a block!"
+    end
+
+    parent = block.binding.eval('self')
+    if !parent.is_a?(Module)
+      parent = parent.class
+    end
+
+    type = Moduler::TypeDSL.type_system.struct_type.specialize(*args, &block)
+
+    # This is the only method of creating a class/module that preserves the
+    # name *even* when it's being created inside of a class with no name
+    # (like a metaclass).
+    child = eval "class parent::#{name}; self; end"
+    type.facade_class = child
+  end
 
   #
   # Constant indicating a lack of a value (as opposed to +nil+), so that methods
@@ -71,3 +91,5 @@ module Moduler
     obj
   end
 end
+
+require 'moduler/type_dsl'

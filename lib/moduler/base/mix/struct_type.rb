@@ -38,7 +38,11 @@ module Moduler
         def emit_to(target)
           target.include(Moduler::Facade::StructFacade)
           attributes.each do |name, type|
-            type.emit_attribute(target, name)
+            if type
+              type.emit_attribute(target, name)
+            else
+              type_system.emit_attribute(target, name)
+            end
           end
         end
 
@@ -97,7 +101,7 @@ module Moduler
         end
 
         def attribute(name, *args, &block)
-          attribute[name] = self.type_type.call(Moduler::Base::ValueContext.new, *args, &block)
+          attributes[name] = type_system.type(*args, &block)
         end
       end
     end

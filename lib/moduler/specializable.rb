@@ -15,7 +15,8 @@ module Moduler
       else
         super()
       end
-      dsl_eval(*args, &block)
+      dsl_eval(*args)
+      instance_eval(&block) if block
     end
 
     def dsl_eval(options={}, &block)

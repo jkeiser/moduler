@@ -1,11 +1,31 @@
 require 'moduler/base/specializable_type'
 require 'set'
+require 'moduler/base/boolean'
+require 'moduler/base/nullable'
+require 'moduler/validation/validator/equal_to'
+require 'moduler/validation/validator/kind_of'
 
 module Moduler
   module Base
     module Mix
       module TypeType
         include Moduler::Base::SpecializableType
+
+        def base_type
+          type_system.base_type
+        end
+        def array_type
+          type_system.array_type
+        end
+        def hash_type
+          type_system.hash_type
+        end
+        def set_type
+          type_system.set_type
+        end
+        def struct_type
+          type_system.struct_type
+        end
 
         #
         # Given a type like Array[String] or Hash[String => Symbol] or ArrayType,
@@ -56,6 +76,12 @@ module Moduler
               set_type.specialize(item_type: coerce(type[0].key))
             end
 
+          when Nullable
+            # Honestly, the Right Thing is compound types with unions, but we
+            # don't support them and I'm not ready to force them until we need
+            # them badly--too much conceptual overhead.
+            coerce(type.type).specialize skip_coercion_if: nil
+
           when Module
             if type == Array
               array_type
@@ -63,17 +89,22 @@ module Moduler
               hash_type
             elsif type == Set
               set_type
+            elsif type == Nullable
+              base_type.specialize skip_coercion_if: nil
+            elsif type == Boolean
+              base_type.specialize do
+                add_validator Validation::Validator::EqualTo.new(true, false)
+              end
             elsif type == base_type.class
-              type = type_type
+              type_system.type_type
             elsif type < base_type.class
-              # TODO bring kind_of back when basic validation is supported--perhaps with direct instantiation
-              type_type.specialize do
+              type_system.type_type.specialize do
                 specialize_from type.empty
-                validator Validation::Validator::KindOf.new(type)
+                add_validator Validation::Validator::KindOf.new(type)
               end
             else
               base_type.specialize do
-                validator Validation::Validator::KindOf.new(type)
+                add_validator Validation::Validator::KindOf.new(type)
               end
             end
           end

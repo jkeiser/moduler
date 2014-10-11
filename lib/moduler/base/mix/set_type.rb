@@ -6,6 +6,10 @@ module Moduler
   module Base
     module Mix
       module SetType
+        def raw_get
+          false
+        end
+
         def facade_class
           Moduler::Facade::SetFacade
         end
@@ -39,7 +43,7 @@ module Moduler
         # an item type on this thing).
         #
         def coerce_out(set, &cache_proc)
-          set = super
+          set = coerce_out_base(set, &cache_proc)
           if set == NO_VALUE
             set = Set.new
             cache_proc.call(set)
@@ -73,14 +77,15 @@ module Moduler
       def emit_attribute(target, name)
         super
         if @hash[:singular]
+          type = self
           target.send(:define_method, @hash[:singular]) do |*args, &block|
             key = type.coerce_key(args.shift)
             context = SetAddContext.new(@hash, name)
             if element_type
               element_type.call(context, *args, &block)
             else
-              # Call the empty type
-              self.class.type_type.base_type.call(context, *args, &block)
+              # Create a type from the empty type
+              type_system.base_type.call(context, *args, &block)
             end
           end
         end

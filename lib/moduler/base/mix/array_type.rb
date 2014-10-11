@@ -5,6 +5,10 @@ module Moduler
   module Base
     module Mix
       module ArrayType
+        def raw_get?
+          false
+        end
+
         def facade_class
           Moduler::Facade::ArrayFacade
         end
@@ -36,8 +40,8 @@ module Moduler
         # When the user requests the array, we give them a facade to protect the
         # values, assuming there is any index_type or element_type to protect.
         #
-        def coerce_out(array)
-          array = super
+        def coerce_out(array, &cache_proc)
+          array = coerce_out_base(array, &cache_proc)
           if array == NO_VALUE
             array = []
             cache_proc.call(array)
@@ -95,6 +99,7 @@ module Moduler
         def emit_attribute(target, name)
           super
           if @hash[:singular]
+            type = self
             target.send(:define_method, @hash[:singular]) do |*args, &block|
               key = type.coerce_key(args.shift)
               context = ArrayAddContext.new(@hash, name)
@@ -102,7 +107,7 @@ module Moduler
                 element_type.call(context, *args, &block)
               else
                 # Call the empty type
-                self.class.type_type.base_type.call(context, *args, &block)
+                type_system.base_type.call(context, *args, &block)
               end
             end
           end
