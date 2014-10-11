@@ -1,10 +1,10 @@
 require 'support/spec_support'
 require 'moduler/lazy_value'
-require 'moduler/type/array_type'
+require 'moduler/type_dsl'
 require 'moduler/validation/coercer'
 require 'moduler/validation/coercer_out'
 
-describe Moduler::Type::ArrayType do
+describe Moduler::TypeDSL do
   shared_context "it behaves exactly like a normal array" do
     it "size works" do
       expect(array.size).to eq 3
@@ -305,7 +305,8 @@ describe Moduler::Type::ArrayType do
     end
   end
 
-  let(:type) { Moduler::Type::ArrayType.new }
+  let(:type_system) { Moduler::TypeDSL.type_system }
+  let(:type) { type_system.array_type.specialize }
   let(:instance) { type.new_facade([1,2,3]) }
   context "With an empty type" do
     include_context "it behaves exactly like a normal array" do
@@ -315,7 +316,7 @@ describe Moduler::Type::ArrayType do
 
   context "With an index type" do
     before do
-      type.index_type = Moduler::Type.new(
+      type.index_type = type_system.base_type.specialize(
         coercer: ArrayTypeIndexCoercer.new(1),
         coercer_out: ArrayTypeIndexCoercer.new(1)
       )
@@ -330,7 +331,7 @@ describe Moduler::Type::ArrayType do
 
   context "With an element type" do
     before do
-      type.element_type = Moduler::Type.new(
+      type.element_type = type_system.base_type.specialize(
         coercer:     ArrayMultiplyCoercer.new,
         coercer_out: ArrayMultiplyCoercer.new
       )
@@ -353,7 +354,7 @@ describe Moduler::Type::ArrayType do
 
     context "And an index type" do
       before do
-        type.index_type = Moduler::Type.new(
+        type.index_type = type_system.base_type.specialize(
           coercer: ArrayTypeIndexCoercer.new(1),
           coercer_out: ArrayTypeIndexCoercer.new(1)
         )

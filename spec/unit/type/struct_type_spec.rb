@@ -1,19 +1,19 @@
 require 'support/spec_support'
-require 'moduler/type'
-require 'moduler/type/struct_type'
+require 'moduler/type_dsl'
 require 'moduler/validation/coercer'
 require 'moduler/validation/coercer_out'
 require 'moduler/lazy_value'
 
-describe Moduler::Type::StructType do
-  let(:type) { Moduler::Type::StructType.new }
+describe Moduler::TypeDSL do
+  let(:type_system) { Moduler::TypeDSL.type_system }
+  let(:type) { type_system.struct_type.specialize }
   context "With no modifications" do
     it "The resulting class has no instance methods" do
       expect(type.facade_class.instance_methods(false)).to eq [ :to_s, :inspect ]
     end
   end
   context "After adding a field" do
-    before { type.attributes[:foo] = Moduler::Type.new }
+    before { type.attributes[:foo] = type_system.base_type.specialize }
     let(:instance) { type.restore_facade({}) }
     it "The resulting class has the field getter and setter" do
       expect(type.facade_class.instance_methods(false)).to eq [ :to_s, :inspect, :foo, :foo= ]
@@ -47,11 +47,11 @@ describe Moduler::Type::StructType do
   end
 
   context "After adding a field with type coercion" do
-    let(:attribute) { Moduler::Type.new }
+    let(:attribute) { type_system.base_type.specialize }
     let(:instance) { type.restore_facade({}) }
     let(:on_set) { [] }
     before do
-      attribute = Moduler::Type.new
+      attribute = type_system.base_type.specialize
       attribute.coercer = StructMultiplyCoercer.new(2)
       attribute.coercer_out = StructMultiplyCoercer.new(3)
       attribute.register(:on_set) do |v|
@@ -101,8 +101,8 @@ describe Moduler::Type::StructType do
   context "After adding a struct field" do
     let(:on_set) { [] }
     before do
-      attribute = Moduler::Type::StructType.new
-      attribute.attributes[:bar] = Moduler::Type.new
+      attribute = type_system.struct_type.specialize
+      attribute.attributes[:bar] = type_system.base_type.specialize
       type.attributes[:foo] = attribute
 
       attribute.register(:on_set) do |v|

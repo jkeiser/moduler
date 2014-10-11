@@ -1,14 +1,14 @@
 require 'support/spec_support'
-require 'moduler/type'
+require 'moduler/type_dsl'
 require 'moduler/validation/coercer'
 require 'moduler/validation/coercer_out'
 require 'moduler/lazy_value'
 require 'moduler/validation/coercer/compound_coercer'
 require 'moduler/validation/coercer_out/compound_coercer_out'
 
-describe Moduler::Type do
+describe Moduler::TypeDSL do
   let(:type) do
-    type = Moduler::Type.new
+    type = Moduler::TypeDSL.type_system.base_type.specialize
     type.register(:on_set) do |v|
       expect(v.type).to eq type
       on_set << v.value
@@ -116,8 +116,8 @@ describe Moduler::Type do
     context "default values" do
       after { expect(on_set).to eq [] }
 
-      it "When NO_VALUE is passed, and no default is specified, NO_VALUE is returned" do
-        expect(type.coerce_out(NO_VALUE)).to eq NO_VALUE
+      it "When NO_VALUE is passed, and no default is specified, nil is returned" do
+        expect(type.coerce_out(NO_VALUE)).to eq nil
       end
 
       it "When NO_VALUE is passed, and a default is specified, it is returned" do
@@ -282,13 +282,13 @@ describe Moduler::Type do
         after { expect(on_set).to eq [] }
 
         it "type.call() is called with no arguments" do
-          expect(type.call(value)).to eq NO_VALUE
+          expect(type.call(value)).to eq nil
         end
 
         it "type.call() does not run coercers_out or coercers" do
           type.coercer = MultiplyCoercer.new(2)
           type.coercer_out = MultiplyCoercerOut.new(3)
-          expect(type.call(value)).to eq NO_VALUE
+          expect(type.call(value)).to eq nil
         end
 
         it "type.call() with default returns the default value" do

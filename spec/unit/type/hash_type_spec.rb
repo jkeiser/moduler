@@ -1,10 +1,10 @@
 require 'support/spec_support'
 require 'moduler/lazy_value'
-require 'moduler/type/hash_type'
+require 'moduler/type_dsl'
 require 'moduler/validation/coercer'
 require 'moduler/validation/coercer_out'
 
-describe Moduler::Type::HashType do
+describe Moduler::TypeDSL do
   shared_context "it behaves exactly like a normal hash" do
     it "size works" do
       expect(hash.size).to eq 3
@@ -86,7 +86,8 @@ describe Moduler::Type::HashType do
     end
   end
 
-  let(:type) { Moduler::Type::HashType.new }
+  let(:type_system) { Moduler::TypeDSL.type_system }
+  let(:type) { type_system.hash_type.specialize }
   let(:instance) { type.new_facade(a:1,b:2,c:3) }
   context "With an empty type" do
     include_context "it behaves exactly like a normal hash" do
@@ -108,7 +109,7 @@ describe Moduler::Type::HashType do
 
   context "With a key type" do
     before do
-      type.key_type = Moduler::Type.new(
+      type.key_type = type_system.base_type.specialize(
         coercer:     HashStringCoercer.new,
         coercer_out: HashStringCoercer.new
       )
@@ -138,7 +139,7 @@ describe Moduler::Type::HashType do
 
   context "With a value type" do
     before do
-      type.value_type = Moduler::Type.new(
+      type.value_type = type_system.base_type.specialize(
         coercer:     HashNumberMultiplier.new,
         coercer_out: HashNumberMultiplier.new
       )
@@ -156,11 +157,11 @@ describe Moduler::Type::HashType do
 
   context "With both a key and a value type" do
     before do
-      type.key_type = Moduler::Type.new(
+      type.key_type = type_system.base_type.specialize(
         coercer:     HashStringCoercer.new,
         coercer_out: HashStringCoercer.new
       )
-      type.value_type = Moduler::Type.new(
+      type.value_type = type_system.base_type.specialize(
         coercer:     HashNumberMultiplier.new,
         coercer_out: HashNumberMultiplier.new
       )

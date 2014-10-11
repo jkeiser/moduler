@@ -1,4 +1,5 @@
-require 'moduler/type'
+require 'support/spec_support'
+require 'moduler/type_dsl'
 require 'moduler/validation/validator/cannot_be'
 require 'moduler/validation/validator/equal_to'
 require 'moduler/validation/validator/kind_of'
@@ -9,7 +10,8 @@ require 'moduler/validation/validator/validate_proc'
 require 'moduler/errors'
 
 describe Moduler::Validation::Validator do
-  let(:type) { Moduler::Type.new }
+  let(:type_system) { Moduler::TypeDSL.type_system }
+  let(:type) { type_system.base_type.specialize }
 
   context "With cannot_be(:nil,:frozen,:terrible)" do
     before { type.validator = Moduler::Validation::Validator::CannotBe.new(:nil,:frozen,:terrible) }

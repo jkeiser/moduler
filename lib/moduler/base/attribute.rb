@@ -134,10 +134,7 @@ module Moduler
           @hash = hash
           @name = name
         end
-@@counter = 0
         def get
-          @@counter += 1
-          raise "Get #{@name}" if @@counter > 31
           if @hash.has_key?(@name)
             @hash[@name]
           else

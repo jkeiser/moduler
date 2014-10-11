@@ -1,10 +1,10 @@
 require 'support/spec_support'
 require 'moduler/lazy_value'
-require 'moduler/type/set_type'
+require 'moduler/type_dsl'
 require 'moduler/validation/coercer'
 require 'moduler/validation/coercer_out'
 
-describe Moduler::Type::SetType do
+describe Moduler::TypeDSL do
   class SetMultiplyCoercer
     include Moduler::Validation::Coercer
     include Moduler::Validation::CoercerOut
@@ -76,7 +76,8 @@ describe Moduler::Type::SetType do
     end
   end
 
-  let(:type) { Moduler::Type::SetType.new }
+  let(:type_system) { Moduler::TypeDSL.type_system }
+  let(:type) { type_system.set_type.specialize }
   let(:instance) { type.new_facade([1,2,3]) }
   context "With an empty type" do
     include_context "it behaves exactly like a normal set" do
@@ -86,7 +87,7 @@ describe Moduler::Type::SetType do
 
   context "With an item type" do
     before do
-      type.item_type = Moduler::Type.new(
+      type.item_type = type_system.base_type.specialize(
         coercer:     SetMultiplyCoercer.new,
         coercer_out: SetMultiplyCoercer.new
       )
