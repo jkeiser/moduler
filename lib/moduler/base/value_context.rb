@@ -1,17 +1,21 @@
 module Moduler
   module Base
     class ValueContext
-      def initialize(value=NO_VALUE)
+      def initialize(value = NO_VALUE, &block)
         @value = value
+        @block = block
       end
-
-      attr_reader :value
 
       def get
         @value
       end
+
       def set(value)
-        @value = value
+        if @block
+          @block.call(value)
+        else
+          @value = value
+        end
       end
     end
   end

@@ -134,7 +134,8 @@ describe Moduler::TypeDSL do
       expect(instance.foo).to eq struct.new(bar: 10)
       expect(on_set).to eq [ struct.new(bar: 10) ]
     end
-    it "The method setter works" do
+    it "The method setter works", :focus do
+      instance.foo bar: 10
       expect(instance.foo bar: 10).to eq struct.new(bar: 10)
       expect(instance.foo).to eq struct.new(bar: 10)
       expect(on_set).to eq [ struct.new(bar: 10) ]

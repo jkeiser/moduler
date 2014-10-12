@@ -1,4 +1,3 @@
-require 'moduler/base/attribute'
 require 'moduler/validation/validator/equal_to'
 require 'moduler/validation/validator/kind_of'
 

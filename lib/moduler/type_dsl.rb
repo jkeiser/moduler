@@ -12,45 +12,20 @@ require 'moduler/validation/validator/regexes'
 require 'moduler/validation/validator/cannot_be'
 require 'moduler/validation/validator/respond_to'
 require 'moduler/validation/validator/validate_proc'
+require 'moduler/emitter'
 
 module Moduler
   module TypeDSL
-    def self.type_system
-      @type_system ||= Base::TypeSystem.new(self)
-    end
+    extend Moduler::Base::TypeSystem
 
-    # Round 1: create the types and link them up in a type system
-    class Type
-      include Moduler::Base::Mix::Type
-      def self.type_system
-        TypeDSL.type_system
-      end
-      def type_system
-        self.class.type_system
-      end
-    end
-    class StructType < Type
-      include Moduler::Base::Mix::StructType
-    end
-    class TypeType < StructType
-      include Moduler::Base::Mix::TypeType
-    end
-    class HashType < Type
-      include Moduler::Base::Mix::HashType
-    end
-    class ArrayType < Type
-      include Moduler::Base::Mix::ArrayType
-    end
-    class SetType < Type
-      include Moduler::Base::Mix::SetType
-    end
+    create_local_types
 
     # Round 2: add support for "attribute"
     class Type
-      def self.type
-        @type ||= type_system.type_type.specialize(facade_class: self)
-      end
-
+      # def self.type
+      #   @type ||= type_system.type_type.specialize(facade_class: self)
+      # end
+      #
       # Mock out attributes we intend to override
       def coercer_out; end
       def coercer; end
@@ -113,7 +88,7 @@ module Moduler
       attribute_type = type_system.type(Hash[Symbol => Type])
       type.inline do
         attribute :attributes, attribute_type
-        attribute :specialize_from, Type
+        attribute :specialize_from, self, :default => lazy { {} }
         attribute :reopen_on_call, boolean, :default => false
       end
       singular_attribute_proc = Base::Attribute.singular_hash_proc(:attributes, attribute_type)
