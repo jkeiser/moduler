@@ -1,9 +1,10 @@
+require 'moduler/base/type'
 require 'moduler/event'
 require 'moduler/facade/hash_facade'
 
 module Moduler
   module Base
-    module HashType
+    class HashType < Type
       def raw_get?
         false
       end
@@ -23,24 +24,12 @@ module Moduler
         end
       end
 
-      # def facade_class
-      #   Moduler::Facade::HashFacade
-      # end
-      #
-      # def new_facade(value)
-      #   facade_class.new(coerce(value), self)
-      # end
-      #
-      # def restore_facade(raw_value)
-      #   facade_class.new(raw_value, self)
-      # end
-
       #
       # We store hashes internally as hashes, and slap facades on them when the
       # user requests them.
       #
       def coerce(hash)
-        if hash.is_a?(facade_class)
+        if hash.is_a?(Moduler::Facade::HashFacade)
           hash = hash.hash
         elsif key_type || value_type
           hash = hash.inject({}) do |result,(key,value)|
@@ -67,7 +56,7 @@ module Moduler
         end
 
         if key_type || value_type
-          facade_class.new(hash, self)
+          Moduler::Facade::HashFacade.new(hash, self)
         else
           hash
         end
@@ -104,19 +93,6 @@ module Moduler
 
       def possible_events
         super.merge(:on_hash_updated => Event)
-      end
-
-      #
-      # Handle singular form:
-      # address :home, :street => ... do ... end
-      # zipcode :home, 80917
-      # zipcode :home => 80917, :work => 80918
-      #
-      def emit_attribute(target, name)
-        super
-        if @hash[:singular]
-          target.send(:define_method, @hash[:singular], Attribute.singular_hash_proc(name, self))
-        end
       end
     end
   end

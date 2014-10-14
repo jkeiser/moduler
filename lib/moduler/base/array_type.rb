@@ -1,31 +1,20 @@
+require 'moduler/base/type'
 require 'moduler/event'
 require 'moduler/facade/array_facade'
 
 module Moduler
   module Base
-    module ArrayType
+    class ArrayType < Type
       def raw_get?
         false
       end
-
-      # def facade_class
-      #   Moduler::Facade::ArrayFacade
-      # end
-      #
-      # def new_facade(value)
-      #   facade_class.new(coerce(value), self)
-      # end
-      #
-      # def restore_facade(raw_value)
-      #   facade_class.new(raw_value, self)
-      # end
 
       #
       # We store arrays internally as arrays, and slap facades on them when the
       # user requests them.
       #
       def coerce(array)
-        if array.is_a?(facade_class)
+        if array.is_a?(Moduler::Facade::ArrayFacade)
           array = array.array
         elsif element_type
           array = array.map { |value| coerce_value(nil, value) }
@@ -47,7 +36,7 @@ module Moduler
         end
 
         if index_type || element_type
-          facade_class.new(array, self)
+          Moduler::Facade::ArrayFacade.new(array, self)
         else
           array
         end
@@ -98,44 +87,6 @@ module Moduler
 
       def possible_events
         super.merge(:on_array_updated => Event)
-      end
-
-      #
-      # Handle singular form:
-      # address :street => ... do ... end
-      # zipcode 80917
-      #
-      def emit_attribute(target, name)
-        super
-        if @hash[:singular]
-          type = self
-          target.send(:define_method, @hash[:singular]) do |*args, &block|
-            key = type.coerce_key(args.shift)
-            context = ArrayAddContext.new(@hash, name)
-            if element_type
-              element_type.call(context, *args, &block)
-            else
-              # Call the empty type
-              type_system.base_type.call(context, *args, &block)
-            end
-          end
-        end
-      end
-
-      class ArrayAddContext
-        def initialize(attributes, name)
-          @attributes = attributes
-          @name = name
-        end
-
-        def get
-          NO_VALUE
-        end
-
-        def set(value)
-          @attributes[@name] ||= []
-          @attributes[@name] << value
-        end
       end
     end
   end

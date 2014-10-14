@@ -1,10 +1,13 @@
-class X
-end
-X.instance_eval do
-  def blah
-   @blah
+require 'moduler/type_dsl'
+
+class Blah
+  Moduler::TypeDSL::StructType.new.inline do
+    attribute :foo
+    attribute :bar
   end
-  @blah = 10
 end
 
-puts X.blah
+
+x = Blah.new
+x.foo = 10
+puts x.foo

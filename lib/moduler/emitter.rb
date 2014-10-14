@@ -1,12 +1,21 @@
 require 'moduler/base/value_context'
 require 'moduler/facade/struct'
+require 'moduler/base/hash_type'
 
 module Moduler
   class Emitter
     def initialize(type, target)
+      @target = target
+      @type = type
+    end
+
+    attr_accessor :target
+    attr_accessor :type
+
+    def emit_target_class_type
       # Create the target class if asked
       if target.is_a?(Hash)
-        target = eval <<-EOM, __FILE__, __LINE__+1
+        @target = eval <<-EOM, __FILE__, __LINE__+1
           class target[:parent]::#{to_camel_case(target[:name])}#{target[:superclass] ? " < target[:superclass]" : ""}
             self
           end
@@ -18,29 +27,23 @@ module Moduler
       end
 
       # Set the type on the class
-      if target.respond_to?(:type)
+      if target.respond_to?(:type) && target.type
         if target.type != type
           raise "Tried to emit #{type} to #{target}, but #{target.type} is already being emitted there!"
         end
       else
+        local_type = type
         target.instance_eval <<-EOM, __FILE__, __LINE__+1
           def type
             @type
           end
-          @type = type
+          @type = local_type
         EOM
       end
-
-      @target = target
-    end
-
-    attr_reader :target
-
-    def type
-      target.type
     end
 
     def emit
+      emit_target_class_type
     end
 
     def type_reference(type)
@@ -63,7 +66,7 @@ module Moduler
 
     def self.emit(type, target)
       case type
-      when type.type_system.struct_type
+      when Moduler::Base::StructType, nil
         StructEmitter.new(type, target).emit
       else
         raise "Unexpected type #{type}"
@@ -73,13 +76,15 @@ module Moduler
     class StructEmitter < Emitter
       def emit
         super
-        type_ref = type_reference(type)
-
-        target.class_eval "include Moduler::Facade::Struct"
 
         type.attributes.map do |name,field_type|
           emit_field(name, field_type)
         end
+      end
+
+      def emit_target_class_type
+        super
+        target.class_eval "include Moduler::Facade::Struct"
       end
 
       def emit_field(name, field_type)
@@ -95,7 +100,7 @@ module Moduler
 
           emit_set_field(name, type_ref)
 
-          if field_type.is_a?(HashType) && field_type.singular
+          if field_type.is_a?(Moduler::Base::HashType) && field_type.singular
             emit_singular_hash_field(field_type.singular, name, field_type)
           end
         else
@@ -108,14 +113,14 @@ module Moduler
           def #{name}(*args, &block)
             if args.size == 0 && !block
               # Handles lazy values and defaults for you
-              result = @hash[name]
+              result = @#{name}
               if !result
-                if !@hash.has_key?(name)
-                  result = #{type_ref}.raw_default { |v| @hash[name] = v }
+                if !defined?(@#{name})
+                  result = #{type_ref}.raw_default { |v| @#{name} = v }
                   result = nil if result == NO_VALUE
                 end
               elsif result.is_a?(Moduler::LazyValue)
-                result = #{type_ref}.raw_value(@hash[name]) { |v| @hash[name] = v }
+                result = #{type_ref}.raw_value(@#{name}) { |v| @#{name} = v }
               end
               result
             else
@@ -156,7 +161,7 @@ module Moduler
         EOM
       end
 
-      def emit_set_field(name)
+      def emit_set_field(name, type_ref)
         target.module_eval <<-EOM, __FILE__, __LINE__+1
           def #{name}=(value)
             value = #{type_ref}.coerce(value)
@@ -203,7 +208,7 @@ module Moduler
                 @#{attribute_name} ||= {}
                 @#{attribute_name}[key] = v
               end
-              #{type_ref}.call(context, *args, &block)
+              #{type_ref}.value_type.call(context, *args, &block)
             end
           end
         EOM

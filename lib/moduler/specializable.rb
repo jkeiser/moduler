@@ -5,20 +5,6 @@ module Moduler
   # A Specializable thing.
   #
   module Specializable
-    def initialize(*args, &block)
-      case args[0]
-      when Class
-        super(args.shift)
-      when Moduler::Scope
-        Scope.bring_into_scope(args.shift)
-        super()
-      else
-        super()
-      end
-      dsl_eval(*args)
-      instance_eval(&block) if block
-    end
-
     def dsl_eval(options={}, &block)
       options.each do |key, value|
         if respond_to?(:"#{key}=")
@@ -31,7 +17,15 @@ module Moduler
     end
 
     def specialize(*args, &block)
-      self.class.new(self, *args, &block)
+      case self
+      when Class
+        other = self.class.new(self)
+      else
+        other = clone
+      end
+
+      other.dsl_eval(*args, &block)
+      other
     end
   end
 end

@@ -5,15 +5,20 @@ module Moduler
     module Struct
       include Moduler::Specializable
 
+      def initialize(*args, &block)
+        dsl_eval(*args, &block)
+      end
+
       def clone
         other = self.dup
-        #{type_ref}.attributes.each_pair do |key,type|
+        self.class.type.attributes.each_pair do |key,type|
           var = :"@#{key}"
           if other.instance_variable_defined?(var)
             value = type.clone_value(other.instance_variable_get(var))
             other.instance_variable_set(var, value)
           end
         end
+        other
       end
 
       def specialize(*args, &block)

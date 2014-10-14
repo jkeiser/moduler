@@ -1,3 +1,5 @@
+require 'moduler/constants'
+
 module Moduler
   module Base
     class ValueContext

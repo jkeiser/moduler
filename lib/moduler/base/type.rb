@@ -1,11 +1,23 @@
 require 'moduler/specializable'
+require 'moduler/lazy_value'
+require 'moduler/constants'
 
 module Moduler
   module Base
-    module Type
+    class Type
       include Moduler::Specializable
 
-      attr_accessor :target # The Class this is tied to (if any)
+      require 'moduler/emitter'
+
+      Moduler::Emitter::StructEmitter.new(nil, self).instance_eval do
+        emit_typeless_get_set_field(:target)
+        emit_typeless_get_set_field(:coercer_out)
+        emit_typeless_get_set_field(:coercer)
+        emit_typeless_get_set_field(:validator)
+        emit_typeless_get_set_field(:events)
+        emit_typeless_get_set_field(:call_proc)
+        emit_typeless_get_set_field(:skip_coercion_if)
+      end
 
       def clone_value(value)
         begin
@@ -15,18 +27,6 @@ module Moduler
         end
       end
 
-      # def inline(&block)
-      #   raise "Must pass block to inline" if !block
-      #   target = block.binding.eval('self')
-      #   instance_eval(&block)
-      #   emit_to(target)
-      # end
-      #
-      # def emit_attribute(target, name)
-      #   Moduler::Base::Attribute.emit_attribute(target, name, self)
-      # end
-      #
-
       #
       # Tell whether call() / coerce() can be skipped if the user asks for a
       # value.  Caller will still need to handle defaults and lazy values (which
@@ -35,18 +35,6 @@ module Moduler
       def raw_get?
         !coercer_out && !call_proc
       end
-
-      #
-      # TODO we need a has_value? for skip_coercion_if that says "will it give
-      # me a value?" and includes default.  To do that, types need types.  Yay?
-      #
-      # def is_set?(name)
-      #   instance_variable_defined?("@#{name}")
-      # end
-      #
-      # def reset(name)
-      #   remove_instance_variable("@#{name}")
-      # end
 
       #
       # Transform or validate the value before setting its raw value.
@@ -135,16 +123,12 @@ module Moduler
       end
 
       def raw_default(&cache_proc)
-        value = @hash[:default] || NO_VALUE
+        value = @default || NO_VALUE
         if value.is_a?(LazyValue)
           cache = value.cache
-          puts "self #{self}"
           value = instance_eval(&value)
-          puts "value #{value}"
           value = coerce(value)
-        end
-
-        if value != NO_VALUE
+        elsif value != NO_VALUE
           # We dup defaults when we copy them out.
           begin
             # Some things cannot be dup'd, and you won't know this till after the fact
@@ -152,10 +136,10 @@ module Moduler
             value = value.dup
           rescue TypeError
           end
+        end
 
-          if cache && cache_proc
-            cache_proc.call(value)
-          end
+        if value != NO_VALUE && cache && cache_proc
+          cache_proc.call(value)
         end
 
         value
@@ -165,12 +149,12 @@ module Moduler
       # The proc to instance_eval on +call+.
       #
       def call(context, *args, &block)
-        if @hash[:call_proc]
+        if @call_proc
           if block
-            context.define_method(:call_proc, @hash[:call_proc])
+            context.define_method(:call_proc, @call_proc)
             result = context.call_proc(context, *args, &block)
           else
-            result = context.instance_exec(context, *args, &@hash[:call_proc])
+            result = context.instance_exec(context, *args, &@call_proc)
           end
           if result == NOT_HANDLED
             result = default_call(context, *args, &block)
@@ -217,7 +201,7 @@ module Moduler
         if args.size == 0 && !block && !defined?(@default)
           nil
         else
-          call(context, *args, &block)
+          call(ValueContext.new(@default) { |v| @default = v }, *args, &block)
         end
       end
       def default=(value)
@@ -243,7 +227,7 @@ module Moduler
       #
       # ==== Example
       #
-      #   type.fire_on_set(@hash[:foo])
+      #   type.fire_on_set(@foo)
       #
       def fire_on_set(value, is_raw=false)
         if events && events[:on_set]
@@ -286,7 +270,9 @@ module Moduler
       # By default, this is just the list of possible_events from the Type class.
       #
       def possible_events
-        type_system.possible_events
+        {
+          :on_set => Moduler::Event
+        }
       end
 
       def add_validator(validator)
@@ -301,3 +287,5 @@ module Moduler
     end
   end
 end
+
+require 'moduler/base/inline_struct'

@@ -1,37 +1,16 @@
-require 'moduler/base/specializable_type'
-require 'set'
-require 'moduler/base/boolean'
+require 'moduler/type_dsl'
 require 'moduler/base/nullable'
-require 'moduler/validation/validator/equal_to'
-require 'moduler/validation/validator/kind_of'
+require 'moduler/base/boolean'
 
 module Moduler
-  module Base
-    module TypeType
-      include Moduler::Base::SpecializableType
-
-      def base_type
-        type_system.base_type
-      end
-      def array_type
-        type_system.array_type
-      end
-      def hash_type
-        type_system.hash_type
-      end
-      def set_type
-        type_system.set_type
-      end
-      def struct_type
-        type_system.struct_type
-      end
-
-      #
-      # Given a type like Array[String] or Hash[String => Symbol] or ArrayType,
-      # resolve it to a system type.
-      #
+  module TypeDSL
+    #
+    #
+    # Given a type like Array[String] or Hash[String => Symbol] or ArrayType,
+    # resolve it to a system type.
+    #
+    class TypeType < StructType
       def coerce(type)
-        type = super
         if !type.is_a?(LazyValue)
           coerced = coerce?(type)
           if coerced
@@ -40,42 +19,42 @@ module Moduler
             raise "Unrecognized type #{type}"
           end
         end
-        type
+        super(type)
       end
 
       def coerce?(type)
         case type
-        when base_type.class
+        when Type
           type
 
         when ::Array
           if type.size == 0
-            array_type
+            ArrayType.new
           elsif type.size == 1
-            array_type.specialize(element_type: coerce(type[0]))
+            ArrayType.new(element_type: coerce(type[0]))
           end
 
         when ::Hash
           if type.size == 0
-            hash_type
+            HashType.new
           elsif type.size == 1
             key_type = coerce?(type.first[0])
             if key_type
               value_type = coerce?(type.first[1])
               if value_type
-                hash_type.specialize(key_type: key_type, value_type: value_type)
+                HashType.new(key_type: key_type, value_type: value_type)
               end
             end
           end
 
         when ::Set
           if type.size == 0
-            set_type
+            SetType.new
           elsif type.size == 1
-            set_type.specialize(item_type: coerce(type[0].key))
+            SetType.new(item_type: coerce(type[0].key))
           end
 
-        when Nullable
+        when Base::Nullable
           # Honestly, the Right Thing is compound types with unions, but we
           # don't support them and I'm not ready to force them until we need
           # them badly--too much conceptual overhead.
@@ -83,26 +62,26 @@ module Moduler
 
         when Module
           if type == Array
-            array_type
+            ArrayType.new
           elsif type == Hash
-            hash_type
+            HashType.new
           elsif type == Set
-            set_type
-          elsif type == Nullable
-            base_type.specialize skip_coercion_if: nil
-          elsif type == Boolean
-            base_type.specialize do
+            SetType.new
+          elsif type == Base::Nullable
+            Type.new skip_coercion_if: nil
+          elsif type == Base::Boolean
+            Type.new do
               add_validator Validation::Validator::EqualTo.new(true, false)
             end
-          elsif type == base_type.class
-            type_system.type_type
-          elsif type < base_type.class
-            type_system.type_type.specialize do
-              specialize_from type.empty
+          elsif type == Type
+            TypeType.new
+          elsif type < Type
+            TypeType.new do
+              specialize_from Type.new
               add_validator Validation::Validator::KindOf.new(type)
             end
           else
-            base_type.specialize do
+            TypeType.new do
               add_validator Validation::Validator::KindOf.new(type)
             end
           end
