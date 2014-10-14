@@ -24,7 +24,7 @@ module Moduler
 
       def coerce?(type)
         case type
-        when Type
+        when Base::Type
           type
 
         when ::Array

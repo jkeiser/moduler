@@ -91,7 +91,7 @@ module Moduler
     class StructType
       def attribute(name, *args, &block)
         context = Base::ValueContext.new(attributes[name]) { |v| attributes[name] = v }
-        attribute name, Type.for(*args, &block)
+        attributes[name] = Type.for(*args, &block)
       end
     end
 
@@ -106,7 +106,7 @@ module Moduler
       # TODO declare attributes with :no_emit, once we support :no_emit
       #attribute :attributes#, :singular => :attribute
       attribute :specialize_from, Type.for(StructType, :default => {})
-      attribute :reopen_on_call, Type.for(boolean, :default => false)
+      attribute :reopen_on_call, Type.for(Moduler::Base::Boolean, :default => false)
     end
     class ArrayType
       attribute :index_type, Type.for(Type)
@@ -143,7 +143,7 @@ module Moduler
       # if !events[:on_set], there are no listeners for on_set.
       #
       attribute :events, Type.for(Hash[Symbol => Event])
-      attribute :required, Type.for(boolean)
+      attribute :required, Type.for(Moduler::Base::Boolean)
     end
     class SetType
       attribute :item_type, Type.for(Type)
@@ -151,7 +151,7 @@ module Moduler
     end
     class TypeType
       attribute :specialize_from, Type.for(Type, :default => Type.new)
-      attribute :reopen_on_call, Type.for(boolean, :default => true)
+      attribute :reopen_on_call, Type.for(Moduler::Base::Boolean, :default => true)
     end
   end
 end
