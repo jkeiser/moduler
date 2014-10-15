@@ -1,5 +1,4 @@
 require 'moduler/base/type'
-require 'moduler/event'
 require 'moduler/facade/array_facade'
 
 module Moduler
@@ -88,10 +87,6 @@ module Moduler
         else
           value.dup
         end
-      end
-
-      def possible_events
-        super.merge(:on_array_updated => Event)
       end
     end
   end

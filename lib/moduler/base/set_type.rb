@@ -1,5 +1,4 @@
 require 'moduler/base/type'
-require 'moduler/event'
 require 'moduler/facade/set_facade'
 require 'set'
 
@@ -60,10 +59,6 @@ module Moduler
 
       def coerce_item_out(item)
         item_type ? item_type.coerce_out(item) : item
-      end
-
-      def self.possible_events
-        super.merge(:on_set_updated => Event)
       end
     end
   end

@@ -52,9 +52,7 @@ module Moduler
         key = type.coerce_key(key)
         result = type.coerce_value(key, value)
         hash[key] = result
-        result = type.coerce_value_out(key, result)
-        type.value_type.fire_on_set(result) if type.value_type
-        result
+        type.coerce_value_out(key, result)
       end
       def delete(key)
         key = type.coerce_key(key)

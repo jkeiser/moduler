@@ -1,5 +1,4 @@
 require 'moduler/base/type'
-require 'moduler/event'
 require 'moduler/facade/hash_facade'
 
 module Moduler
@@ -89,10 +88,6 @@ module Moduler
 
       def item_type_for(raw_key)
         value_type
-      end
-
-      def possible_events
-        super.merge(:on_hash_updated => Event)
       end
     end
   end

@@ -1,4 +1,3 @@
-require 'moduler/event'
 require 'moduler/base/value_context'
 
 module Moduler
@@ -62,10 +61,6 @@ module Moduler
       #   attributes[raw_field_name]
       # end
 
-      def self.possible_events
-        super.merge(:on_struct_updated => Event)
-      end
-
       def inline(*args, &block)
         # Determine the target from the caller
         target = block.binding.eval('self')
@@ -123,13 +118,11 @@ module Moduler
         if args.size == 1 && !block
           if args[0].is_a?(LazyValue)
             context.set(args[0])
-            fire_on_set_raw(args[0])
             return args[0]
           end
 
           if args[0] == nil
             context.set(args[0])
-            fire_on_set(args[0])
             return args[0]
           end
         end
@@ -147,7 +140,6 @@ module Moduler
 
         context.set(value)
         value = coerce_out(value)
-        fire_on_set(value)
         value
       end
 

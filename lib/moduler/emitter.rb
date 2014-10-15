@@ -166,7 +166,6 @@ module Moduler
           def #{name}=(value)
             value = #{type_ref}.coerce(value)
             @#{name} = value
-            #{type_ref}.fire_on_set_raw(value)
             # NOTE: Ruby doesn't let you return a value here anyway--it will always
             # return the passed-in value to the user.
           end
@@ -189,7 +188,6 @@ module Moduler
                   key = #{type_ref}.coerce_key(key)
                   value = #{type_ref}.coerce_value(value)
                   @#{attribute_name}[key] = value
-                  #{type_ref}.value_type.fire_on_set_raw(value) if #{type_ref}.value_type
                 end
               end
             else
