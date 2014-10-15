@@ -1,7 +1,6 @@
 require 'moduler/specializable'
 require 'moduler/lazy_value'
 require 'moduler/constants'
-require 'moduler/validation/validator/compound_validator'
 
 module Moduler
   module Base
@@ -49,34 +48,7 @@ module Moduler
           # Leave lazy values alone until we retrieve them
           value
         else
-          validate(value) if validator
           coercer ? coercer.coerce(value) : value
-        end
-      end
-
-      #
-      # Run the validator against the value, throwing a ValidationError if there
-      # are issues.
-      #
-      # Generally, you should be running coerce(), as it is possible for coerce
-      # methods to do some validation.
-      #
-      def validate(value)
-        if is_set?(:skip_coercion_if) && skip_coercion_if == value
-          return
-        end
-
-        if validator
-          result = validator.validate(value)
-          if result.is_a?(Array)
-            if result.size > 0
-              raise ValidationFailed.new(result)
-            end
-          elsif result.is_a?(Hash) || result.is_a?(String)
-            raise ValidationFailed.new([result])
-          elsif result == false
-            raise ValidationFailed.new([ Validation::Validator.default_validation_failure(validator, value) ])
-          end
         end
       end
 
@@ -274,16 +246,6 @@ module Moduler
         {
           :on_set => Moduler::Event
         }
-      end
-
-      def add_validator(validator)
-        if @validator.is_a?(Moduler::Validation::Validator::CompoundValidator)
-          @validator.validators << validator
-        elsif @validator
-          @validator = Moduler::Validation::Validator::CompoundValidator(@validator, validator)
-        else
-          @validator = validator
-        end
       end
     end
   end
