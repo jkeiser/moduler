@@ -2,6 +2,8 @@ class A
   def foo
   end
 end
+puts A
+puts A.dup
 
 a = A.new
 a.instance_eval do

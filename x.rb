@@ -1,7 +1,7 @@
-require 'moduler/type_dsl'
+require 'moduler/type'
 
 class Blah
-  Moduler::TypeDSL::StructType.new.inline do
+  Moduler::Type.inline do
     attribute :foo
     attribute :bar
   end

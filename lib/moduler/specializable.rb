@@ -5,12 +5,14 @@ module Moduler
   # A Specializable thing.
   #
   module Specializable
-    def dsl_eval(options={}, &block)
-      options.each do |key, value|
-        if respond_to?(:"#{key}=")
-          public_send(:"#{key}=", value)
-        else
-          public_send(key, value)
+    def dsl_eval(options=nil, &block)
+      if options
+        options.each do |key, value|
+          if respond_to?(:"#{key}=")
+            public_send(:"#{key}=", value)
+          else
+            public_send(key, value)
+          end
         end
       end
       instance_eval(&block) if block

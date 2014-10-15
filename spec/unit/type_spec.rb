@@ -1,24 +1,16 @@
 require 'support/spec_support'
-require 'moduler/type_dsl'
+require 'moduler/type'
 require 'moduler/validation/coercer'
 require 'moduler/validation/coercer_out'
 require 'moduler/lazy_value'
 require 'moduler/validation/coercer/compound_coercer'
 require 'moduler/validation/coercer_out/compound_coercer_out'
 
-describe Moduler::TypeDSL do
+describe Moduler::Type do
   let(:type) do
-    type = Moduler::TypeDSL.type_system.base_type.specialize
-    type.register(:on_set) do |v|
-      expect(v.type).to eq type
-      on_set << v.value
-    end
-    type
+    Moduler::Type.new
   end
   NO_VALUE = Moduler::NO_VALUE
-  def on_set
-    @on_set ||= []
-  end
 
   class MultiplyCoercer
     include Moduler::Validation::Coercer
@@ -59,7 +51,7 @@ describe Moduler::TypeDSL do
   end
 
   describe "coerce" do
-    after { expect(on_set).to eq [] }
+    #after { expect(on_set).to eq [] }
 
     it "By default, coerce returns the input value" do
       expect(type.coerce(100)).to eq 100
@@ -93,7 +85,7 @@ describe Moduler::TypeDSL do
   end
 
   describe "coerce_out" do
-    after { expect(on_set).to eq [] }
+    #after { expect(on_set).to eq [] }
 
     it "By default, coerce_out returns the input value" do
       expect(type.coerce_out(100)).to eq 100
@@ -114,7 +106,7 @@ describe Moduler::TypeDSL do
     end
 
     context "default values" do
-      after { expect(on_set).to eq [] }
+      #after { expect(on_set).to eq [] }
 
       it "When NO_VALUE is passed, and no default is specified, nil is returned" do
         expect(type.coerce_out(NO_VALUE)).to eq nil
@@ -181,7 +173,7 @@ describe Moduler::TypeDSL do
     end
 
     context "Lazy value" do
-      after { expect(on_set).to eq [] }
+      #after { expect(on_set).to eq [] }
 
       it "When given a lazy value, by default, the value is returned and cached" do
         cache = 0
@@ -279,7 +271,7 @@ describe Moduler::TypeDSL do
     context "default_call" do
       context "When value is NO_VALUE" do
         before { value.set(NO_VALUE) }
-        after { expect(on_set).to eq [] }
+        #after { expect(on_set).to eq [] }
 
         it "type.call() is called with no arguments" do
           expect(type.call(value)).to eq nil
@@ -327,7 +319,7 @@ describe Moduler::TypeDSL do
       it "type.call(value) sets the value" do
         expect(type.call(value, 100)).to eq 100
         expect(value.get).to eq 100
-        expect(on_set).to eq [ 100 ]
+        #expect(on_set).to eq [ 100 ]
       end
 
       it "type.call(value) runs coercers and returns a value with coercers_out" do
@@ -335,14 +327,14 @@ describe Moduler::TypeDSL do
         type.coercer_out = MultiplyCoercerOut.new(3)
         expect(type.call(value, 100)).to eq 600
         expect(value.get).to eq 200
-        expect(on_set).to eq [ 600 ]
+        #expect(on_set).to eq [ 600 ]
       end
 
       it "type.call(&block) sets the value to the block" do
         block = proc { 100 }
         expect(type.call(value, &block)).to eq block
         expect(value.get).to eq block
-        expect(on_set).to eq [ block ]
+        #expect(on_set).to eq [ block ]
       end
 
       it "type.call(&block) with coercers and coercers_out sets the value to the block" do
@@ -351,7 +343,7 @@ describe Moduler::TypeDSL do
         type.coercer_out = WrapMultiplyCoercerOut.new(3)
         expect(type.call(value, &block).call).to eq 600
         expect(value.get.call).to eq 200
-        expect(on_set.map { |x| x.call }).to eq [ 600 ]
+        #expect(on_set.map { |x| x.call }).to eq [ 600 ]
       end
     end
   end

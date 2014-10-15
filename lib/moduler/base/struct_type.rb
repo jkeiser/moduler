@@ -33,18 +33,6 @@ module Moduler
         end
       end
 
-      # def specialize_from?(value)
-      #   if value.is_a?(target)
-      #     value
-      #   end
-      # end
-      # def specialize_from
-      #   target.new
-      # end
-      # def reopen_on_call
-      #   false
-      # end
-
       #
       # We store structs internally with the actual hash class.
       #
@@ -132,30 +120,31 @@ module Moduler
           return super
         end
 
-        if args[0].is_a?(LazyValue)
-          context.set(args[0])
-          fire_on_set_raw(args[0])
-          return args[0]
+        if args.size == 1 && !block
+          if args[0].is_a?(LazyValue)
+            context.set(args[0])
+            fire_on_set_raw(args[0])
+            return args[0]
+          end
+
+          if args[0] == nil
+            context.set(args[0])
+            fire_on_set(args[0])
+            return args[0]
+          end
         end
 
-        if args[0] == nil
-          context.set(args[0])
-          fire_on_set(args[0])
-          return args[0]
-        end
-
-        # Figure out if we want to specialize a value, or start anew
-        value = specialize_from?(args[0])
-        if value
-          args.shift
-        elsif reopen_on_call
+        if reopen_on_call
           value = raw_value(context.get) { |v| context.set(v) }
-          value = specialize_from if value == NO_VALUE
+          if value != NO_VALUE
+            value = value.specialize(*args, &block)
+          else
+            value = default_class.new(*args, &block)
+          end
         else
-          value = specialize_from
+          value = default_class.new(*args, &block)
         end
 
-        value = value.specialize(*args, &block)
         context.set(value)
         value = coerce_out(value)
         fire_on_set(value)
@@ -163,8 +152,14 @@ module Moduler
       end
 
       attr_accessor :supertype
+      attr_accessor :target
+      attr_accessor :reopen_on_call
+      attr_accessor :default_class
+      def default_class
+        @default_class || @target
+      end
     end
   end
 end
 
-require 'moduler/base/type'
+require 'moduler/base/type_attributes'

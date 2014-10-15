@@ -16,10 +16,15 @@ module Moduler
       def coerce(array)
         if array.is_a?(Moduler::Facade::ArrayFacade)
           array = array.array
-        elsif element_type
-          array = array.map { |value| coerce_value(nil, value) }
         else
-          array = array.to_a
+          if array.respond_to?(:to_a)
+            array = array.to_a
+          else
+            array = [ array ]
+          end
+          if element_type
+            array = array.map { |value| coerce_value(nil, value) }
+          end
         end
         super(array)
       end

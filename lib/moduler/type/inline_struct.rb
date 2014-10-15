@@ -1,8 +1,8 @@
+require 'moduler/base/inline_struct'
 require 'moduler/base/struct_type'
-require 'moduler/emitter'
 
 module Moduler
-  module Base
+  module Type
     module InlineStruct
       def self.extended(target)
         target.emitter.emit
@@ -13,12 +13,16 @@ module Moduler
           if @type
             type = @type
           elsif respond_to?(:type) && self.type
-            type = self.type.specialize
+            if type.is_a?(Moduler::Base::StructType)
+              type = StructType.new(type.to_hash)
+            else
+              type = self.type.specialize
+            end
           else
             type = StructType.new
           end
-          Moduler::Emitter::StructEmitter.new(type, self)
         end
+        @emitter = Moduler::Emitter::StructEmitter.new(type, self)
       end
 
       def inherited(subclass)
@@ -32,15 +36,11 @@ module Moduler
       def included(target)
         super
         target.extend(InlineStruct)
-      end
-
-      def attribute(name, type=nil)
-        if type && !type.is_a?(Type)
-          raise "#{type} must be a Type"
-        end
-        self.type.dsl_eval { attributes[name] = type }
-        emitter.emit_field(name, self.type.attributes[name])
+        subclass.emitter.emit
       end
     end
   end
 end
+
+require 'moduler/type/struct_type'
+require 'moduler/emitter'

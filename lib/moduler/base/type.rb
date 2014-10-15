@@ -1,6 +1,7 @@
 require 'moduler/specializable'
 require 'moduler/lazy_value'
 require 'moduler/constants'
+require 'moduler/validation/validator/compound_validator'
 
 module Moduler
   module Base
@@ -288,4 +289,4 @@ module Moduler
   end
 end
 
-require 'moduler/base/inline_struct'
+require 'moduler/base/type_attributes'

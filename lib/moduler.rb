@@ -12,15 +12,15 @@ module Moduler
   # block was created).
   #
   def self.inline(*args, &block)
-    Moduler::TypeDSL.inline(*args, &block)
+    Moduler::Type.inline(*args, &block)
   end
 
   #
   # Create a struct with the given name in the current namespace.
   #
   def self.struct(name, *args, &block)
-    Moduler::TypeDSL.struct(name, *args, &block)
+    Moduler::Type.struct(name, *args, &block)
   end
 end
 
-require 'moduler/type_dsl'
+require 'moduler/type'
