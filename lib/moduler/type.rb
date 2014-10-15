@@ -32,13 +32,12 @@ module Moduler
     require 'moduler/type/basic_type'
     type.default_class = BasicType
 
-    attribute :equal_to
-    attribute :kind_of
+    attr_accessor :nullable, :cannot_be, :equal_to, :kind_of, :regexes, :respond_to, :validators, :required
 
     require 'moduler/type/array_type'
 
+    attribute :kind_of,    Array[kind_of: [ Module ]]
     attribute :equal_to,   Array
-    attribute :kind_of,    Array[Module]
     attribute :nullable,   Boolean
     attribute :regexes,    Array[kind_of: [ Regexp, String ]]
     attribute :cannot_be,  Array[Symbol]

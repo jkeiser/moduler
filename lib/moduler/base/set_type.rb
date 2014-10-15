@@ -40,7 +40,7 @@ module Moduler
       # an item type on this thing).
       #
       def coerce_out(set, &cache_proc)
-        set = coerce_out_base(set, &cache_proc)
+        set = raw_value(set, &cache_proc)
         if set == NO_VALUE
           set = Set.new
           cache_proc.call(set)

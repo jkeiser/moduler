@@ -48,7 +48,7 @@ module Moduler
       # a key or value type on this thing).
       #
       def coerce_out(hash, &cache_proc)
-        hash = coerce_out_base(hash, &cache_proc)
+        hash = raw_value(hash, &cache_proc)
         if hash == NO_VALUE
           hash = {}
           cache_proc.call(hash)
@@ -70,7 +70,7 @@ module Moduler
       end
 
       def coerce_keys_out?
-        key_type && key_type.coercer_out
+        key_type
       end
 
       def coerce_values_out?

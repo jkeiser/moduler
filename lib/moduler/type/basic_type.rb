@@ -5,9 +5,12 @@ require 'moduler/lazy_value'
 
 module Moduler
   module Type
+    module TypeStruct; end
     class BasicType < Moduler::Base::Type
-      require 'moduler/type/type_struct'
       extend TypeStruct
+      include Type
     end
   end
 end
+
+require 'moduler/type/type_struct'

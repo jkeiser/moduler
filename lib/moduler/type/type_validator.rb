@@ -2,6 +2,17 @@ require 'moduler/errors'
 
 module Moduler
   module Type
+    def coerce(value)
+      if value.is_a?(LazyValue)
+        # Leave lazy values alone until we retrieve them
+        value
+      else
+        value = super(value)
+        validate(value)
+        value
+      end
+    end
+
     #
     # Run the validator against the value, throwing a ValidationError if there
     # are issues.
@@ -16,22 +27,24 @@ module Moduler
 
       errors = []
 
-      if cannot_be.size > 0
-        errors += cannot_be.
-          select { |thing| value.respond_to?(:"#{thing}?") && value.send(:"#{thing}?") }.
-          map { |thing| "Value #{value.inspect} is #{thing}." }
+      if cannot_be
+        cannot_be.each do |thing|
+          if value.respond_to?(:"#{thing}?") && value.send(:"#{thing}?")
+            errors << "Value #{value.inspect} is #{thing}."
+          end
+        end
       end
-      if equal_to.size > 0
+      if equal_to && equal_to.size > 0
         if !equal_to.include?(value)
           errors << "Value must be equal to one of (#{equal_to.map { |k| k.inspect }.join(", ")}), but is #{value.inspect}"
         end
       end
-      if kind_of.size > 0
+      if kind_of && kind_of.size > 0
         if kind_of.all? { |k| !value.kind_of?(k) }
           errors << "Value must be kind_of?(#{kind_of.join(", ")}), but is #{value.class}"
         end
       end
-      if regexes.size > 0
+      if regexes && regexes.size > 0
         if value.respond_to?(:match)
           if regexes.all? { |regex| !value.match(regex) }
             errors << "Value must match one of (#{regexes.map { |r| r.inspect }.join(", ")}), but does not: #{value.inspect}"
@@ -48,17 +61,19 @@ module Moduler
       # else
       #   errors << "Value must have fields #{field_names.join(', ')}, but is not a hash: #{value.inspect}"
       # end
-      if respond_to.size > 0
-        respond_to.select { |name| !value.respond_to?(name) }.map do |name|
-          errors << "Value #{value.inspect} (#{value.class}) does not respond to #{name}"
+      if respond_to
+        respond_to.each do |name|
+          if !value.respond_to?(name)
+            errors << "Value #{value.inspect} (#{value.class}) does not respond to #{name}"
+          end
         end
       end
-      if validators.size > 0
+      if validators
         validators.each do |validator|
           result = validator.call(value)
           if result == false
             errors << "Validator proc failed on value #{value}"
-          else
+          elsif !result.nil?
             errors += Array(result)
           end
         end

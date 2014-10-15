@@ -33,7 +33,7 @@ module Moduler
       # values, assuming there is any index_type or element_type to protect.
       #
       def coerce_out(array, &cache_proc)
-        array = coerce_out_base(array, &cache_proc)
+        array = raw_value(array, &cache_proc)
         if array == NO_VALUE
           array = []
           cache_proc.call(array)

@@ -107,7 +107,7 @@ module Moduler
       end
 
       def to_a
-        # TODO don't copy arrays unless there are lazy values/coercer_outs
+        # TODO don't copy arrays unless there are lazy values
         array.map { |value| type.coerce_value_out(nil, value) }
       end
       def ==(other)
@@ -128,6 +128,10 @@ module Moduler
       end
       def -(other)
         to_a - other.to_a
+      end
+
+      def join(other)
+        to_a.join(other)
       end
 
       def assoc(obj)
