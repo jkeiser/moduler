@@ -1,19 +1,23 @@
-require 'moduler/specializable'
-
 module Moduler
   module Facade
     module Struct
-      def initialize(*args, &block)
-        dsl_eval(*args, &block)
+      def initialize(attributes=nil, is_raw=false, &block)
+        set_attributes(attributes, is_raw, &block)
       end
 
-      def dsl_eval(options=nil, &block)
-        if options
-          options.each do |key, value|
-            if respond_to?(:"#{key}=")
-              public_send(:"#{key}=", value)
-            else
-              public_send(key, value)
+      def set_attributes(attributes=nil, is_raw=false, &block)
+        if attributes
+          if is_raw
+            attributes.each do |key, value|
+              instance_variable_set("@#{key}", value)
+            end
+          else
+            attributes.each do |key, value|
+              if respond_to?(:"#{key}=")
+                public_send(:"#{key}=", value)
+              else
+                public_send(key, value)
+              end
             end
           end
         end
@@ -34,7 +38,7 @@ module Moduler
 
       def specialize(*args, &block)
         other = clone
-        other.dsl_eval(*args, &block)
+        other.set_attributes(*args, &block)
         other
       end
 

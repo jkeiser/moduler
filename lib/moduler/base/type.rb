@@ -4,8 +4,6 @@ require 'moduler/constants'
 module Moduler
   module Base
     class Type
-      require 'moduler/emitter'
-
       def clone_value(value)
         begin
           value.dup

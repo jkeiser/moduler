@@ -9,7 +9,7 @@ module Moduler
       def specialize(*args, &block)
         result = self.class.new
         result.supertype = self
-        result.dsl_eval(*args, &block)
+        result.set_attributes(*args, &block)
         result
       end
 
@@ -38,12 +38,12 @@ module Moduler
       def coerce(struct)
         if struct.is_a?(Hash)
           result = target.new({})
-          result.dsl_eval(struct)
+          result.set_attributes(struct)
           struct = result
         # TODO regretting the "LazyValue is a Proc" thing a little bit right now.
         elsif struct.is_a?(Proc) && !struct.is_a?(LazyValue)
           result = target.new({})
-          result.dsl_eval(&struct)
+          result.set_attributes(&struct)
           struct = result
         end
         super(struct)
@@ -68,13 +68,13 @@ module Moduler
         # See if the target class already has a type; reuse it if so
         if target.respond_to?(:type) && target.type
           type = target.type
-          type.dsl_eval(*args, &block)
+          type.set_attributes(*args, &block)
         else
           type = self.specialize(*args, &block)
         end
 
         # Write it out!
-        Moduler::Emitter.emit(type, target)
+        type.emit
         type
       end
 
@@ -90,7 +90,7 @@ module Moduler
         if target
           if target.respond_to?(:type)
             type = target.type
-            type.dsl_eval(&block)
+            type.set_attributes(&block)
           end
         else
           target = { parent: parent, name: name }
@@ -98,7 +98,8 @@ module Moduler
 
         # Write it out!
         type ||= StructType.new(*args, &block)
-        Moduler::Emitter.emit(type, target)
+        type.target = target
+        type.emit
         type
       end
 
@@ -156,4 +157,5 @@ module Moduler
   end
 end
 
+require 'moduler/base/struct_emitter'
 require 'moduler/base/type_attributes'

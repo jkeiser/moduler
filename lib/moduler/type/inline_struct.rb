@@ -5,29 +5,22 @@ module Moduler
   module Type
     module InlineStruct
       def self.extended(target)
-        target.emitter.emit
+        target.type.emit
       end
 
-      def emitter
-        @emitter ||= begin
-          if @type
-            type = @type
-          elsif respond_to?(:type) && self.type
-            if type.is_a?(Moduler::Base::StructType)
-              type = StructType.new(type.to_hash)
-            else
-              type = self.type.specialize
-            end
+      def type
+        @type ||= begin
+          if superclass.respond_to?(:type) && (supertype = super)
+            StructType.new(supertype: supertype, target: self)
           else
-            type = StructType.new
+            StructType.new(target: self)
           end
         end
-        @emitter = Moduler::Emitter::StructEmitter.new(type, self)
       end
 
       def inherited(subclass)
         super
-        subclass.emitter.emit
+        subclass.type.emit
       end
 
       #
@@ -43,4 +36,3 @@ module Moduler
 end
 
 require 'moduler/type/struct_type'
-require 'moduler/emitter'

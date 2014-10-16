@@ -10,7 +10,7 @@ module Moduler
       extend InlineStruct
     end
     class StructType < Type
-      emitter.emit
+      type.emit
       attribute :reopen_on_call
       attribute :supertype
     end

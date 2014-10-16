@@ -12,7 +12,7 @@ describe Moduler::Type::StructType do
   context "After adding a field" do
     before do
       type.attribute :foo
-      Moduler::Emitter.emit(type, type.target)
+      type.emit
     end
     let(:instance) { type.target.new }
     it "The resulting class has the field getter and setter" do
@@ -50,7 +50,7 @@ describe Moduler::Type::StructType do
     let(:instance) { type.target.new }
     before do
       type.attribute :foo, MultiplyCoercer.new(in_val: 2, out_val: 3)
-      Moduler::Emitter.emit(type, type.target)
+      type.emit
     end
 
     it "The resulting class has the field getter and setter" do
@@ -94,8 +94,8 @@ describe Moduler::Type::StructType do
           attribute :bar
         end
       end
-      Moduler::Emitter.emit(type, type.target)
-      Moduler::Emitter.emit(type.attributes[:foo], type.attributes[:foo].target)
+      type.emit
+      type.attributes[:foo].emit
       type
     end
     let(:foo_struct) { type.target }
@@ -135,7 +135,7 @@ describe Moduler::Type::StructType do
       expect(instance.foo(bar: 10) { bar bar * 2 }).to eq struct.new(bar: 20)
     end
     it "Sending multiple values throws an exception" do
-      expect { instance.foo({bar: 10}, {bar: 20}) }.to raise_error ArgumentError
+      expect { instance.foo({bar: 10}, {bar: 20}, {wah: 30}) }.to raise_error ArgumentError
     end
   end
 

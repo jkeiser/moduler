@@ -99,7 +99,7 @@ describe Moduler::Type do
         target Class.new
         attribute :a, :required => true
       end
-      Moduler::Emitter.emit(type, type.target)
+      type.emit
       type
     end
     it "a missing required field yields an error" do

@@ -11,7 +11,7 @@ module Moduler
 
       def attribute(name, *args, &block)
         self.type.attributes[name] = Type.new(*args, &block)
-        emitter.emit_field(name, self.type.attributes[name])
+        type.emit_field(name)
       end
     end
   end
