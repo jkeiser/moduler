@@ -3,10 +3,21 @@ require 'moduler/specializable'
 module Moduler
   module Facade
     module Struct
-      include Moduler::Specializable
-
       def initialize(*args, &block)
         dsl_eval(*args, &block)
+      end
+
+      def dsl_eval(options=nil, &block)
+        if options
+          options.each do |key, value|
+            if respond_to?(:"#{key}=")
+              public_send(:"#{key}=", value)
+            else
+              public_send(key, value)
+            end
+          end
+        end
+        instance_eval(&block) if block
       end
 
       def clone

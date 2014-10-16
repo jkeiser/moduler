@@ -1,22 +1,8 @@
 require 'support/spec_support'
 require 'moduler/lazy_value'
-require 'moduler/type_dsl'
-require 'moduler/validation/coercer'
-require 'moduler/validation/coercer_out'
+require 'moduler/type/set_type'
 
-describe Moduler::TypeDSL do
-  class SetMultiplyCoercer
-    include Moduler::Validation::Coercer
-    include Moduler::Validation::CoercerOut
-
-    def coerce(value)
-      value * 2
-    end
-    def coerce_out(value)
-      value ? value / 2 : value
-    end
-  end
-
+describe Moduler::Type::SetType do
   shared_context "it behaves exactly like a normal set" do
     it "size works" do
       expect(set.size).to eq 3
@@ -76,23 +62,16 @@ describe Moduler::TypeDSL do
     end
   end
 
-  let(:type_system) { Moduler::TypeDSL.type_system }
-  let(:type) { type_system.set_type.specialize }
   let(:instance) { type.new_facade([1,2,3]) }
   context "With an empty type" do
+    let(:type) { Moduler::Type::SetType.new }
     include_context "it behaves exactly like a normal set" do
       let(:set) { instance }
     end
   end
 
   context "With an item type" do
-    before do
-      type.item_type = type_system.base_type.specialize(
-        coercer:     SetMultiplyCoercer.new,
-        coercer_out: SetMultiplyCoercer.new
-      )
-    end
-    let(:set) { instance }
+    let(:type) { Moduler::Type::SetType.new item_type: MultiplyCoercer.new(in_val: 2, out_val: 0.5) }
 
     include_context "it behaves exactly like a normal set" do
       let(:set) { instance }

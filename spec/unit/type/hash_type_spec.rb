@@ -1,10 +1,8 @@
 require 'support/spec_support'
 require 'moduler/lazy_value'
-require 'moduler/type_dsl'
-require 'moduler/validation/coercer'
-require 'moduler/validation/coercer_out'
+require 'moduler/type/hash_type'
 
-describe Moduler::TypeDSL do
+describe Moduler::Type::HashType do
   shared_context "it behaves exactly like a normal hash" do
     it "size works" do
       expect(hash.size).to eq 3
@@ -86,19 +84,16 @@ describe Moduler::TypeDSL do
     end
   end
 
-  let(:type_system) { Moduler::TypeDSL.type_system }
-  let(:type) { type_system.hash_type.specialize }
   let(:instance) { type.new_facade(a:1,b:2,c:3) }
   context "With an empty type" do
+    let(:type) { Moduler::Type::HashType.new }
+
     include_context "it behaves exactly like a normal hash" do
       let(:hash) { instance }
     end
   end
 
-  class HashStringCoercer
-    include Moduler::Validation::Coercer
-    include Moduler::Validation::CoercerOut
-
+  class HashStringCoercer < Moduler::Type::BasicType
     def coerce(value)
       value.to_s
     end
@@ -108,12 +103,7 @@ describe Moduler::TypeDSL do
   end
 
   context "With a key type" do
-    before do
-      type.key_type = type_system.base_type.specialize(
-        coercer:     HashStringCoercer.new,
-        coercer_out: HashStringCoercer.new
-      )
-    end
+    let(:type) { Moduler::Type::HashType.new key_type: HashStringCoercer.new }
 
     include_context "it behaves exactly like a normal hash" do
       let(:hash) { instance }
@@ -125,25 +115,8 @@ describe Moduler::TypeDSL do
     end
   end
 
-  class HashNumberMultiplier
-    include Moduler::Validation::Coercer
-    include Moduler::Validation::CoercerOut
-
-    def coerce(value)
-      value*2
-    end
-    def coerce_out(value)
-      value/2
-    end
-  end
-
   context "With a value type" do
-    before do
-      type.value_type = type_system.base_type.specialize(
-        coercer:     HashNumberMultiplier.new,
-        coercer_out: HashNumberMultiplier.new
-      )
-    end
+    let(:type) { Moduler::Type::HashType.new value_type: MultiplyCoercer.new(in_val: 2, out_val: 0.5) }
 
     include_context "it behaves exactly like a normal hash" do
       let(:hash) { instance }
@@ -156,16 +129,7 @@ describe Moduler::TypeDSL do
   end
 
   context "With both a key and a value type" do
-    before do
-      type.key_type = type_system.base_type.specialize(
-        coercer:     HashStringCoercer.new,
-        coercer_out: HashStringCoercer.new
-      )
-      type.value_type = type_system.base_type.specialize(
-        coercer:     HashNumberMultiplier.new,
-        coercer_out: HashNumberMultiplier.new
-      )
-    end
+    let(:type) { Moduler::Type::HashType.new key_type: HashStringCoercer.new, value_type: MultiplyCoercer.new(in_val: 2, out_val: 0.5) }
 
     include_context "it behaves exactly like a normal hash" do
       let(:hash) { instance }

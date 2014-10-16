@@ -88,6 +88,10 @@ module Moduler
           value.dup
         end
       end
+
+      def new_facade(array)
+        Facade::ArrayFacade.new(array.map { |value| coerce_value(nil, value) }, self)
+      end
     end
   end
 end

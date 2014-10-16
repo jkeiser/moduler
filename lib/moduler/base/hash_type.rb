@@ -89,6 +89,10 @@ module Moduler
       def item_type_for(raw_key)
         value_type
       end
+
+      def new_facade(hash)
+        Facade::HashFacade.new(Hash[hash.map { |key,value| [ coerce_key(key), coerce_value(key, value) ] }], self)
+      end
     end
   end
 end

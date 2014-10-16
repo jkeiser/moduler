@@ -73,7 +73,7 @@ module Moduler
           result = validator.call(value)
           if result == false
             errors << "Validator proc failed on value #{value}"
-          elsif !result.nil?
+          elsif !result.nil? && !(result == true)
             errors += Array(result)
           end
         end

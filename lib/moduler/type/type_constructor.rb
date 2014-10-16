@@ -31,9 +31,7 @@ module Moduler
         end
 
       when ::Hash
-        if type.size == 0
-          HashType.new(options, &block)
-        elsif type.size == 1
+        if type.size == 1
           key_type = Type.new(type.first[0])
           value_type = Type.new(type.first[1])
           HashType.new(options.merge(key_type: key_type, value_type: value_type), &block)
@@ -56,6 +54,8 @@ module Moduler
           HashType.new(options, &block)
         elsif type == Set
           SetType.new(options, &block)
+        elsif type == Struct
+          StructType.new(options, &block)
         elsif type == Base::Boolean
           BasicType.new({ equal_to: [true,false] }.merge(options), &block)
         else
@@ -66,13 +66,14 @@ module Moduler
       if !result
         raise "Unknown type #{type}"
       end
+
       result
     end
 
     def self.is_options?(options)
       if options.respond_to?(:each_key)
         first = options.first
-        if first && first[0].is_a?(Symbol)
+        if !first || first[0].is_a?(Symbol)
           return true
         end
       end

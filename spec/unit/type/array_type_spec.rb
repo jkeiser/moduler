@@ -1,10 +1,8 @@
 require 'support/spec_support'
 require 'moduler/lazy_value'
-require 'moduler/type_dsl'
-require 'moduler/validation/coercer'
-require 'moduler/validation/coercer_out'
+require 'moduler/type/array_type'
 
-describe Moduler::TypeDSL do
+describe Moduler::Type::ArrayType do
   shared_context "it behaves exactly like a normal array" do
     it "size works" do
       expect(array.size).to eq 3
@@ -279,50 +277,17 @@ describe Moduler::TypeDSL do
     end
   end
 
-  class ArrayMultiplyCoercer
-    include Moduler::Validation::Coercer
-    include Moduler::Validation::CoercerOut
-    def coerce(value)
-      value * 2
-    end
-    def coerce_out(value)
-      value ? value / 2 : value
-    end
-  end
-
-  class ArrayTypeIndexCoercer
-    include Moduler::Validation::Coercer
-    include Moduler::Validation::CoercerOut
-    def initialize(amount)
-      @amount = amount
-    end
-    attr_reader :amount
-    def coerce(value)
-      value >= 1 ? value - amount : value
-    end
-    def coerce_out(value)
-      value >= 0 ? value + amount : value
-    end
-  end
-
-  let(:type_system) { Moduler::TypeDSL.type_system }
-  let(:type) { type_system.array_type.specialize }
   let(:instance) { type.new_facade([1,2,3]) }
   context "With an empty type" do
+    let(:type) { Moduler::Type::ArrayType.new }
+
     include_context "it behaves exactly like a normal array" do
       let(:array) { instance }
     end
   end
 
   context "With an index type" do
-    before do
-      type.index_type = type_system.base_type.specialize(
-        coercer: ArrayTypeIndexCoercer.new(1),
-        coercer_out: ArrayTypeIndexCoercer.new(1)
-      )
-    end
-
-    let(:array) { instance }
+    let(:type) { Moduler::Type::ArrayType.new index_type: OneBasedArray.new }
 
     include_context "it behaves like a one-based array" do
       let(:array) { instance }
@@ -330,12 +295,7 @@ describe Moduler::TypeDSL do
   end
 
   context "With an element type" do
-    before do
-      type.element_type = type_system.base_type.specialize(
-        coercer:     ArrayMultiplyCoercer.new,
-        coercer_out: ArrayMultiplyCoercer.new
-      )
-    end
+    let(:type) { Moduler::Type::ArrayType.new element_type: MultiplyCoercer.new(in_val: 2, out_val: 0.5) }
 
     include_context "it behaves exactly like a normal array" do
       let(:array) { instance }
@@ -353,14 +313,7 @@ describe Moduler::TypeDSL do
     end
 
     context "And an index type" do
-      before do
-        type.index_type = type_system.base_type.specialize(
-          coercer: ArrayTypeIndexCoercer.new(1),
-          coercer_out: ArrayTypeIndexCoercer.new(1)
-        )
-      end
-
-      let(:array) { instance }
+      let(:type) { Moduler::Type::ArrayType.new index_type: OneBasedArray.new, element_type: MultiplyCoercer.new(in_val: 2, out_val: 0.5) }
 
       include_context "it behaves like a one-based array" do
         let(:array) { instance }

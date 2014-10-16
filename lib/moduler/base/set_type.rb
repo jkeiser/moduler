@@ -60,6 +60,10 @@ module Moduler
       def coerce_item_out(item)
         item_type ? item_type.coerce_out(item) : item
       end
+
+      def new_facade(set)
+        Facade::SetFacade.new(Set.new(set.map { |item| coerce_item(item) }), self)
+      end
     end
   end
 end

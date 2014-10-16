@@ -1,12 +1,9 @@
-require 'moduler/specializable'
 require 'moduler/lazy_value'
 require 'moduler/constants'
 
 module Moduler
   module Base
     class Type
-      include Moduler::Specializable
-
       require 'moduler/emitter'
 
       def clone_value(value)

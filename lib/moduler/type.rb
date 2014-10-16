@@ -12,17 +12,9 @@ module Moduler
     def lazy(cache=true, &block)
       Moduler::LazyValue.new(cache, &block)
     end
-    def specialize(type=nil, options=nil, &block)
-      if !options && Type.is_options?(type)
-        options = type
-        type = nil
-      end
-      if options
-        options.merge!(supertype: self)
-      else
-        options = { supertype: self }
-      end
-      Type.new(type, options, self.class, &block)
+
+    def raw_get?
+      !(super || @kind_of || @equal_to || @regexes || @cannot_be || @respond_to || @validators)
     end
 
     require 'moduler/base/inline_struct'
@@ -41,7 +33,7 @@ module Moduler
     attribute :nullable,   Boolean
     attribute :regexes,    Array[kind_of: [ Regexp, String ]]
     attribute :cannot_be,  Array[Symbol]
-    attribute :respond_to, Array[Symbol]
+    attribute :respond_to, Array[kind_of: [ Symbol, String ]]
     attribute :validators, Array[Proc]
     attribute :required,   Boolean
   end

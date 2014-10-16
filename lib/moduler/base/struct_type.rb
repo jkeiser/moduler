@@ -75,6 +75,7 @@ module Moduler
 
         # Write it out!
         Moduler::Emitter.emit(type, target)
+        type
       end
 
       def struct(name, &block)
@@ -98,6 +99,7 @@ module Moduler
         # Write it out!
         type ||= StructType.new(*args, &block)
         Moduler::Emitter.emit(type, target)
+        type
       end
 
       #
@@ -132,10 +134,10 @@ module Moduler
           if value != NO_VALUE
             value = value.specialize(*args, &block)
           else
-            value = default_class.new(*args, &block)
+            value = (default_class || target).new(*args, &block)
           end
         else
-          value = default_class.new(*args, &block)
+          value = (default_class || target).new(*args, &block)
         end
 
         context.set(value)

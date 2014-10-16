@@ -1,22 +1,22 @@
 require 'support/spec_support'
-require 'moduler/type_dsl'
-require 'moduler/validation/coercer'
-require 'moduler/validation/coercer_out'
+require 'moduler/type/struct_type'
 require 'moduler/lazy_value'
 
-describe Moduler::TypeDSL do
-  let(:type_system) { Moduler::TypeDSL.type_system }
-  let(:type) { type_system.struct_type.specialize }
+describe Moduler::Type::StructType do
+  let(:type) { Moduler::Type::StructType.new(target: Class.new) }
   context "With no modifications" do
     it "The resulting class has no instance methods" do
-      expect(type.facade_class.instance_methods(false)).to eq [ :to_s, :inspect ]
+      expect(type.target.instance_methods(false)).to eq [ ]
     end
   end
   context "After adding a field" do
-    before { type.attributes[:foo] = type_system.base_type.specialize }
-    let(:instance) { type.restore_facade({}) }
+    before do
+      type.attribute :foo
+      Moduler::Emitter.emit(type, type.target)
+    end
+    let(:instance) { type.target.new }
     it "The resulting class has the field getter and setter" do
-      expect(type.facade_class.instance_methods(false)).to eq [ :to_s, :inspect, :foo, :foo= ]
+      expect(type.target.instance_methods(false)).to eq [ :foo, :foo= ]
     end
     it "The default getter returns nil" do
       expect(instance.foo).to eq nil
@@ -47,41 +47,29 @@ describe Moduler::TypeDSL do
   end
 
   context "After adding a field with type coercion" do
-    let(:attribute) { type_system.base_type.specialize }
-    let(:instance) { type.restore_facade({}) }
-    let(:on_set) { [] }
+    let(:instance) { type.target.new }
     before do
-      attribute = type_system.base_type.specialize
-      attribute.coercer = StructMultiplyCoercer.new(2)
-      attribute.coercer_out = StructMultiplyCoercer.new(3)
-      attribute.register(:on_set) do |v|
-        expect(v.type).to eq attribute
-        on_set << v.value
-      end
-      type.attributes[:foo] = attribute
+      type.attribute :foo, MultiplyCoercer.new(in_val: 2, out_val: 3)
+      Moduler::Emitter.emit(type, type.target)
     end
 
     it "The resulting class has the field getter and setter" do
-      expect(type.facade_class.instance_methods(false)).to eq [ :to_s, :inspect, :foo, :foo= ]
+      expect(type.target.instance_methods(false)).to eq [ :foo, :foo= ]
     end
     it "The default getter returns nil" do
       expect(instance.foo).to eq nil
-      expect(on_set).to eq []
     end
     it "The setter and getter work" do
       instance.foo = 10
       expect(instance.foo).to eq 60
-      expect(on_set).to eq [ 60 ]
     end
     it "The method setter works" do
       expect(instance.foo 10).to eq 60
       expect(instance.foo).to eq 60
-      expect(on_set).to eq [ 60 ]
     end
     it "Lazy value set works" do
       expect(instance.foo Moduler::LazyValue.new { 100 }).to be_kind_of(Moduler::LazyValue)
       expect(instance.foo).to eq 600
-      expect(on_set).to eq [ 600 ]
     end
     # it "Default block setter works" do
     #   block = proc { 100 }
@@ -90,73 +78,64 @@ describe Moduler::TypeDSL do
     # end
     it "Sending both a value and a block throws an exception" do
       expect { instance.foo(100) { 200 } }.to raise_error ArgumentError
-      expect(on_set).to eq []
     end
     it "Sending multiple values throws an exception" do
       expect { instance.foo(100, 200) }.to raise_error ArgumentError
-      expect(on_set).to eq []
     end
   end
 
   context "After adding a struct field" do
-    let(:on_set) { [] }
-    before do
-      attribute = type_system.struct_type.specialize
-      attribute.attributes[:bar] = type_system.base_type.specialize
-      type.attributes[:foo] = attribute
-
-      attribute.register(:on_set) do |v|
-        expect(v.type).to eq attribute
-        on_set << v.value
+    let(:type) do
+      type = Moduler::Type.new Struct do
+        target Class.new { define_singleton_method(:to_s) { puts "outer struct" }}
+        attribute :foo, Struct do
+          # TODO shouldn't have to set a target on an inner struct
+          target Class.new { define_singleton_method(:to_s) { puts "foo struct" }}
+          attribute :bar
+        end
       end
+      Moduler::Emitter.emit(type, type.target)
+      Moduler::Emitter.emit(type.attributes[:foo], type.attributes[:foo].target)
+      type
     end
-    let(:foo_struct) { type.facade_class }
-    let(:instance) { type.restore_facade({}) }
-    let(:struct) { type.attributes[:foo].facade_class }
+    let(:foo_struct) { type.target }
+    let(:instance) { type.target.new }
+    let(:struct) { type.attributes[:foo].target }
 
     it "The resulting class has the field getter and setter" do
-      expect(type.facade_class.instance_methods(false)).to eq [ :to_s, :inspect, :foo, :foo= ]
-      expect(on_set).to eq []
+      expect(foo_struct.instance_methods(false)).to eq [ :foo, :foo= ]
     end
     it "The default getter returns nil" do
       expect(instance.foo).to eq nil
-      expect(on_set).to eq []
     end
     it "Set to a foo_struct value works" do
       value = struct.new(bar: 10)
       instance.foo = value
       expect(instance.foo.object_id).to eq value.object_id
-      expect(on_set).to eq [ struct.new(bar: 10) ]
     end
     it "The setter and getter work" do
       instance.foo = { bar: 10 }
       struct.new(bar: 10)
       expect(instance.foo).to eq struct.new(bar: 10)
-      expect(on_set).to eq [ struct.new(bar: 10) ]
     end
-    it "The method setter works", :focus do
+    it "The method setter works" do
       instance.foo bar: 10
       expect(instance.foo bar: 10).to eq struct.new(bar: 10)
       expect(instance.foo).to eq struct.new(bar: 10)
-      expect(on_set).to eq [ struct.new(bar: 10) ]
     end
     it "Lazy value set works" do
       expect(instance.foo Moduler::LazyValue.new { { bar: 10 } }).to be_kind_of(Moduler::LazyValue)
       expect(instance.foo).to eq struct.new(bar: 10)
-      expect(on_set).to eq [ struct.new(bar: 10) ]
     end
     it "Default block setter sets struct properties" do
       expect(instance.foo { bar 10 }).to eq struct.new(bar: 10)
       expect(instance.foo).to eq struct.new(bar: 10)
-      expect(on_set).to eq [ struct.new(bar: 10) ]
     end
     it "Setter with both a value and a block works" do
       expect(instance.foo(bar: 10) { bar bar * 2 }).to eq struct.new(bar: 20)
-      expect(on_set).to eq [ struct.new(bar: 20) ]
     end
     it "Sending multiple values throws an exception" do
       expect { instance.foo({bar: 10}, {bar: 20}) }.to raise_error ArgumentError
-      expect(on_set).to eq []
     end
   end
 
@@ -166,17 +145,4 @@ describe Moduler::TypeDSL do
   # Methods in existing module
   # Methods in existing class
 
-  class StructMultiplyCoercer
-    include Moduler::Validation::Coercer
-    include Moduler::Validation::CoercerOut
-    def initialize(n)
-      @n = n
-    end
-    def coerce(value)
-      value*@n
-    end
-    def coerce_out(value)
-      value*@n
-    end
-  end
 end

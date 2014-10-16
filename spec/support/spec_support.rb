@@ -6,17 +6,18 @@ end
 require 'moduler/type/basic_type'
 
 class MultiplyCoercer < Moduler::Type::BasicType
-  attribute :in_val, Fixnum, :default => 1
-  attribute :out_val, Fixnum, :default => 1
+  attribute :in_val, Numeric, :default => 1
+  attribute :out_val, Numeric, :default => 1
 
   def coerce(value)
     case value
     when Moduler::LazyValue
       value
     when Proc
-      proc { super(value.call)*in_val }
+      proc { v = super(value.call); v ? v*in_val : v }
     else
-      super(value)*in_val
+      v = super(value)
+      v ? v*in_val : v
     end
   end
 
@@ -24,19 +25,33 @@ class MultiplyCoercer < Moduler::Type::BasicType
     value = super(value)
     case value
     when Proc
-      proc { super(value.call)*out_val }
+      proc { v = super(value.call); v ? v*out_val : v }
     else
-      super(value)*out_val
+      v = super(value)
+      v ? (v*out_val).to_i : v
     end
+  end
+
+  def raw_get?
+    false
   end
 end
 
 class OneBasedArray < Moduler::Type::BasicType
   def coerce(value)
     value = super(value)
-    value.is_a?(Moduler::LazyValue) ? value : value-1
+    if value.is_a?(Moduler::LazyValue)
+      value
+    elsif value <= 0
+      value
+    else
+      value-1
+    end
   end
   def coerce_out(value)
     super(value)+1
+  end
+  def raw_get?
+    false
   end
 end

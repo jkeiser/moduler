@@ -46,10 +46,6 @@ module Moduler
       emit_target_class_type
     end
 
-    def type_reference(type)
-      "#{target.name}.type"
-    end
-
     # foo_bar/baz_bonk -> FooBar::BazBonk
     def to_camel_case(snake_case)
       snake_case.split('/').map do |str|
@@ -89,7 +85,7 @@ module Moduler
 
       def emit_field(name, field_type)
         if field_type
-          type_ref = "#{type_reference(type)}.attributes[#{name.inspect}]"
+          type_ref = "#{target.name || "self.class"}.type.attributes[#{name.inspect}]"
           # If the type has a raw get (no coercion on output) then we skip
           # the "call."
           if field_type.raw_get?

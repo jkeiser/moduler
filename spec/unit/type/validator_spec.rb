@@ -1,20 +1,12 @@
 require 'support/spec_support'
-require 'moduler/type_dsl'
-require 'moduler/validation/validator/cannot_be'
-require 'moduler/validation/validator/equal_to'
-require 'moduler/validation/validator/kind_of'
-require 'moduler/validation/validator/regexes'
-require 'moduler/validation/validator/required_fields'
-require 'moduler/validation/validator/respond_to'
-require 'moduler/validation/validator/validate_proc'
+require 'moduler/type'
 require 'moduler/errors'
 
-describe Moduler::Validation::Validator do
-  let(:type_system) { Moduler::TypeDSL.type_system }
-  let(:type) { type_system.base_type.specialize }
+describe Moduler::Type do
+  let(:type) { Moduler::Type.new }
 
   context "With cannot_be(:nil,:frozen,:terrible)" do
-    before { type.validator = Moduler::Validation::Validator::CannotBe.new(:nil,:frozen,:terrible) }
+    before { type.cannot_be [:nil,:frozen,:terrible] }
     it "'hi' matches" do
       expect(type.coerce('hi')).to eq 'hi'
     end
@@ -29,7 +21,7 @@ describe Moduler::Validation::Validator do
   end
 
   context "With equal_to(1,2,nil)" do
-    before { type.validator = Moduler::Validation::Validator::EqualTo.new(1,2,nil) }
+    before { type.equal_to [1,2,nil] }
     it "1 matches" do
       expect(type.coerce(1)).to eq 1
     end
@@ -45,7 +37,7 @@ describe Moduler::Validation::Validator do
   end
 
   context "With kind_of(Symbol,String,NilClass)" do
-    before { type.validator = Moduler::Validation::Validator::KindOf.new(Symbol,String,NilClass) }
+    before { type.kind_of [ Symbol,String,NilClass ] }
     it "'1' matches" do
       expect(type.coerce('1')).to eq '1'
     end
@@ -61,7 +53,7 @@ describe Moduler::Validation::Validator do
   end
 
   context "With regexes('a*b', /c*d$/)" do
-    before { type.validator = Moduler::Validation::Validator::Regexes.new('a*b', /c*d$/) }
+    before { type.regexes [ 'a*b', /c*d$/ ] }
     it "'aaaaab' matches" do
       expect(type.coerce('aaaaab')).to eq 'aaaaab'
     end
@@ -86,7 +78,7 @@ describe Moduler::Validation::Validator do
   end
 
   context "With respond_to(:pop, 'abs')" do
-    before { type.validator = Moduler::Validation::Validator::RespondTo.new(:include?,'size') }
+    before { type.respond_to [:include?,'size'] }
     it "[1,2] matches" do
       expect(type.coerce([1,2])).to eq [1,2]
     end
@@ -101,36 +93,29 @@ describe Moduler::Validation::Validator do
     end
   end
 
-  context "With required_fields('a', :b, 3, nil)" do
-    before { type.validator = Moduler::Validation::Validator::RequiredFields.new('a', :b, 3, nil) }
-    it "{'a' => 1, :b => 2, 3 => 3, nil => 4} matches" do
-      expect(type.coerce({'a' => 1, :b => 2, 3 => 3, nil => 4})).
-        to eq({'a' => 1, :b => 2, 3 => 3, nil => 4})
+  context "With required fields" do
+    let(:type) do
+      type = Moduler::Type.new Struct do
+        target Class.new
+        attribute :a, :required => true
+      end
+      Moduler::Emitter.emit(type, type.target)
+      type
     end
-    it "{'foo' => 'bar', 'a' => 1, :b => 2, 3 => 3, nil => 4} matches" do
-      expect(type.coerce({'foo' => 'bar', 'a' => 1, :b => 2, 3 => 3, nil => 4})).
-        to eq({'foo' => 'bar', 'a' => 1, :b => 2, 3 => 3, nil => 4})
+    it "a missing required field yields an error" do
+      expect { type.coerce(type.target.new) }.to raise_error(Moduler::ValidationFailed)
     end
-    it "{'a' => 1, 3 => 3, nil => 4} does not match" do
-      expect { type.coerce({'a' => 1, 3 => 3, nil => 4}) }.to raise_error(Moduler::ValidationFailed)
+    it "a required field set to a value does not yield an error" do
+      expect(type.coerce(type.target.new :a => 1).a).to eq 1
     end
-    it "{} does not match" do
-      expect { type.coerce({}) }.to raise_error(Moduler::ValidationFailed)
-    end
-    it "nil does not match" do
-      expect { type.coerce(nil) }.to raise_error(Moduler::ValidationFailed)
-    end
-    it "'a' does not match" do
-      expect { type.coerce('a') }.to raise_error(Moduler::ValidationFailed)
-    end
-    it ":a does not match" do
-      expect { type.coerce(:a) }.to raise_error(Moduler::ValidationFailed)
+    it "a required field set explicitly to nil yields no error" do
+      expect(type.coerce(type.target.new :a => nil).a).to be_nil
     end
   end
 
   context "validate procs" do
     context "With a validator proc that returns true or false" do
-      before { type.validator = Moduler::Validation::Validator::ValidateProc.new { |v| v >= 2 } }
+      before { type.validators { |v| v >= 2 } }
       it "2 matches" do
         expect(type.coerce(2)).to be 2
       end
@@ -141,7 +126,7 @@ describe Moduler::Validation::Validator do
 
     context "With a validator proc that returns a failure string" do
       before do
-        type.validator = Moduler::Validation::Validator::ValidateProc.new do |v|
+        type.validators do |v|
           v < 2 ? "Proc failed!" : nil
         end
       end
@@ -155,7 +140,7 @@ describe Moduler::Validation::Validator do
 
     context "With a validator proc that returns an array of failure string" do
       before do
-        type.validator = Moduler::Validation::Validator::ValidateProc.new do |v|
+        type.validators do |v|
           v < 2 ? [ "Proc failed!" ] : []
         end
       end
@@ -169,9 +154,7 @@ describe Moduler::Validation::Validator do
 
     context "With a validator proc that returns a failure" do
       before do
-        type.validator = Moduler::Validation::Validator::ValidateProc.new do |v|
-          v < 2 ? Moduler::Validation::Validator.validation_failure(v, "Proc failed!") : nil
-        end
+        type.validators { |v| "Proc failed!" if v < 2 }
       end
       it "2 matches" do
         expect(type.coerce(2)).to be 2
@@ -183,9 +166,7 @@ describe Moduler::Validation::Validator do
 
     context "With a validator proc that returns an array of failures" do
       before do
-        type.validator = Moduler::Validation::Validator::ValidateProc.new do |v|
-          v < 2 ? [ Moduler::Validation::Validator.validation_failure(v, "Proc failed!") ] : []
-        end
+        type.validators { |v| "Proc failed!" if v < 2 }
       end
       it "2 matches" do
         expect(type.coerce(2)).to be 2
