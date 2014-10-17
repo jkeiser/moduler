@@ -12,14 +12,14 @@ module Moduler
   # block was created).
   #
   def self.inline(*args, &block)
-    Moduler::Type.inline(*args, &block)
+    Moduler::Type::StructType.inline(*args, &block)
   end
 
   #
   # Create a struct with the given name in the current namespace.
   #
   def self.struct(name, *args, &block)
-    Moduler::Type.struct(name, *args, &block)
+    Moduler::Type::StructType.new.struct(name, *args, &block)
   end
 end
 

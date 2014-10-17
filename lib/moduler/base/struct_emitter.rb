@@ -32,7 +32,7 @@ module Moduler
       def emit_target_class_type
         # Create the target class if asked
         if target.is_a?(Hash)
-          @target = eval <<-EOM, __FILE__, __LINE__+1
+          @target = eval <<-EOM, binding, __FILE__, __LINE__+1
             class target[:parent]::#{to_camel_case(target[:name])}#{target[:superclass] ? " < target[:superclass]" : ""}
               self
             end
@@ -82,7 +82,9 @@ module Moduler
                 # user tries to write to them.  Frozen defaults (like an int)
                 # we don't store at all.
                 raw_default = #{type_ref}.raw_default
-                if !raw_default.frozen?
+                if raw_default.frozen?
+                  raw_value = raw_default
+                else
                   raw_value = Lazy::ForReadValue.new(raw_default) do
                     defined?(@#{name}) ? @#{name} : (@#{name} = raw_default)
                   end

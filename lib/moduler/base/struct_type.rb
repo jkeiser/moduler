@@ -63,7 +63,7 @@ module Moduler
         type
       end
 
-      def struct(name, &block)
+      def struct(name, *args, &block)
         # Determine the parent from the caller
         parent = block.binding.eval('self')
         if !parent.is_a?(Module)
@@ -71,8 +71,8 @@ module Moduler
         end
 
         # See if the class already exists and reuse it if so
-        target = parent.const_get(name, false)
-        if target
+        if parent.const_defined?(name, false)
+          target = parent.const_get(name, false)
           if target.respond_to?(:type)
             type = target.type
             type.set_attributes(&block)
@@ -82,7 +82,7 @@ module Moduler
         end
 
         # Write it out!
-        type ||= StructType.new(*args, &block)
+        type ||= self.class.new(*args, &block)
         type.target = target
         type.emit
         type

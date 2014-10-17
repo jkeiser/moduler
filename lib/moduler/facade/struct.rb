@@ -79,8 +79,14 @@ module Moduler
         instance_variable_defined?("@#{name}")
       end
 
-      def reset(name)
-        remove_instance_variable("@#{name}")
+      def reset(name=nil)
+        if name
+          remove_instance_variable("@#{name}") if instance_variable_defined?("@#{name}")
+        else
+          self.class.type.attributes.each_key do |name|
+            remove_instance_variable("@#{name}") if instance_variable_defined?("@#{name}")
+          end
+        end
       end
     end
   end

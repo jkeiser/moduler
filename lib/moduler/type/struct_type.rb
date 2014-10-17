@@ -43,7 +43,7 @@ module Moduler
       attribute :default_class,  Struct#,     :default => lazy(false) { |v| v.target }
       attribute :reopen_on_call, Boolean,    :default => false
       attribute :supertype,      Type
-      attribute :target,         Module
+      attribute :target,         :kind_of => [ Module, Hash ]
     end
   end
 end
