@@ -1,6 +1,6 @@
 require 'support/spec_support'
 require 'moduler/type/struct_type'
-require 'moduler/lazy_value'
+require 'moduler/lazy/value'
 
 describe Moduler::Type::StructType do
   let(:type) { Moduler::Type::StructType.new(target: Class.new) }
@@ -30,7 +30,7 @@ describe Moduler::Type::StructType do
       expect(instance.foo).to eq 10
     end
     it "Lazy value set works" do
-      expect(instance.foo Moduler::LazyValue.new { 100 }).to be_kind_of(Moduler::LazyValue)
+      expect(instance.foo Moduler::Lazy::Value.new { 100 }).to be_kind_of(Moduler::Lazy)
       expect(instance.foo).to eq 100
     end
     it "Default block setter works" do
@@ -68,7 +68,7 @@ describe Moduler::Type::StructType do
       expect(instance.foo).to eq 60
     end
     it "Lazy value set works" do
-      expect(instance.foo Moduler::LazyValue.new { 100 }).to be_kind_of(Moduler::LazyValue)
+      expect(instance.foo Moduler::Lazy::Value.new { 100 }).to be_kind_of(Moduler::Lazy)
       expect(instance.foo).to eq 600
     end
     # it "Default block setter works" do
@@ -124,7 +124,7 @@ describe Moduler::Type::StructType do
       expect(instance.foo).to eq struct.new(bar: 10)
     end
     it "Lazy value set works" do
-      expect(instance.foo Moduler::LazyValue.new { { bar: 10 } }).to be_kind_of(Moduler::LazyValue)
+      expect(instance.foo Moduler::Lazy::Value.new { { bar: 10 } }).to be_kind_of(Moduler::Lazy)
       expect(instance.foo).to eq struct.new(bar: 10)
     end
     it "Default block setter sets struct properties" do

@@ -1,5 +1,5 @@
 require 'support/spec_support'
-require 'moduler/lazy_value'
+require 'moduler/lazy/value'
 require 'moduler/type/array_type'
 
 describe Moduler::Type::ArrayType do
@@ -300,7 +300,7 @@ describe Moduler::Type::ArrayType do
     include_context "it behaves exactly like a normal array" do
       let(:array) { instance }
       after do
-        array.array.each do |v|
+        array.raw.each do |v|
           if v
             expect(v%2).to eq 0
           end
@@ -309,7 +309,7 @@ describe Moduler::Type::ArrayType do
     end
 
     it "Stores values internally multiplied" do
-      expect(array.array).to eq [ 2, 4, 6 ]
+      expect(array.raw).to eq [ 2, 4, 6 ]
     end
 
     context "And an index type" do
@@ -318,7 +318,7 @@ describe Moduler::Type::ArrayType do
       include_context "it behaves like a one-based array" do
         let(:array) { instance }
         after do
-          array.array.each do |v|
+          array.raw.each do |v|
             if v
               expect(v%2).to eq 0
             end
@@ -327,7 +327,7 @@ describe Moduler::Type::ArrayType do
       end
 
       it "Stores values internally multiplied" do
-        expect(array.array).to eq [ 2, 4, 6 ]
+        expect(array.raw).to eq [ 2, 4, 6 ]
       end
     end
   end

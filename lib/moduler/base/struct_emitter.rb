@@ -1,7 +1,7 @@
-require 'moduler/base/value_context'
 require 'moduler/facade/struct'
 require 'moduler/base/type'
 require 'moduler/base/hash_type'
+require 'moduler/lazy/for_read_value'
 
 module Moduler
   module Base
@@ -17,18 +17,10 @@ module Moduler
         field_type = @attributes[name]
         if field_type
           type_ref = "#{target.name || "self.class"}.type.attributes[#{name.inspect}]"
-          # If the type has a raw get (no coercion on output) then we skip
-          # the "call."
-          if field_type.raw_get?
-            emit_raw_get_field(name, type_ref)
-          else
-            emit_get_field(name, type_ref)
-          end
-
-          emit_set_field(name, type_ref)
+          emit_get_set_field(name, type_ref)
 
           if field_type.is_a?(Moduler::Base::HashType) && field_type.singular
-            emit_singular_hash_field(field_type.singular, name, field_type)
+            emit_singular_hash_field(field_type.singular, name, type_ref)
           end
         else
           emit_typeless_get_set_field(name)
@@ -79,36 +71,34 @@ module Moduler
         end.join('/')
       end
 
-      def emit_raw_get_field(name, type_ref)
+      def emit_get_set_field(name, type_ref)
         target.module_eval <<-EOM, __FILE__, __LINE__+1
           def #{name}(*args, &block)
             if args.size == 0 && !block
-              # Handles lazy values and defaults for you
-              result = @#{name}
-              if !result
-                if !defined?(@#{name})
-                  result = #{type_ref}.raw_default { |v| @#{name} = v }
-                  result = nil if result == NO_VALUE
+              if defined?(@#{name})
+                raw_value = @#{name}
+              else
+                # We don't set defaults into the struct right away; only if the
+                # user tries to write to them.  Frozen defaults (like an int)
+                # we don't store at all.
+                raw_default = #{type_ref}.raw_default
+                if !raw_default.frozen?
+                  raw_value = Lazy::ForReadValue.new(raw_default) do
+                    defined?(@#{name}) ? @#{name} : (@#{name} = raw_default)
+                  end
                 end
-              elsif result.is_a?(Moduler::LazyValue)
-                result = #{type_ref}.raw_value(@#{name}) { |v| @#{name} = v }
               end
-              result
+              #{type_ref}.from_raw(raw_value)
             else
-              value = defined?(@#{name}) ? @#{name} : NO_VALUE
-              context = Moduler::Base::ValueContext.new(value) { |v| @#{name} = v }
-              #{type_ref}.call(context, *args, &block)
+              raw_value = #{type_ref}.construct_raw(*args, &block)
+              @#{name} = raw_value
+              raw_value.is_a?(Lazy) ? raw_value : #{type_ref}.from_raw(raw_value)
             end
           end
-        EOM
-      end
-
-      def emit_get_field(name, type_ref)
-        target.module_eval <<-EOM, __FILE__, __LINE__+1
-          def #{name}(*args, &block)
-            value = defined?(@#{name}) ? @#{name} : NO_VALUE
-            context = Moduler::Base::ValueContext.new(value) { |v| @#{name} = v }
-            #{type_ref}.call(context, *args, &block)
+          def #{name}=(value)
+            @#{name} = #{type_ref}.to_raw(value)
+            # NOTE: Ruby doesn't let you return a value here anyway--it will always
+            # return the passed-in value to the user.
           end
         EOM
       end
@@ -132,17 +122,6 @@ module Moduler
         EOM
       end
 
-      def emit_set_field(name, type_ref)
-        target.module_eval <<-EOM, __FILE__, __LINE__+1
-          def #{name}=(value)
-            value = #{type_ref}.coerce(value)
-            @#{name} = value
-            # NOTE: Ruby doesn't let you return a value here anyway--it will always
-            # return the passed-in value to the user.
-          end
-        EOM
-      end
-
       def emit_singular_hash_field(method_name, attribute_name, type_ref)
         target.module_eval <<-EOM, __FILE__, __LINE__+1
           def #{method_name}(*args, &block)
@@ -153,31 +132,21 @@ module Moduler
             # The plural value
             if args[0].is_a?(Hash) && args.size == 1 && !block
               # If we get a hash, we merge in the values
-              if args[0].size > 0
-                @#{attribute_name} ||= {}
-                args[0].each do |key,value|
-                  key = #{type_ref}.coerce_key(key)
-                  value = #{type_ref}.coerce_value(value)
-                  @#{attribute_name}[key] = value
-                end
-              end
+              #{attribute_name}.merge!(args[0])
             else
-              # If we get :key, ... do ... end, we do the standard get/set with it.
-              key = #{type_ref}.coerce_key(args.shift)
-              if defined?(@#{attribute_name})
-                if @#{attribute_name}.has_key?(key)
-                  value = @#{attribute_name}[key]
-                else
-                  value = NO_VALUE
-                end
+              key = args.shift
+              value_type = #{type_ref}.value_type
+              if value_type
+                value = value_type.construct_raw(*args, &block)
+                #{attribute_name}.raw_write[key] = value
+                value_type.from_raw(value)
+              elsif args.size == 1 && !block
+                #{attribute_name}[key] = args[0]
+              elsif args.size == 0 && block
+                #{attribute_name}[key] = block
               else
-                value = NO_VALUE
+                raise ArgumentError, "#{method_name} takes exactly two arguments: #{method_name} <key>, <value> or #{method_name} <key> => <value>, <key> => <value> ..."
               end
-              context = Moduler::Base::ValueContext.new(value) do |v|
-                @#{attribute_name} ||= {}
-                @#{attribute_name}[key] = v
-              end
-              #{type_ref}.value_type.call(context, *args, &block)
             end
           end
         EOM

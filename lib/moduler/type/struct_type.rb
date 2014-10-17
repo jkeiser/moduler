@@ -1,5 +1,4 @@
 require 'moduler/base/struct_type'
-require 'moduler/base/value_context'
 require 'moduler/type/type_struct'
 require 'moduler/errors'
 
@@ -10,7 +9,7 @@ module Moduler
 
       def coerce(value)
         value = super(value)
-        if !value.is_a?(LazyValue)
+        if !value.is_a?(Lazy)
           errors = []
           attributes.each do |name,type|
             if type.required && !value.is_set?(name)
@@ -36,13 +35,12 @@ module Moduler
       end
 
       def attribute(name, *args, &block)
-        context = Base::ValueContext.new(attributes[name]) { |v| attributes[name] = v }
         attributes[name] = Type.new(*args, &block)
       end
 
       # TODO declare attributes with :no_emit, once we support :no_emit
       #attribute :attributes#, :singular => :attribute
-      attribute :default_class,  Struct,     :default => lazy(false) { target }
+      attribute :default_class,  Struct#,     :default => lazy(false) { |v| v.target }
       attribute :reopen_on_call, Boolean,    :default => false
       attribute :supertype,      Type
       attribute :target,         Module

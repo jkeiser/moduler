@@ -154,14 +154,14 @@ add a LazyGuard at the top (just before Guard), doing:
 > ```ruby
 > module LazyValueGuard
 >   def set(value)
->     if value.is_a?(LazyValue)
+>     if value.is_a?(Lazy)
 >       raw = value # Set without coercion; the coercion will happen on get.
 >     else
 >       raw = coerce(value)
 >     end
 >   end
 >   def get
->     if raw.is_a?(LazyValue)
+>     if raw.is_a?(Lazy)
 >       coerce_out(coerce(raw))
 >     else
 >       coerce_out(raw)

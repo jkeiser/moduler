@@ -1,5 +1,5 @@
 require 'support/spec_support'
-require 'moduler/lazy_value'
+require 'moduler/lazy/value'
 require 'moduler/type/hash_type'
 
 describe Moduler::Type::HashType do
@@ -107,11 +107,11 @@ describe Moduler::Type::HashType do
 
     include_context "it behaves exactly like a normal hash" do
       let(:hash) { instance }
-      after { hash.hash.each_key { |k| expect(k).to be_kind_of(String) } }
+      after { hash.raw.each_key { |k| expect(k).to be_kind_of(String) } }
     end
 
     it "Stores keys internally modified" do
-      expect(hash.hash).to eq({ 'a' => 1, 'b' => 2, 'c' => 3 })
+      expect(hash.raw).to eq({ 'a' => 1, 'b' => 2, 'c' => 3 })
     end
   end
 
@@ -120,11 +120,11 @@ describe Moduler::Type::HashType do
 
     include_context "it behaves exactly like a normal hash" do
       let(:hash) { instance }
-      after { hash.hash.each_value { |v| expect(v%2).to eq 0 } }
+      after { hash.raw.each_value { |v| expect(v%2).to eq 0 } }
     end
 
     it "Stores values internally modified" do
-      expect(hash.hash).to eq({ :a => 2, :b => 4, :c => 6 })
+      expect(hash.raw).to eq({ :a => 2, :b => 4, :c => 6 })
     end
   end
 
@@ -133,12 +133,12 @@ describe Moduler::Type::HashType do
 
     include_context "it behaves exactly like a normal hash" do
       let(:hash) { instance }
-      after { hash.hash.each_key { |k| expect(k).to be_kind_of(String) } }
-      after { hash.hash.each_value { |v| expect(v%2).to eq 0 } }
+      after { hash.raw.each_key { |k| expect(k).to be_kind_of(String) } }
+      after { hash.raw.each_value { |v| expect(v%2).to eq 0 } }
     end
 
     it "Stores keys internally modified" do
-      expect(hash.hash).to eq({ 'a' => 2, 'b' => 4, 'c' => 6 })
+      expect(hash.raw).to eq({ 'a' => 2, 'b' => 4, 'c' => 6 })
     end
   end
 end

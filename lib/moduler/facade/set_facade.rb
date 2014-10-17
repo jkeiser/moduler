@@ -1,4 +1,4 @@
-require 'moduler/facade'
+require 'moduler/facade/value_facade'
 
 module Moduler
   module Facade
@@ -6,17 +6,8 @@ module Moduler
     # Slaps a set interface on top of the set value (which subclasses can
     # override).
     #
-    class SetFacade
-      include Facade
+    class SetFacade < ValueFacade
       include Enumerable
-
-      def initialize(set, type)
-        @set = set
-        @type = type
-      end
-
-      attr_reader :set
-      attr_reader :type
 
       def ==(other)
         if other.is_a?(Set) || other.is_a?(SetFacade)
@@ -26,43 +17,53 @@ module Moduler
         end
       end
       def to_set
-        Set.new(each)
+        each.to_set
       end
       def size
-        set.size
+        raw.size
       end
       def to_a
-        set.map { |item| type.coerce_item_out(item) }
+        raw.map { |item| from_raw(item) }
       end
       def include?(item)
-        set.include?(type.coerce_item(item))
+        raw.include?(to_raw(item))
       end
       def member?(item)
-        set.member?(type.coerce_item(item))
+        raw.member?(to_raw(item))
       end
       def add(item)
-        set.add(type.coerce_item(item))
+        raw_write.add(to_raw(item))
         self
       end
       def add?(item)
-        set.add?(type.coerce_item(item)) ? self : nil
+        raw_write.add?(to_raw(item)) ? self : nil
       end
       def <<(item)
-        set << type.coerce_item(item)
+        raw_write << to_raw(item)
         self
       end
       def delete(item)
-        set.delete(type.coerce_item(item))
+        raw_write.delete(to_raw(item))
         self
       end
       def each
         if block_given?
-          set.each { |item| yield type.coerce_item_out(item) }
+          raw.each { |item| yield from_raw(item) }
         else
           Enumerator.new do |y|
-            set.each { |item| y.yield type.coerce_item_out(item) }
+            raw.each { |item| y.yield from_raw(item) }
           end
         end
+      end
+
+      protected
+
+      def to_raw(item)
+        type.item_type ? type.item_type.to_raw(item)   : item
+      end
+
+      def from_raw(item)
+        type.item_type ? type.item_type.from_raw(item) : item
       end
     end
   end

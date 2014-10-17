@@ -1,117 +1,97 @@
-require 'moduler/facade'
+require 'moduler/facade/value_facade'
 
 module Moduler
   module Facade
-    class ArrayFacade
-      include Facade
+    class ArrayFacade < ValueFacade
       include Enumerable
 
-      def initialize(array, type)
-        @array = array
-        @type = type
-      end
-
-      attr_reader :array
-      attr_reader :type
-
       def size
-        array.size
+        raw.size
       end
       def each
         if block_given?
-          array.each_with_index do |value, index|
-            yield type.coerce_value_out(index, value)
-          end
+          raw.each { |value| yield from_raw(value) }
         else
           Enumerator.new do |y|
-            array.each_with_index do |value, index|
-              y.yield type.coerce_value_out(index, value)
-            end
+            raw.each { |value| y.yield from_raw(value) }
           end
         end
       end
       def each_with_index
         if block_given?
-          array.each_with_index do |value, index|
-            yield type.coerce_value_out(index, value), type.coerce_key_out(index)
-          end
+          raw.each_with_index { |value,index| yield from_raw(value), index_from_raw(index) }
         else
           Enumerator.new do |y|
-            array.each_with_index do |value, index|
-              y.yield type.coerce_value_out(index, value), type.coerce_key_out(index)
-            end
+            raw.each_with_index { |value,index| y.yield from_raw(value), index_from_raw(index) }
           end
         end
       end
+
       def [](index)
         if index.is_a?(Range)
-          index = type.coerce_key_range(index)
-          result = array[index]
-          result ? type.coerce_out(result) : result
+          range = range_to_raw(index)
+          result = raw[range_to_raw(index)]
+          type.from_raw(result)
         else
-          index = type.coerce_key(index)
-          type.coerce_value_out(index, array[index])
+          index = index_to_raw(index)
+          from_raw(raw[index])
         end
       end
       def at(index)
-        index = type.coerce_key(index)
-        type.coerce_value_out(index, array[index])
+        index = index_to_raw(index)
+        from_raw(raw[index])
       end
 
       def []=(index, value)
         if index.is_a?(Range)
-          index = type.coerce_key_range(index)
-          result = type.coerce(value)
-          @array[index] = result
-          result = type.coerce_out(result)
+          index = range_to_raw(index)
+          value = type.to_raw(value)
+          raw_write[index] = value
+          type.from_raw(value)
         else
-          index = type.coerce_key(index)
-          result = type.coerce_value(index, value)
-          @array[index] = result
-          result = type.coerce_value_out(index, result)
+          index = index_to_raw(index)
+          value = to_raw(value)
+          raw_write[index] = value
+          from_raw(value)
         end
-        result
       end
 
       def <<(value)
-        value = type.coerce_value(nil, value)
-        array << value
+        raw_write << to_raw(value)
         self
       end
       def unshift(value)
-        value = type.coerce_value(nil, value)
-        array.unshift(value)
+        raw_write.unshift(to_raw(value))
         self
       end
       def push(value)
-        value = type.coerce_value(nil, value)
-        array.push(value)
+        raw_write.push(to_raw(value))
         self
       end
       def shift
-        type.coerce_value_out(nil, @array.shift)
+        from_raw(raw_write.shift)
       end
       def pop
-        type.coerce_value_out(nil, @array.pop)
+        from_raw(raw_write.pop)
       end
 
       def insert(index, value)
-        index = type.coerce_key(index)
-        value = type.coerce_value(index, value)
-        array.insert(index, value)
+        index = index_to_raw(index)
+        value = to_raw(value)
+        raw_write.insert(index, value)
         self
       end
       def delete_at(index)
-        index = type.coerce_key(index)
-        type.coerce_value_out(index, array.delete_at(index))
+        index = index_to_raw(index)
+        from_raw(raw.delete_at(index))
       end
 
       def to_a
-        # TODO don't copy arrays unless there are lazy values
-        array.map { |value| type.coerce_value_out(nil, value) }
+        # TODO don't copy raws unless there are lazy values
+        raw.map { |value| from_raw(value) }
       end
       def ==(other)
-        if other.is_a?(Array) || other.is_a?(ArrayType)
+        if other.is_a?(Array) || other.is_a?(ArrayFacade)
           to_a == other.to_a
         else
           false
@@ -134,21 +114,24 @@ module Moduler
         to_a.join(other)
       end
 
-      def assoc(obj)
-        if type.element_type.respond_to?(:coerce_value)
-          obj = type.element_type.coerce_value(nil, obj)
-        end
-        type.coerce_value_out(array.assoc(obj))
+      def range_to_raw(index)
+        type.index_type ? Range.new(type.index_type.to_raw(index.begin), type.index_type.to_raw(index.end)) : index
       end
 
-      def bsearch(&block)
-        result = array.bsearch { |v| block.call(type.coerce_value_out(v)) }
-        type.coerce_out(result)
+      def index_to_raw(index)
+        type.index_type ? type.index_type.to_raw(index)   : index
       end
 
-      def clear
-        array.clear
-        self
+      def index_from_raw(index)
+        type.index_type ? type.index_type.from_raw(index) : index
+      end
+
+      def to_raw(value)
+        type.element_type ? type.element_type.to_raw(value) : value
+      end
+
+      def from_raw(value)
+        type.element_type ? type.element_type.from_raw(value) : value
       end
     end
   end

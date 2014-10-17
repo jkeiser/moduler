@@ -1,5 +1,5 @@
 require 'support/spec_support'
-require 'moduler/lazy_value'
+require 'moduler/lazy/value'
 require 'moduler/type/set_type'
 
 describe Moduler::Type::SetType do
@@ -75,11 +75,11 @@ describe Moduler::Type::SetType do
 
     include_context "it behaves exactly like a normal set" do
       let(:set) { instance }
-      after { set.set.each { |v| v%2 == 0 } }
+      after { set.raw.each { |v| v%2 == 0 } }
     end
 
     it "Stores coerced values" do
-      set.set == Set[2,4,6]
+      set.raw == Set[2,4,6]
     end
   end
 end

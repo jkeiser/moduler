@@ -1,4 +1,4 @@
-require 'moduler/lazy_value'
+require 'moduler/lazy/value'
 require 'moduler/constants'
 
 module Moduler
@@ -12,13 +12,16 @@ module Moduler
         end
       end
 
-      #
-      # Tell whether call() / coerce() can be skipped if the user asks for a
-      # value.  Caller will still need to handle defaults and lazy values (which
-      # require you to do call or coerce_out).
-      #
-      def raw_get?
-        true
+      def to_raw(value)
+        value.is_a?(Lazy) ? value : coerce(value)
+      end
+
+      def from_raw(value)
+        coerce_out(value.is_a?(Lazy) ? coerce(value.get) : value)
+      end
+
+      def raw_default
+        @default
       end
 
       #
@@ -34,80 +37,23 @@ module Moduler
       # ==== Returns
       # The output value.
       #
-      def coerce_out(value, &cache_proc)
-        value = raw_value(value, &cache_proc)
-        value == NO_VALUE ? nil : value
-      end
-
-      def raw_value(value, &cache_proc)
-        if value == NO_VALUE
-          raw_default(&cache_proc)
-
-        elsif value.is_a?(LazyValue)
-          cache = value.cache
-          value = coerce(value.call)
-          if cache && cache_proc
-            cache_proc.call(value)
-          end
-          value
-
-        else
-          value
-        end
-      end
-
-      def raw_default(&cache_proc)
-        value = @default || NO_VALUE
-        if value.is_a?(LazyValue)
-          cache = value.cache
-          value = instance_eval(&value)
-          value = coerce(value)
-
-        elsif value != NO_VALUE
-          # We dup defaults when we copy them out.
-          begin
-            # Some things cannot be dup'd, and you won't know this till after the fact
-            # because all values implement dup
-            # TODO this is a terrible idea.  Classes, for example, should not be dup'd.
-            # Narrow it down to things people expect to be value-ish (hash,array,set?)
-            value = value.dup
-          rescue TypeError
-          end
-        end
-
-        if value != NO_VALUE && cache && cache_proc
-          cache_proc.call(value)
-        end
-
+      def coerce_out(value)
         value
       end
 
-      #
-      # The proc to instance_eval on +call+.
-      #
-      # Standard call semantics: +blah+ is get, +blah value+ is set,
-      # +blah do ... end+ is "set to proc"
-      #
-      def call(context, *args, &block)
-        # Default "call" semantics (get/set)
-        default_call(context, *args, &block)
-      end
-
-      def default_call(context, value = NOT_PASSED, &block)
+      def construct_raw(value=NOT_PASSED, &block)
         if value == NOT_PASSED
           if block
             value = block
           else
-            return coerce_out(context.get) { |value| context.set(value) }
+            raise ArgumentError, "Neither value nor block passed to set attribute!  Pass one or the other."
           end
         elsif block
-          raise ArgumentError, "Both value and block passed to attribute!  Only one at a time accepted."
+          raise ArgumentError, "Both value and block passed to set attribute!  Only one at a time accepted."
         end
 
-        value = coerce(value)
-        value = context.set(value)
-        if !value.is_a?(LazyValue)
-          value = coerce_out(value) { |value| context.set(value) }
+        if !value.is_a?(Lazy)
+          value = coerce(value)
         end
         value
       end
@@ -118,14 +64,13 @@ module Moduler
       #
       def default(*args, &block)
         # Short circuit "no default value for default" so we don't loop
-        if args.size == 0 && !block && !defined?(@default)
-          nil
-        else
-          call(ValueContext.new(@default) { |v| @default = v }, *args, &block)
+        if args.size != 0 || block
+          @default = construct_raw(*args, &block)
         end
+        from_raw(@default)
       end
       def default=(value)
-        @default = coerce(value)
+        @default = to_raw(value)
       end
     end
   end

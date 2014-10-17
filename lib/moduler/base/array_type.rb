@@ -4,79 +4,52 @@ require 'moduler/facade/array_facade'
 module Moduler
   module Base
     class ArrayType < Type
-      def raw_get?
-        false
+      def raw_default
+        result = super
+        if result.nil? && !nullable
+          result = []
+        end
+        result
       end
 
       #
       # We store arrays internally as arrays, and slap facades on them when the
       # user requests them.
       #
-      def coerce(array)
-        if array.is_a?(Moduler::Facade::ArrayFacade)
-          array = array.array
-        else
-          if array.respond_to?(:to_a)
-            array = array.to_a
+      def coerce(value)
+        if value.is_a?(Moduler::Facade::ArrayFacade)
+          if value.type != self && element_type
+            value = value.map { |value| element_type.to_raw(value) }
           else
-            array = [ array ]
+            value = value.raw_write
+          end
+        elsif !value.nil?
+          if value.respond_to?(:to_a)
+            value = value.to_a
+          else
+            value = [ value ]
           end
           if element_type
-            array = array.map { |value| coerce_value(nil, value) }
+            value = value.map { |value| element_type.to_raw(value) }
           end
         end
-        super(array)
+        super(value)
       end
 
       #
       # When the user requests the array, we give them a facade to protect the
       # values, assuming there is any index_type or element_type to protect.
       #
-      def coerce_out(array, &cache_proc)
-        array = raw_value(array, &cache_proc)
-        if array == NO_VALUE
-          array = []
-          cache_proc.call(array)
-        end
-
-        if index_type || element_type
-          Moduler::Facade::ArrayFacade.new(array, self)
+      def coerce_out(array)
+        if array && (index_type || element_type)
+          Facade::ArrayFacade.new(array, self)
         else
           array
         end
       end
 
-      def coerce_key(index)
-        if index_type
-          index_type.coerce(index)
-        else
-          index
-        end
-      end
-
-      def coerce_key_range(range)
-        if index_type
-          Range.new(index_type.coerce(range.begin), index_type.coerce(range.end))
-        else
-          range
-        end
-      end
-
-      def coerce_value(raw_index, value)
-        element_type ? element_type.coerce(value) : value
-      end
-
-      def coerce_key_out(index)
-        index_type ? index_type.coerce_out(index) : index
-      end
-
-      def coerce_value_out(raw_index, value)
-        result = element_type ? element_type.coerce_out(value) : value
-        result == NO_VALUE ? nil : result
-      end
-
-      def item_type_for(raw_index)
-        element_type
+      def new_facade(array)
+        Facade::ArrayFacade.new(to_raw(array), self)
       end
 
       def clone_value(value)
@@ -87,10 +60,6 @@ module Moduler
         else
           value.dup
         end
-      end
-
-      def new_facade(array)
-        Facade::ArrayFacade.new(array.map { |value| coerce_value(nil, value) }, self)
       end
     end
   end

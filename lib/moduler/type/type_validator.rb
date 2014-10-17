@@ -3,14 +3,9 @@ require 'moduler/errors'
 module Moduler
   module Type
     def coerce(value)
-      if value.is_a?(LazyValue)
-        # Leave lazy values alone until we retrieve them
-        value
-      else
-        value = super(value)
-        validate(value)
-        value
-      end
+      value = super(value)
+      validate(value)
+      value
     end
 
     #

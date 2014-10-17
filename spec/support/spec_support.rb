@@ -11,8 +11,6 @@ class MultiplyCoercer < Moduler::Type::BasicType
 
   def coerce(value)
     case value
-    when Moduler::LazyValue
-      value
     when Proc
       proc { v = super(value.call); v ? v*in_val : v }
     else
@@ -31,18 +29,12 @@ class MultiplyCoercer < Moduler::Type::BasicType
       v ? (v*out_val).to_i : v
     end
   end
-
-  def raw_get?
-    false
-  end
 end
 
 class OneBasedArray < Moduler::Type::BasicType
   def coerce(value)
     value = super(value)
-    if value.is_a?(Moduler::LazyValue)
-      value
-    elsif value <= 0
+    if value <= 0
       value
     else
       value-1
@@ -50,8 +42,5 @@ class OneBasedArray < Moduler::Type::BasicType
   end
   def coerce_out(value)
     super(value)+1
-  end
-  def raw_get?
-    false
   end
 end

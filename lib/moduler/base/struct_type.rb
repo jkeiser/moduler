@@ -1,5 +1,3 @@
-require 'moduler/base/value_context'
-
 module Moduler
   module Base
     # Predeclare Type
@@ -40,26 +38,13 @@ module Moduler
           result = target.new({})
           result.set_attributes(struct)
           struct = result
-        # TODO regretting the "LazyValue is a Proc" thing a little bit right now.
-        elsif struct.is_a?(Proc) && !struct.is_a?(LazyValue)
+        elsif struct.is_a?(Proc)
           result = target.new({})
           result.set_attributes(&struct)
           struct = result
         end
         super(struct)
       end
-
-      # def coerce_key(field_name)
-      #   field_name.to_sym
-      # end
-      #
-      # def coerce_value(raw_field_name, value)
-      #   attributes[raw_field_name] ? attributes[raw_field_name].coerce(value) : NO_VALUE
-      # end
-      #
-      # def item_type_for(raw_field_name)
-      #   attributes[raw_field_name]
-      # end
 
       def inline(*args, &block)
         # Determine the target from the caller
@@ -112,47 +97,29 @@ module Moduler
       #   When reopens_on_call is true
       #   address *args, &block -> (current_value || default).specialize(*args, &block)
       #
-      def default_call(context, *args, &block)
+      def construct_raw(*args, &block)
         if args.size == 0 && !block
           # If we're doing a simple get, we just do the get.
           return super
         end
 
         if args.size == 1 && !block
-          if args[0].is_a?(LazyValue)
-            context.set(args[0])
+          if args[0].is_a?(Lazy)
             return args[0]
           end
 
           if args[0] == nil
-            context.set(args[0])
-            return args[0]
+            return type.coerce(args[0])
           end
         end
 
-        if reopen_on_call
-          value = raw_value(context.get) { |v| context.set(v) }
-          if value != NO_VALUE
-            value = value.specialize(*args, &block)
-          else
-            value = (default_class || target).new(*args, &block)
-          end
-        else
-          value = (default_class || target).new(*args, &block)
-        end
-
-        context.set(value)
-        value = coerce_out(value)
-        value
+        (default_class || target).new(*args, &block)
       end
 
       attr_accessor :supertype
       attr_accessor :target
       attr_accessor :reopen_on_call
       attr_accessor :default_class
-      def default_class
-        @default_class || @target
-      end
     end
   end
 end

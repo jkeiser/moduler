@@ -49,15 +49,12 @@ module Moduler
         self.class.type.attributes.each_pair do |name,type|
           var = :"@#{name}"
           # Don't pull defaults unless you have to
-          next if !instance_variable_defined?(var) &&
-                  !other.instance_variable_defined?(var)
+          var_defined = instance_variable_defined?(var)
+          other_defined = other.instance_variable_defined?(var)
+          next if !var_defined && !other_defined
 
-          value = type.raw_value(instance_variable_get(var)) do |v|
-            instance_variable_set(var, v)
-          end
-          other_value = type.raw_value(other.instance_variable_get(var)) do |v|
-            other.instance_variable_set(var, v)
-          end
+          value = var_defined ? type.to_raw(instance_variable_get(var)) : type.raw_default
+          other_value = other_defined ? type.to_raw(other.instance_variable_get(var)) : type.raw_default
           if value != other_value
             return false
           end
@@ -65,14 +62,14 @@ module Moduler
         true
       end
 
-      def to_hash
+      def to_hash(include_defaults = false)
         result = {}
         self.class.type.attributes.each_pair do |name,type|
           var = :"@#{name}"
           if instance_variable_defined?(var)
-            result[name] = type.raw_value(instance_variable_get(var)) do |v|
-              instance_variable_set(var, v)
-            end
+            result[name] = type.from_raw(instance_variable_get(var))
+          elsif include_defaults
+            result[name] = type.from_raw(type.raw_default)
           end
         end
         result

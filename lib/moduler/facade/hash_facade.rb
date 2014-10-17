@@ -1,4 +1,4 @@
-require 'moduler/facade'
+require 'moduler/facade/value_facade'
 
 module Moduler
   module Facade
@@ -6,17 +6,8 @@ module Moduler
     # Slaps a hash interface on top of the hash value (which subclasses can
     # override).
     #
-    class HashFacade
-      include Facade
+    class HashFacade < ValueFacade
       include Enumerable
-
-      def initialize(hash, type)
-        @hash = hash
-        @type = type
-      end
-
-      attr_reader :hash
-      attr_reader :type
 
       def ==(other)
         if other.is_a?(Hash) || other.is_a?(HashFacade)
@@ -26,91 +17,109 @@ module Moduler
         end
       end
       def to_hash
-        if type.coerce_keys_out? || type.coerce_values_out?
+        if type.key_type || type.value_type
           # TODO don't coerce unless it's dirty
-          hash.inject({}) do |result,(key,value)|
-            result[type.coerce_key_out(key)] = type.coerce_value_out(key, value)
+          raw.inject({}) do |result,(key,value)|
+            result[key_from_raw(key)] = from_raw(value)
             result
           end
         else
-          hash
+          # TODO should this be raw_write?
+          raw
         end
       end
       def size
-        hash.size
+        raw.size
       end
       def [](key)
-        key = type.coerce_key(key)
-        if hash.has_key?(key)
-          type.coerce_value_out(key, hash[key])
+        key = key_to_raw(key)
+        if raw.has_key?(key)
+          from_raw(raw[key])
         end
       end
       def []=(key, value)
-        key = type.coerce_key(key)
-        result = type.coerce_value(key, value)
-        hash[key] = result
-        type.coerce_value_out(key, result)
+        key = key_to_raw(key)
+        result = to_raw(value)
+        raw_write[key] = result
+        from_raw(result)
       end
       def delete(key)
-        key = type.coerce_key(key)
-        if hash.has_key?(key)
-          type.coerce_value_out(key, hash.delete(key))
+        key = key_to_raw(key)
+        if raw_write.has_key?(key)
+          from_raw(raw_write.delete(key))
         end
       end
+      def merge(other)
+        if other.respond_to?(:type) && other.type == type
+          raw.merge(other.raw)
+        else
+          raw.merge(other.to_hash.map { |k,v| [ key_from_raw(k), from_raw(v) ] })
+        end
+      end
+      def merge!(other)
+        if other.respond_to?(:type) && other.type == type
+          raw_write.merge!(other.raw)
+        else
+          raw_write.merge!(Hash[other.to_hash.map { |k,v| [ key_to_raw(k), to_raw(v) ] }])
+        end
+        self
+      end
+
       def each
-        if type.coerce_keys_out? || type.coerce_values_out?
-          if block_given?
-            hash.each do |key, value|
-              yield type.coerce_key_out(key), type.coerce_value_out(key, value)
-            end
-          else
-            Enumerator.new do |y|
-              hash.each do |key, value|
-                y.yield type.coerce_key_out(key), type.coerce_value_out(key, value)
-              end
-            end
+        if block_given?
+          raw.each do |key, value|
+            yield key_from_raw(key), from_raw(value)
           end
         else
-          hash.each
+          Enumerator.new do |y|
+            raw.each do |key, value|
+              y.yield key_from_raw(key), from_raw(value)
+            end
+          end
         end
       end
       alias :each_pair :each
 
       def has_key?(key)
-        key = type.coerce_key(key)
-        hash.has_key?(key)
+        raw.has_key?(key_to_raw(key))
       end
       def each_key
-        if type.coerce_keys_out?
-          if block_given?
-            hash.each_key { |key| yield type.coerce_key_out(key) }
-          else
-            Enumerator.new { |y| hash.each_key { |key| y << type.coerce_key_out(key) } }
-          end
+        if block_given?
+          raw.each_key { |key| yield key_from_raw(key) }
         else
-          hash.each_key
+          Enumerator.new { |y| raw.each_key { |key| y << key_from_raw(key) } }
         end
       end
       def keys
-        type.coerce_keys_out? ? each_key.to_a : hash.keys
+        type.key_type ? each_key.to_a : raw.keys
       end
       def each_value
-        if type.coerce_values_out?
-          if block_given?
-            hash.each_value { |value| yield type.coerce_value_out(nil, value) }
-          else
-            Enumerator.new { |y| hash.each_value { |value| y << type.coerce_value_out(nil, value) } }
-          end
+        if block_given?
+          raw.each_value { |value| yield from_raw(value) }
         else
-          hash.each_value
+          Enumerator.new { |y| raw.each_value { |value| y << from_raw(value) } }
         end
       end
       def values
-        if type.coerce_values_out?
-          each_value.to_a
-        else
-          hash.values
-        end
+        type.value_type ? each_value.to_a : raw.values
+      end
+
+      protected
+
+      def key_to_raw(key)
+        type.key_type ? type.key_type.to_raw(key) : key
+      end
+
+      def key_from_raw(key)
+        type.key_type ? type.key_type.from_raw(key) : key
+      end
+
+      def to_raw(value)
+        type.value_type ? type.value_type.to_raw(value) : value
+      end
+
+      def from_raw(value)
+        type.value_type ? type.value_type.from_raw(value) : value
       end
     end
   end
