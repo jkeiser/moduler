@@ -71,6 +71,8 @@ describe Moduler do
       end
     end
 
+    # TODO lazy default
+    # TODO lazy value set
     context "with a basic attribute with no type" do
       let(:struct_class) do
         make_struct_class do
@@ -195,6 +197,58 @@ describe Moduler do
 
       context "when foo is set to 10" do
         before { struct.foo = 10 }
+
+        it ".foo is 10" do
+          expect(struct.foo).to eq 10
+        end
+
+        it "is_set?(:foo) returns true" do
+          expect(struct.is_set?(:foo)).to be_truthy
+        end
+
+        it "reset(:foo) returns 10" do
+          expect(struct.reset(:foo)).to eq 10
+          expect(struct.is_set?(:foo)).to eq false
+          expect(struct.foo).to be_nil
+        end
+
+        it "to_hash returns { :foo => 10 }" do
+          expect(struct.to_hash).to be_kind_of(Hash)
+          expect(struct.to_hash).to eq({ :foo => 10 })
+        end
+
+        it "to_hash(true) returns { :foo => 10 }" do
+          expect(struct.to_hash(true)).to be_kind_of(Hash)
+          expect(struct.to_hash(true)).to eq({ :foo => 10 })
+        end
+
+        it "struct == {} returns false" do
+          expect(struct == {}).to be_falsey
+        end
+
+        it "struct == { :foo => nil } returns false" do
+          expect(struct == { :foo => nil }).to be_falsey
+        end
+
+        it "struct == { :foo => 10 } returns false" do
+          expect(struct == { :foo => 10 }).to be_falsey
+        end
+
+        it "struct == <empty struct> returns false" do
+          expect(struct == struct_class.new).to be_falsey
+        end
+
+        it "struct == struct{:foo => nil} returns false" do
+          expect(struct == struct_class.new({ :foo => nil })).to be_falsey
+        end
+
+        it "struct == struct{:foo => 10} returns 10" do
+          expect(struct == struct_class.new({ :foo => 10 })).to be_truthy
+        end
+      end
+
+      context "when foo is set to lazy { 10 }" do
+        before { struct.foo = Moduler::Lazy::Value.new { 10 } }
 
         it ".foo is 10" do
           expect(struct.foo).to eq 10

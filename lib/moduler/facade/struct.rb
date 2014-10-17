@@ -54,6 +54,7 @@ module Moduler
           next if !var_defined && !other_defined
 
           value = var_defined ? type.to_raw(instance_variable_get(var)) : type.raw_default
+          value = value.get_for_read if value.is_a?(Lazy)
           other_value = other_defined ? type.to_raw(other.instance_variable_get(var)) : type.raw_default
           if value != other_value
             return false
@@ -81,7 +82,11 @@ module Moduler
 
       def reset(name=nil)
         if name
-          remove_instance_variable("@#{name}") if instance_variable_defined?("@#{name}")
+          if instance_variable_defined?("@#{name}")
+            result = remove_instance_variable("@#{name}")
+            field_type = self.class.type.attributes[name]
+            field_type ? field_type.from_raw(result) : result
+          end
         else
           self.class.type.attributes.each_key do |name|
             remove_instance_variable("@#{name}") if instance_variable_defined?("@#{name}")

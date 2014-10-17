@@ -15,14 +15,7 @@ module Moduler
 
       def get_for_read
         if defined?(@for_read_value)
-          case @for_read_value
-          when ForReadValue
-            @for_read_value.get_for_read
-          when Lazy
-            @for_read_value.get
-          else
-            @for_read_value
-          end
+          @for_read_value.is_a?(Lazy) ? @for_read_value.get_for_read : @for_read_value
         else
           get
         end
