@@ -2,7 +2,7 @@ module Moduler
   module Type
     module TypeStruct
       def self.extended(target)
-        target.include(Type) unless target == Type
+        target.send(:include, Type) unless target == Type
       end
 
       def lazy(cache=true, &block)

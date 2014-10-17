@@ -149,7 +149,7 @@ module Moduler
     def include(other)
       super
       if other.is_a?(Scope)
-        scope_proxy.include(other.scope_proxy)
+        scope_proxy.send(:include, other.scope_proxy)
       end
     end
 
@@ -178,7 +178,7 @@ module Moduler
           end
         end
         to_include.reverse.each do |m|
-          @scope_proxy.include m
+          @scope_proxy.send(:include, m)
         end
       end
       @scope_proxy
