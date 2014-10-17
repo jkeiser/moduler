@@ -65,9 +65,14 @@ module Moduler
       end
 
       # FooBar::BazBonk -> foo_bar/baz_bonk
+      if RUBY_VERSION.to_f >= 2
+        UPPERCASE_SPLIT = Regexp.new('(?=\p{Lu})')
+      else
+        UPPERCASE_SPLIT = Regexp.new('(?=[A-Z])')
+      end
       def to_snake_case(camel_case)
         camel_case.split('::').map do |str|
-          str.split(/(?=\p{Lu})/).map { |s| s.downcase! }.join('_')
+            str.split(UPPERCASE_SPLIT).map { |s| s.downcase! }.join('_')
         end.join('/')
       end
 
