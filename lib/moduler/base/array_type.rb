@@ -46,11 +46,7 @@ module Moduler
 
       def construct_raw(*values)
         if values.size == 1
-          if values[0].is_a?(Lazy)
-            value = values[0]
-          elsif values[0].respond_to?(:to_a)
-            value = coerce(values[0])
-          elsif values[0].nil?
+          if values[0].is_a?(Lazy) || values[0].respond_to?(:to_a) || values[0].nil?
             value = values[0]
           else
             value = values
@@ -58,7 +54,7 @@ module Moduler
         else
           value = values
         end
-        value
+        coerce(value)
       end
 
       def new_facade(array)

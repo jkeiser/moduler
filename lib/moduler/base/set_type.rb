@@ -23,6 +23,8 @@ module Moduler
         elsif !value.nil?
           if value.respond_to?(:to_set)
             value = value.to_set
+          else
+            value = Set.new([ value ])
           end
           if item_type
             value = value.map { |item| item_type.to_raw(item) }.to_set
@@ -41,6 +43,19 @@ module Moduler
         else
           set
         end
+      end
+
+      def construct_raw(*values)
+        if values.size == 1
+          if values[0].is_a?(Lazy) || values[0].respond_to?(:to_set) || values[0].nil?
+            value = values[0]
+          else
+            value = values
+          end
+        else
+          value = values
+        end
+        coerce(value)
       end
 
       def new_facade(set)
