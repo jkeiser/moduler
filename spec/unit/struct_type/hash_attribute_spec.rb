@@ -1,7 +1,7 @@
 require 'support/spec_support'
 require 'moduler'
 
-module ArrayAttributeTests
+module HashAttributeTests
   @num = 0
 end
 
@@ -21,7 +21,7 @@ describe Moduler do
 
   context "With a struct class" do
     def make_struct_class(&block)
-      ArrayAttributeTests.module_eval do
+      HashAttributeTests.module_eval do
         @num += 1
         Moduler.struct("Test#{@num}") { instance_eval(&block) }
         const_get("Test#{@num}")
@@ -35,31 +35,30 @@ describe Moduler do
     context "with an array attribute" do
       let(:struct_class) do
         make_struct_class do
-          attribute :foo, Array
+          attribute :foo, Hash
         end
       end
 
       it "Defaults to empty array" do
-        expect(struct.foo).to eq []
+        expect(struct.foo).to eq({})
       end
 
-      it ".foo = [ 10 ] setter works" do
-        expect(struct.foo = [ 10 ]).to eq [ 10 ]
-        expect(struct.foo).to eq [ 10 ]
+      it ".foo = { :a => 1 } setter works" do
+        expect(struct.foo = { :a => 1 }).to eq({ :a => 1 })
+        expect(struct.foo).to eq({ :a => 1 })
       end
 
-      it ".foo [ 10 ] setter works" do
-        expect(struct.foo [ 10 ]).to eq [ 10 ]
-        expect(struct.foo).to eq [ 10 ]
+      it ".foo :a => 1 setter works" do
+        expect(struct.foo :a => 1).to eq({ :a => 1 })
+        expect(struct.foo).to eq({ :a => 1 })
       end
 
-      it ".foo 10, 20, 30 works" do
-        expect(struct.foo 10, 20, 30).to eq [10,20,30]
+      it ".foo { :a => 1 }, { :b => 2 } raises an error" do
+        expect { struct.foo({ :a => 1 }, { :b => 2 }) }.to raise_error { ArgumentError }
       end
 
       it ".foo = 10 throws an exception" do
-        expect(struct.foo = 10).to eq 10
-        expect(struct.foo).to eq [10]
+        expect { struct.foo = 10 }.to raise_error(Moduler::ValidationFailed)
       end
 
       it ".foo nil yields nil" do
@@ -69,8 +68,8 @@ describe Moduler do
       end
 
       context "when foo is not set" do
-        it ".foo returns []" do
-          expect(struct.foo).to eq []
+        it ".foo returns {}" do
+          expect(struct.foo).to eq({})
         end
 
         it "is_set?(:foo) returns false" do
@@ -86,97 +85,97 @@ describe Moduler do
           expect(struct.to_hash).to eq({})
         end
 
-        it "to_hash(true) returns { :foo => [] }" do
+        it "to_hash(true) returns { :foo => {} }" do
           expect(struct.to_hash(true)).to be_kind_of(Hash)
-          expect(struct.to_hash(true)).to eq({ :foo => [] })
+          expect(struct.to_hash(true)).to eq({ :foo => {} })
         end
 
         it "struct == <empty struct> returns true" do
           expect(struct == struct_class.new).to be_truthy
         end
 
-        it "struct == struct{:foo => []} returns true" do
-          expect(struct == struct_class.new({ :foo => [] })).to be_truthy
+        it "struct == struct{:foo => {}} returns true" do
+          expect(struct == struct_class.new({ :foo => {} })).to be_truthy
         end
 
         it "struct == struct{:foo => nil} returns false" do
           expect(struct == struct_class.new({ :foo => nil })).to be_falsey
         end
 
-        it "struct == struct{:foo => [ 10 ]} returns false" do
-          expect(struct == struct_class.new({ :foo => [ 10 ] })).to be_falsey
+        it "struct == struct{:foo => { :a => 1 }} returns false" do
+          expect(struct == struct_class.new({ :foo => { :a => 1 } })).to be_falsey
         end
       end
 
-      context "when foo is set to []" do
-        before { struct.foo = [] }
+      context "when foo is set to {}" do
+        before { struct.foo = {} }
 
-        it ".foo returns []" do
-          expect(struct.foo).to eq []
+        it ".foo returns {}" do
+          expect(struct.foo).to eq({})
         end
 
         it "is_set?(:foo) returns true" do
           expect(struct.is_set?(:foo)).to be_truthy
         end
 
-        it "reset(:foo) returns []" do
-          expect(struct.reset(:foo)).to eq []
+        it "reset(:foo) returns {}" do
+          expect(struct.reset(:foo)).to eq({})
           expect(struct.is_set?(:foo)).to be_falsey
-          expect(struct.foo).to eq []
+          expect(struct.foo).to eq({})
         end
 
-        it "to_hash returns { :foo => [] }" do
+        it "to_hash returns { :foo => {} }" do
           expect(struct.to_hash).to be_kind_of(Hash)
-          expect(struct.to_hash).to eq({ :foo => [] })
+          expect(struct.to_hash).to eq({ :foo => {} })
         end
 
-        it "to_hash(true) returns { :foo => [] }" do
+        it "to_hash(true) returns { :foo => {} }" do
           expect(struct.to_hash(true)).to be_kind_of(Hash)
-          expect(struct.to_hash(true)).to eq({ :foo => [] })
+          expect(struct.to_hash(true)).to eq({ :foo => {} })
         end
 
         it "struct == <empty struct> returns true" do
           expect(struct == struct_class.new).to be_truthy
         end
 
-        it "struct == struct{:foo => []} returns true" do
-          expect(struct == struct_class.new({ :foo => [] })).to be_truthy
+        it "struct == struct{:foo => {}} returns true" do
+          expect(struct == struct_class.new({ :foo => {} })).to be_truthy
         end
 
         it "struct == struct{:foo => nil} returns false" do
           expect(struct == struct_class.new({ :foo => nil })).to be_falsey
         end
 
-        it "struct == struct{:foo => [ 10 ]} returns false" do
-          expect(struct == struct_class.new({ :foo => [ 10 ] })).to be_falsey
+        it "struct == struct{:foo => { :a => 1 }} returns false" do
+          expect(struct == struct_class.new({ :foo => { :a => 1 } })).to be_falsey
         end
       end
 
-      context "when foo is set to [ 10 ]" do
-        before { struct.foo = [ 10 ] }
+      context "when foo is set to { :a => 1 }" do
+        before { struct.foo = { :a => 1 } }
 
-        it ".foo is [ 10 ]" do
-          expect(struct.foo).to eq [ 10 ]
+        it ".foo is { :a => 1 }" do
+          expect(struct.foo).to eq({ :a => 1 })
         end
 
         it "is_set?(:foo) returns true" do
           expect(struct.is_set?(:foo)).to be_truthy
         end
 
-        it "reset(:foo) returns [ 10 ]" do
-          expect(struct.reset(:foo)).to eq [ 10 ]
+        it "reset(:foo) returns { :a => 1 }" do
+          expect(struct.reset(:foo)).to eq({ :a => 1 })
           expect(struct.is_set?(:foo)).to eq false
-          expect(struct.foo).to eq []
+          expect(struct.foo).to eq({})
         end
 
-        it "to_hash returns { :foo => [ 10 ] }" do
+        it "to_hash returns { :foo => { :a => 1 } }" do
           expect(struct.to_hash).to be_kind_of(Hash)
-          expect(struct.to_hash).to eq({ :foo => [ 10 ] })
+          expect(struct.to_hash).to eq({ :foo => { :a => 1 } })
         end
 
-        it "to_hash(true) returns { :foo => [ 10 ] }" do
+        it "to_hash(true) returns { :foo => { :a => 1 } }" do
           expect(struct.to_hash(true)).to be_kind_of(Hash)
-          expect(struct.to_hash(true)).to eq({ :foo => [ 10 ] })
+          expect(struct.to_hash(true)).to eq({ :foo => { :a => 1 } })
         end
 
         it "struct == <empty struct> returns false" do
@@ -187,40 +186,40 @@ describe Moduler do
           expect(struct == struct_class.new({ :foo => nil })).to be_falsey
         end
 
-        it "struct == struct{:foo => []} returns false" do
-          expect(struct == struct_class.new({ :foo => [] })).to be_falsey
+        it "struct == struct{:foo => {}} returns false" do
+          expect(struct == struct_class.new({ :foo => {} })).to be_falsey
         end
 
-        it "struct == struct{:foo => [ 10 ]} returns true" do
-          expect(struct == struct_class.new({ :foo => [ 10 ] })).to be_truthy
+        it "struct == struct{:foo => { :a => 1 }} returns true" do
+          expect(struct == struct_class.new({ :foo => { :a => 1 } })).to be_truthy
         end
       end
 
-      context "when foo is set to lazy { [ 10 ] }" do
-        before { struct.foo = Moduler::Lazy::Value.new { [ 10 ] } }
+      context "when foo is set to lazy { { :a => 1 } }" do
+        before { struct.foo = Moduler::Lazy::Value.new { { :a => 1 } } }
 
-        it ".foo is [ 10 ]" do
-          expect(struct.foo).to eq [ 10 ]
+        it ".foo is { :a => 1 }" do
+          expect(struct.foo).to eq({ :a => 1 })
         end
 
         it "is_set?(:foo) returns true" do
           expect(struct.is_set?(:foo)).to be_truthy
         end
 
-        it "reset(:foo) returns [ 10 ]" do
-          expect(struct.reset(:foo)).to eq [ 10 ]
+        it "reset(:foo) returns { :a => 1 }" do
+          expect(struct.reset(:foo)).to eq({ :a => 1 })
           expect(struct.is_set?(:foo)).to eq false
-          expect(struct.foo).to eq []
+          expect(struct.foo).to eq({})
         end
 
-        it "to_hash returns { :foo => [ 10 ] }" do
+        it "to_hash returns { :foo => { :a => 1 } }" do
           expect(struct.to_hash).to be_kind_of(Hash)
-          expect(struct.to_hash).to eq({ :foo => [ 10 ] })
+          expect(struct.to_hash).to eq({ :foo => { :a => 1 } })
         end
 
-        it "to_hash(true) returns { :foo => [ 10 ] }" do
+        it "to_hash(true) returns { :foo => { :a => 1 } }" do
           expect(struct.to_hash(true)).to be_kind_of(Hash)
-          expect(struct.to_hash(true)).to eq({ :foo => [ 10 ] })
+          expect(struct.to_hash(true)).to eq({ :foo => { :a => 1 } })
         end
 
         it "struct == <empty struct> returns false" do
@@ -231,12 +230,12 @@ describe Moduler do
           expect(struct == struct_class.new({ :foo => nil })).to be_falsey
         end
 
-        it "struct == struct{:foo => []} returns false" do
-          expect(struct == struct_class.new({ :foo => [] })).to be_falsey
+        it "struct == struct{:foo => {}} returns false" do
+          expect(struct == struct_class.new({ :foo => {} })).to be_falsey
         end
 
-        it "struct == struct{:foo => [ 10 ]} returns true" do
-          expect(struct == struct_class.new({ :foo => [ 10 ] })).to be_truthy
+        it "struct == struct{:foo => { :a => 1 }} returns true" do
+          expect(struct == struct_class.new({ :foo => { :a => 1 } })).to be_truthy
         end
       end
 
@@ -254,7 +253,7 @@ describe Moduler do
         it "reset(:foo) returns nil" do
           expect(struct.reset(:foo)).to be_nil
           expect(struct.is_set?(:foo)).to eq false
-          expect(struct.foo).to eq []
+          expect(struct.foo).to eq({})
         end
 
         it "to_hash returns { :foo => nil }" do
@@ -275,12 +274,12 @@ describe Moduler do
           expect(struct == struct_class.new({ :foo => nil })).to be_truthy
         end
 
-        it "struct == struct{:foo => []} returns false" do
-          expect(struct == struct_class.new({ :foo => [] })).to be_falsey
+        it "struct == struct{:foo => {}} returns false" do
+          expect(struct == struct_class.new({ :foo => {} })).to be_falsey
         end
 
-        it "struct == struct{:foo => [ 10 ]} returns false" do
-          expect(struct == struct_class.new({ :foo => [ 10 ] })).to be_falsey
+        it "struct == struct{:foo => { :a => 1 }} returns false" do
+          expect(struct == struct_class.new({ :foo => { :a => 1 } })).to be_falsey
         end
       end
     end

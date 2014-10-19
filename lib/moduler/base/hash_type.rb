@@ -22,6 +22,8 @@ module Moduler
         elsif !value.nil?
           if value.respond_to?(:to_hash)
             value = value.to_hash
+          else
+            raise ValidationFailed.new([ "Hash field must be set to a hash value: #{value.inspect} is not a hash value." ])
           end
           if key_type || value_type
             value = Facade::HashFacade.new({}, self).merge!(value).raw_write
