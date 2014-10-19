@@ -46,10 +46,10 @@ module Moduler
           if block
             value = block
           else
-            raise ArgumentError, "Neither value nor block passed to set attribute!  Pass one or the other."
+            raise ArgumentError, "Neither value nor block passed to construct attribute!  Pass one or the other."
           end
         elsif block
-          raise ArgumentError, "Both value and block passed to set attribute!  Only one at a time accepted."
+          raise ArgumentError, "Both value and block passed to construct attribute!  Only one at a time accepted."
         end
 
         if !value.is_a?(Lazy)

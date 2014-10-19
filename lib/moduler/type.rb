@@ -25,12 +25,12 @@ module Moduler
 
     attribute :kind_of,    Array[kind_of: [ Module ]]
     attribute :equal_to,   Array
-    attribute :nullable,   Boolean, :default => false
+    attribute :nullable,   Boolean, :default => true
     attribute :regexes,    Array[kind_of: [ Regexp, String ]]
     attribute :cannot_be,  Array[Symbol]
     attribute :respond_to, Array[kind_of: [ Symbol, String ]]
     attribute :validators, Array[Proc]
-    attribute :required,   Boolean, :default => false
+    attribute :required,   Boolean
   end
 end
 

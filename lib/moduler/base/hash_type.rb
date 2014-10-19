@@ -5,11 +5,7 @@ module Moduler
   module Base
     class HashType < Type
       def raw_default
-        result = super
-        if result.nil? && !nullable
-          result = {}
-        end
-        result
+        defined?(@default) ? @default : {}
       end
 
       #

@@ -5,11 +5,7 @@ module Moduler
   module Base
     class ArrayType < Type
       def raw_default
-        result = super
-        if result.nil? && !nullable
-          result = []
-        end
-        result
+        defined?(@default) ? @default : []
       end
 
       #
@@ -46,6 +42,23 @@ module Moduler
         else
           array
         end
+      end
+
+      def construct_raw(*values)
+        if values.size == 1
+          if values[0].is_a?(Lazy)
+            value = values[0]
+          elsif values[0].respond_to?(:to_a)
+            value = coerce(values[0])
+          elsif values[0].nil?
+            value = values[0]
+          else
+            value = values
+          end
+        else
+          value = values
+        end
+        value
       end
 
       def new_facade(array)

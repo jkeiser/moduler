@@ -16,8 +16,12 @@ module Moduler
     # methods to do some validation.
     #
     def validate(value)
-      if nullable && value.nil?
-        return
+      if value.nil?
+        if nullable || equal_to.include?(nil) || kind_of.include?(NilClass)
+          return
+        else
+          raise ValidationFailed.new([ "non-nullable type cannot set set to nil" ])
+        end
       end
 
       errors = []

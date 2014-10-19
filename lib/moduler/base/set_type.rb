@@ -6,11 +6,7 @@ module Moduler
   module Base
     class SetType < Type
       def raw_default
-        result = super
-        if result.nil? && !nullable
-          result = Set.new
-        end
-        result
+        defined?(@default) ? @default : Set.new
       end
 
       #

@@ -113,6 +113,7 @@ module Moduler
       def emit_typeless_get_set_field(name)
         target.module_eval <<-EOM, __FILE__, __LINE__+1
           def #{name}(value=NOT_PASSED, &block)
+            puts "Err #{name}"
             if value == NOT_PASSED
               if block
                 @#{name} = block

@@ -1,7 +1,7 @@
 require 'support/spec_support'
 require 'moduler'
 
-module DSLTests
+module AttributeTests
   @num = 0
 end
 
@@ -21,7 +21,7 @@ describe Moduler do
 
   context "With a class" do
     def make_struct_class(&block)
-      DSLTests.module_eval do
+      AttributeTests.module_eval do
         @num += 1
         Moduler.struct("Test#{@num}") { instance_eval(&block) }
         const_get("Test#{@num}")
