@@ -270,5 +270,129 @@ describe Moduler do
         end
       end
     end
+
+    context "Nested attributes" do
+
+      context "And a Hash[Symbol=>Hash] attribute" do
+        let(:struct_class) do
+          make_struct_class do
+            attribute :foo, Hash[Symbol=>Hash]
+          end
+        end
+
+        it "Defaults to empty hash" do
+          expect(struct.foo).to eq({})
+        end
+
+        it ".foo = {a: {x: 1} } setter works" do
+          expect(struct.foo = {a: {x: 1}}).to eq({a: {x: 1}})
+          expect(struct.foo).to eq({a: {x: 1}})
+        end
+
+        it ".foo = {x: 1} raises an error" do
+          expect { struct.foo = {x: 1} }.to raise_error Moduler::ValidationFailed
+        end
+
+        it ".foo = 10 raises an error" do
+          expect { struct.foo = 10 }.to raise_error Moduler::ValidationFailed
+        end
+
+        it ".foo {a: {x: 1}} setter works" do
+          expect(struct.foo({a: {x: 1}})).to eq({a: {x: 1}})
+          expect(struct.foo).to eq({a: {x: 1}})
+        end
+
+        it ".foo {a: {x: 1}}, {b: {x: 1}} raises an exception" do
+          expect { struct.foo({a: {x: 1}}, {b: {x: 1}}) }.to raise_error ArgumentError
+        end
+
+        it ".foo nil yields nil" do
+          expect(struct.foo nil).to be_nil
+          expect(struct.is_set?(:foo)).to be_truthy
+          expect(struct.foo).to be_nil
+        end
+      end
+
+      context "And a Hash[Symbol=>Array] attribute" do
+        let(:struct_class) do
+          make_struct_class do
+            attribute :foo, Hash[Symbol=>Array]
+          end
+        end
+
+        it "Defaults to empty hash" do
+          expect(struct.foo).to eq({})
+        end
+
+        it ".foo = {a: [10] } setter works" do
+          expect(struct.foo = {a: [10]}).to eq({a: [10]})
+          expect(struct.foo).to eq({a: [10]})
+        end
+
+        it ".foo = [10] raises an error" do
+          expect { struct.foo = [10] }.to raise_error Moduler::ValidationFailed
+        end
+
+        it ".foo = 10 raises an error" do
+          expect { struct.foo = 10 }.to raise_error Moduler::ValidationFailed
+        end
+
+        it ".foo {a: [10]} setter works" do
+          expect(struct.foo({a: [10]})).to eq({a: [10]})
+          expect(struct.foo).to eq({a: [10]})
+        end
+
+        it ".foo {a: [10]}, {b: [10]} raises an exception" do
+          expect { struct.foo({a: [10]}, {b: [10]}) }.to raise_error ArgumentError
+        end
+
+        it ".foo nil yields nil" do
+          expect(struct.foo nil).to be_nil
+          expect(struct.is_set?(:foo)).to be_truthy
+          expect(struct.foo).to be_nil
+        end
+      end
+
+      context "And a Hash[Symbol=>Set] attribute" do
+        let(:struct_class) do
+          make_struct_class do
+            attribute :foo, Hash[Symbol=>Set]
+          end
+        end
+
+        it "Defaults to empty hash" do
+          expect(struct.foo).to eq({})
+        end
+
+        it ".foo = {a: Set[10] } setter works" do
+          expect(struct.foo = {a: Set[10]}).to eq({a: Set[10]})
+          expect(struct.foo).to eq({a: Set[10]})
+        end
+
+        it ".foo = Set[10] raises an error" do
+          expect { struct.foo = Set[10] }.to raise_error Moduler::ValidationFailed
+        end
+
+        it ".foo = 10 raises an error" do
+          expect { struct.foo = 10 }.to raise_error Moduler::ValidationFailed
+        end
+
+        it ".foo {a: Set[10]} setter works" do
+          expect(struct.foo({a: Set[10]})).to eq({a: Set[10]})
+          expect(struct.foo).to eq({a: Set[10]})
+        end
+
+        it ".foo {a: Set[10]}, {b: Set[10]} raises an exception" do
+          expect { struct.foo({a: Set[10]}, {b: Set[10]}) }.to raise_error ArgumentError
+        end
+
+        it ".foo nil yields nil" do
+          expect(struct.foo nil).to be_nil
+          expect(struct.is_set?(:foo)).to be_truthy
+          expect(struct.foo).to be_nil
+        end
+      end
+
+    end
   end
 end
