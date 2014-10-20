@@ -1,13 +1,12 @@
-require 'moduler/type'
-
-class Blah
-  Moduler::Type.inline do
-    attribute :foo
-    attribute :bar
+class X
+  def hi
+    @foo = 10
+  end
+  def lo
+    remove_instance_variable(:@foo)
   end
 end
 
-
-x = Blah.new
-x.foo = 10
-puts x.foo
+x = X.new
+puts x.hi
+puts x.lo

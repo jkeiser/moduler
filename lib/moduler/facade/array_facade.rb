@@ -89,7 +89,7 @@ module Moduler
       end
       def delete_at(index)
         index = index_to_raw(index)
-        from_raw(raw.delete_at(index))
+        from_raw(raw_write.delete_at(index))
       end
 
       def to_a
@@ -137,7 +137,12 @@ module Moduler
       end
 
       def from_raw(value)
-        type.element_type ? type.element_type.from_raw(value) : value
+        result = type.element_type ? type.element_type.from_raw(value) : value
+        # TODO this code will almost certainly go away once we get something similar into structs
+        if !result.frozen? && @raw.is_a?(Lazy)
+          @raw.ensure_writeable
+        end
+        result
       end
     end
   end

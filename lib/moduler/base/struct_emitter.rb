@@ -91,7 +91,11 @@ module Moduler
                   raw_value = raw_default
                 else
                   raw_value = Lazy::ForReadValue.new(raw_default) do
-                    defined?(@#{name}) ? @#{name} : (@#{name} = raw_default)
+                    if defined?(@#{name})
+                      raise "#{name} was defined by someone else: race!"
+                    else
+                      @#{name} = raw_default
+                    end
                   end
                 end
               end

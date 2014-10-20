@@ -1,4 +1,5 @@
 require 'moduler/facade'
+require 'moduler/lazy'
 
 module Moduler
   module Facade
@@ -16,12 +17,8 @@ module Moduler
       # The raw value, for read purposes.
       #
       def raw
-        if @raw.is_a?(Lazy::Value)
-          if @raw.is_a?(Lazy::ForReadValue)
-            @raw.get_for_read
-          else
-            @raw.get
-          end
+        if @raw.is_a?(Lazy)
+          @raw.get_for_read
         else
           @raw
         end
@@ -31,7 +28,7 @@ module Moduler
       # The raw value, for write purposes
       #
       def raw_write
-        if @raw.is_a?(Lazy::Value)
+        if @raw.is_a?(Lazy)
           @raw.get
         else
           @raw

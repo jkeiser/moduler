@@ -405,7 +405,51 @@ describe Moduler do
           expect(struct.foo).to be_nil
         end
       end
-
     end
+
+    context "With a hash attribute defaulting to {a: 1}" do
+      let(:struct_class) do
+        make_struct_class do
+          attribute :foo, Hash, :default => {a: 1}
+        end
+      end
+
+      it "Calculating the size of the hash does not affect is_set?" do
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.foo.size).to eq 1
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.to_hash).to eq({})
+      end
+
+      it "Retrieving a frozen, raw value from a default hash does not affect is_set" do
+        expect(struct.foo[:a]).to eq 1
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.to_hash).to eq({})
+      end
+    end
+
+    context "With a hash attribute defaulting to {a: 'hi'}" do
+      let(:struct_class) do
+        make_struct_class do
+          attribute :foo, Hash, :default => {a: 'hi'}
+        end
+      end
+
+      it "Calculating the size of the hash does not affect is_set?" do
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.foo.size).to eq 1
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.to_hash).to eq({})
+      end
+
+      it "Retrieving a non-frozen, raw value from a default hash *does* affect is_set" do
+        x = struct.foo[:a]
+        expect(x).to eq 'hi'
+        expect(struct.is_set?(:foo)).to be_truthy
+        x << ' you'
+        expect(struct.to_hash).to eq({foo: {a: 'hi you'}})
+      end
+    end
+
   end
 end

@@ -119,7 +119,11 @@ module Moduler
       end
 
       def from_raw(value)
-        type.value_type ? type.value_type.from_raw(value) : value
+        result = type.value_type ? type.value_type.from_raw(value) : value
+        if !result.frozen? && @raw.is_a?(Lazy)
+          @raw.ensure_writeable
+        end
+        result
       end
     end
   end

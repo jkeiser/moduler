@@ -439,5 +439,49 @@ describe Moduler do
         end
       end
     end
+
+    context "With an array attribute defaulting to [10]" do
+      let(:struct_class) do
+        make_struct_class do
+          attribute :foo, Array, :default => [10]
+        end
+      end
+
+      it "Calculating the size of the array does not affect is_set?" do
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.foo.size).to eq 1
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.to_hash).to eq({})
+      end
+
+      it "Retrieving a frozen, raw value from a default array does not affect is_set" do
+        expect(struct.foo[0]).to eq 10
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.to_hash).to eq({})
+      end
+    end
+
+    context "With an array attribute defaulting to ['hi']" do
+      let(:struct_class) do
+        make_struct_class do
+          attribute :foo, Array, :default => ['hi']
+        end
+      end
+
+      it "Calculating the size of the array does not affect is_set?" do
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.foo.size).to eq 1
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.to_hash).to eq({})
+      end
+
+      it "Retrieving a non-frozen, raw value from a default array *does* affect is_set" do
+        x = struct.foo[0]
+        expect(x).to eq 'hi'
+        expect(struct.is_set?(:foo)).to be_truthy
+        x << ' you'
+        expect(struct.to_hash).to eq({foo: ['hi you']})
+      end
+    end
   end
 end
