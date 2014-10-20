@@ -17,7 +17,7 @@ module Moduler
     #
     def validate(value)
       if value.nil?
-        if nullable || equal_to.include?(nil) || kind_of.include?(NilClass)
+        if (nullable || equal_to.include?(nil) || kind_of.include?(NilClass)) && !cannot_be.include?(:nil)
           return
         else
           raise ValidationFailed.new([ "non-nullable type cannot set set to nil" ])
@@ -33,6 +33,7 @@ module Moduler
           end
         end
       end
+
       if equal_to && equal_to.size > 0
         if !equal_to.include?(value)
           errors << "Value must be equal to one of (#{equal_to.map { |k| k.inspect }.join(", ")}), but is #{value.inspect}"
@@ -52,14 +53,6 @@ module Moduler
           errors << "Value must match one of (#{regexes.map { |r| r.inspect }.join(", ")}), but is not a string: #{value.inspect}"
         end
       end
-      # required fields
-      # if value.respond_to?(:has_key?)
-      #   errors += field_names.
-      #       select { |name| !value.has_key?(name) }.
-      #       map    { |name| "Missing required field #{name}." }
-      # else
-      #   errors << "Value must have fields #{field_names.join(', ')}, but is not a hash: #{value.inspect}"
-      # end
       if respond_to
         respond_to.each do |name|
           if !value.respond_to?(name)

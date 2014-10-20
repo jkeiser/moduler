@@ -66,8 +66,8 @@ describe Moduler::Type do
     it "cccccccde does not match" do
       expect { type.coerce('cccccccde') }.to raise_error(Moduler::ValidationFailed)
     end
-    it "nil does not match" do
-      expect { type.coerce(nil) }.to raise_error(Moduler::ValidationFailed)
+    it "nil matches" do
+      expect(type.coerce(nil)).to be_nil
     end
     it "3 does not match" do
       expect { type.coerce(3) }.to raise_error(Moduler::ValidationFailed)
@@ -88,8 +88,8 @@ describe Moduler::Type do
     it "1 does not match" do
       expect { type.coerce(1) }.to raise_error(Moduler::ValidationFailed)
     end
-    it "nil does not match" do
-      expect { type.coerce(nil) }.to raise_error(Moduler::ValidationFailed)
+    it "nil matches" do
+      expect(type.coerce(nil)).to be_nil
     end
   end
 
