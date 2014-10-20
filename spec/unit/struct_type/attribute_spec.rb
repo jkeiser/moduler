@@ -641,5 +641,35 @@ describe Moduler do
         end
       end
     end
+
+    context "With an attribute defaulting to 10" do
+      let(:struct_class) do
+        make_struct_class do
+          attribute :foo, :default => 10
+        end
+      end
+
+      it "Retrieving the frozen, raw value does not affect is_set" do
+        expect(struct.foo).to eq 10
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.to_hash).to eq({})
+      end
+    end
+
+    context "With an attribute defaulting to 'hi'" do
+      let(:struct_class) do
+        make_struct_class do
+          attribute :foo, :default => 'hi'
+        end
+      end
+
+      it "Retrieving the non-frozen, raw value from a default array *does* affect is_set" do
+        x = struct.foo
+        expect(x).to eq 'hi'
+        expect(struct.is_set?(:foo)).to be_truthy
+        x << ' you'
+        expect(struct.to_hash).to eq({:foo => 'hi you'})
+      end
+    end
   end
 end
