@@ -1,16 +1,24 @@
 module Moduler
   module Facade
-    module Struct
+    module HashStruct
       def initialize(attributes=nil, is_raw=false, &block)
-        set_attributes(attributes, is_raw, &block)
+        if is_raw
+          super(attributes, nil)
+          instance_eval(&block) if block
+        else
+          super({}, nil)
+          set_attributes(attributes, is_raw, &block)
+        end
+      end
+
+      def type
+        self.class.type
       end
 
       def set_attributes(attributes=nil, is_raw=false, &block)
         if attributes
           if is_raw
-            attributes.each do |key, value|
-              instance_variable_set("@#{key}", value)
-            end
+            raw.merge!(attributes)
           else
             attributes.each do |key, value|
               setter = :"#{key}="
@@ -28,10 +36,8 @@ module Moduler
       def clone
         other = self.dup
         self.class.type.attributes.each_pair do |key,type|
-          var = :"@#{key}"
-          if other.instance_variable_defined?(var)
-            value = type.clone_value(other.instance_variable_get(var))
-            other.instance_variable_set(var, value)
+          if raw.has_key?(key)
+            other.raw[key] = type.clone_value(raw[key])
           end
         end
         other
@@ -47,16 +53,15 @@ module Moduler
         if other.class != self.class
           return false
         end
-        self.class.type.attributes.each_pair do |name,type|
-          var = :"@#{name}"
+        self.class.type.attributes.each_pair do |key,type|
           # Don't pull defaults unless you have to
-          var_defined = instance_variable_defined?(var)
-          other_defined = other.instance_variable_defined?(var)
+          var_defined = raw.has_key?(key)
+          other_defined = other.raw.has_key?(key)
           next if !var_defined && !other_defined
 
-          value = var_defined ? type.to_raw(instance_variable_get(var)) : type.raw_default
+          value = var_defined ? type.to_raw(raw[key]) : type.raw_default
           value = value.get_for_read if value.is_a?(Lazy)
-          other_value = other_defined ? type.to_raw(other.instance_variable_get(var)) : type.raw_default
+          other_value = other_defined ? type.to_raw(other.raw[key]) : type.raw_default
           other_value = other_value.get_for_read if other_value.is_a?(Lazy)
           if value != other_value
             return false
@@ -66,33 +71,30 @@ module Moduler
       end
 
       def to_hash(include_defaults = false)
-        result = {}
-        self.class.type.attributes.each_pair do |name,type|
-          var = :"@#{name}"
-          if instance_variable_defined?(var)
-            result[name] = type.from_raw(instance_variable_get(var))
-          elsif include_defaults
-            result[name] = type.from_raw(type.raw_default)
+        if include_defaults
+          result = {}
+          self.class.type.attributes.each_pair do |key,type|
+            result[key] = type.from_raw(raw.has_key?(key) ? raw[key] : type.raw_default)
           end
+          result
+        else
+          raw
         end
-        result
       end
 
       def is_set?(name)
-        instance_variable_defined?("@#{name}")
+        raw.has_key?(name)
       end
 
       def reset(name=nil)
         if name
-          if instance_variable_defined?("@#{name}")
-            result = remove_instance_variable("@#{name}")
+          if raw.has_key?(name)
+            result = raw_write.delete(name)
             field_type = self.class.type.attributes[name]
             field_type ? field_type.from_raw(result) : result
           end
-        else
-          self.class.type.attributes.each_key do |name|
-            remove_instance_variable("@#{name}") if instance_variable_defined?("@#{name}")
-          end
+        elsif raw.size > 0
+          raw_write.clear
         end
       end
     end

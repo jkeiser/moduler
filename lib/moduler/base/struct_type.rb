@@ -120,6 +120,7 @@ module Moduler
       attr_accessor :target
       attr_accessor :reopen_on_call
       attr_accessor :default_class
+      attr_accessor :store_in_hash
     end
   end
 end

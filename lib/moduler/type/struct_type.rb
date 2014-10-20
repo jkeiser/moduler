@@ -41,9 +41,10 @@ module Moduler
       # TODO declare attributes with :no_emit, once we support :no_emit
       #attribute :attributes#, :singular => :attribute
       attribute :default_class,  Struct#,     :default => lazy(false) { |v| v.target }
-      attribute :reopen_on_call, Boolean,    :default => false
+      attribute :reopen_on_call, Boolean
       attribute :supertype,      Type
       attribute :target,         :kind_of => [ Module, Hash ]
+      attribute :store_in_hash,  Boolean
     end
   end
 end
