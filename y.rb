@@ -1,12 +1,7 @@
 class X
-  def hi
-    @x = 10
-  end
-  def hi2
-    @x
-  end
-  def hi3
-    remove_instance_variable(:@x)
+  @x = 10
+  def self.hi
+    puts @x
   end
 end
 

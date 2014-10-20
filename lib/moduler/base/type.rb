@@ -72,6 +72,9 @@ module Moduler
       def default=(value)
         @default = to_raw(value)
       end
+
+      def emit(parent=nil, name=nil)
+      end
     end
   end
 end

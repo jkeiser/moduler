@@ -86,11 +86,9 @@ describe Moduler::Type::StructType do
 
   context "After adding a struct field" do
     let(:type) do
-      type = Moduler::Type.new Struct do
+      type = Moduler::Type::StructType.new do
         target Class.new { define_singleton_method(:to_s) { puts "outer struct" }}
         attribute :foo, Struct do
-          # TODO shouldn't have to set a target on an inner struct
-          target Class.new { define_singleton_method(:to_s) { puts "foo struct" }}
           attribute :bar
         end
       end

@@ -97,6 +97,56 @@ module Moduler
           raw_write.clear
         end
       end
+
+      def has_key?(name)
+        raw.has_key?(name) || self.type.attributes.has_key?(name)
+      end
+
+      def [](name)
+        if type.attributes.has_key?(name)
+          attribute_type = type.attributes[name]
+
+          if attribute_type
+            if raw.has_key?(name)
+              attribute_type.from_raw(raw[name])
+
+            else
+              # We don't have a key; return the default.
+
+              # We don't set defaults into the struct right away; only if the
+              # user tries to write to them.  Frozen defaults (like an int)
+              # we don't store at all.
+              raw_default = attribute_type.raw_default
+              if raw_default.frozen?
+                raw_value = raw_default
+              else
+                raw_value = Lazy::ForReadValue.new(raw_default) do
+                  if raw.has_key?(name)
+                    raise "#{name} was defined by someone else: race!"
+                  else
+                    raw_write[name] = raw_default
+                  end
+                end
+              end
+
+              attribute_type.from_raw(raw_value)
+            end
+          else
+            raw[name]
+          end
+        else
+          raise "Invalid key #{}"
+        end
+      end
+
+      def []=(name, value)
+        if type.attributes.has_key?(name)
+          attribute_type = type.attributes[name]
+          raw_write[name] = attribute_type ? attribute_type.to_raw(value) : value
+        else
+          raw_write[name] = value
+        end
+      end
     end
   end
 end

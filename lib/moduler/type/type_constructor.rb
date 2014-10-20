@@ -55,7 +55,7 @@ module Moduler
         elsif type == Set
           SetType.new(options, &block)
         elsif type == Struct
-          StructType.new(options, &block)
+          StructType.new({ store_in_hash: true }.merge(options), &block)
         elsif type == Base::Boolean
           BasicType.new({ equal_to: [true,false] }.merge(options), &block)
         else

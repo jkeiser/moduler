@@ -7,7 +7,10 @@ require 'moduler/lazy/for_read_value'
 module Moduler
   module Base
     class StructType < Type
-      def emit
+      def emit(parent=nil, name=nil)
+        if !target && parent && name
+          self.target = { parent: parent, name: name }
+        end
         emit_target_class_type
         attributes.map do |name,field_type|
           emit_field(name)
@@ -17,12 +20,14 @@ module Moduler
       def emit_field(name)
         field_type = @attributes[name]
         if field_type
-          type_ref = "#{target.name || "self.class"}.type.attributes[#{name.inspect}]"
+          type_ref = "method(__method__).owner.type.attributes[#{name.inspect}]"
           emit_get_set_field(name, type_ref)
 
           if field_type.is_a?(Moduler::Base::HashType) && field_type.singular
             emit_singular_hash_field(field_type.singular, name, type_ref)
           end
+
+          field_type.emit(target, name)
         else
           emit_typeless_get_set_field(name)
         end
@@ -69,7 +74,7 @@ module Moduler
 
       # foo_bar/baz_bonk -> FooBar::BazBonk
       def to_camel_case(snake_case)
-        snake_case.split('/').map do |str|
+        snake_case.to_s.split('/').map do |str|
           str.split('_').map { |s| s.capitalize }.join('')
         end.join('::')
       end
@@ -81,7 +86,7 @@ module Moduler
         UPPERCASE_SPLIT = Regexp.new('(?=[A-Z])')
       end
       def to_snake_case(camel_case)
-        camel_case.split('::').map do |str|
+        camel_case.to_s.split('::').map do |str|
             str.split(UPPERCASE_SPLIT).map { |s| s.downcase! }.join('_')
         end.join('/')
       end

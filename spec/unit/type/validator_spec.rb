@@ -95,7 +95,7 @@ describe Moduler::Type do
 
   context "With required fields" do
     let(:type) do
-      type = Moduler::Type.new Struct do
+      type = Moduler::Type::StructType.new do
         target Class.new
         attribute :a, :required => true
       end

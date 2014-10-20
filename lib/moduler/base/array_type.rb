@@ -57,6 +57,11 @@ module Moduler
           value.dup
         end
       end
+
+      def emit(parent=nil, name=nil)
+        index_type.emit(parent, name) if index_type
+        element_type.emit(parent, name) if element_type
+      end
     end
   end
 end
