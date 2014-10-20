@@ -17,7 +17,7 @@ module Moduler
       end
 
       def from_raw(value)
-        coerce_out(value.is_a?(Lazy) ? coerce(value.get) : value)
+        coerce_out(value)
       end
 
       def raw_default
@@ -38,7 +38,7 @@ module Moduler
       # The output value.
       #
       def coerce_out(value)
-        value
+        value.is_a?(Lazy) ? coerce(value.get) : value
       end
 
       def construct_raw(value=NOT_PASSED, &block)

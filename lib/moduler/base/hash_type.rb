@@ -36,11 +36,11 @@ module Moduler
       # When the user requests the hash, we give them a facade to protect the
       # values, assuming there is any index_type or element_type to protect.
       #
-      def coerce_out(hash)
-        if hash && (key_type || value_type)
-          Facade::HashFacade.new(hash, self)
+      def coerce_out(value)
+        if value.is_a?(Lazy) || (value && (key_type || value_type))
+          Facade::HashFacade.new(value, self)
         else
-          hash
+          value
         end
       end
 

@@ -26,8 +26,21 @@ describe Moduler do
         end
       end
 
-      it "Defaults to empty array" do
+      it "Defaults to empty hash" do
         expect(struct.foo).to eq({})
+      end
+
+      it "Default hash doesn't affect is_set" do
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.foo).to eq({})
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.to_hash).to eq({})
+      end
+
+      it "Default hash modifiers *do* affect is_set" do
+        expect(struct.foo[:bar] = 10).to eq 10
+        expect(struct.is_set?(:foo)).to be_truthy
+        expect(struct.to_hash).to eq({foo: {bar: 10}})
       end
 
       it ".foo = { :a => 1 } setter works" do

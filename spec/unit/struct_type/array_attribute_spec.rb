@@ -30,6 +30,19 @@ describe Moduler do
         expect(struct.foo).to eq []
       end
 
+      it "Default array doesn't affect is_set" do
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.foo).to eq []
+        expect(struct.is_set?(:foo)).to be_falsey
+        expect(struct.to_hash).to eq({})
+      end
+
+      it "Default array appenders and such *do* affect is_set" do
+        expect(struct.foo << 10).to eq [10]
+        expect(struct.is_set?(:foo)).to be_truthy
+        expect(struct.to_hash).to eq({foo: [10]})
+      end
+
       it ".foo = [ 10 ] setter works" do
         expect(struct.foo = [ 10 ]).to eq [ 10 ]
         expect(struct.foo).to eq [ 10 ]

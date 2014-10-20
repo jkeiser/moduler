@@ -37,11 +37,11 @@ module Moduler
       # When the user requests the set, we give them a facade to protect the
       # values, assuming there is any item_type to protect.
       #
-      def coerce_out(set)
-        if set && item_type
-          Facade::SetFacade.new(set, self)
+      def coerce_out(value)
+        if value.is_a?(Lazy) || (value && item_type)
+          Facade::SetFacade.new(value, self)
         else
-          set
+          value
         end
       end
 

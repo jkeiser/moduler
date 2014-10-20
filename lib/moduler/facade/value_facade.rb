@@ -17,7 +17,7 @@ module Moduler
       #
       def raw
         if @raw.is_a?(Lazy::Value)
-          if @raw.is_a?(Lazy::ReadonlyValue)
+          if @raw.is_a?(Lazy::ForReadValue)
             @raw.get_for_read
           else
             @raw.get

@@ -36,11 +36,11 @@ module Moduler
       # When the user requests the array, we give them a facade to protect the
       # values, assuming there is any index_type or element_type to protect.
       #
-      def coerce_out(array)
-        if array && (index_type || element_type)
-          Facade::ArrayFacade.new(array, self)
+      def coerce_out(value)
+        if value.is_a?(Lazy) || (value && (index_type || element_type))
+          Facade::ArrayFacade.new(value, self)
         else
-          array
+          value
         end
       end
 
