@@ -71,8 +71,6 @@ describe Moduler do
       end
     end
 
-    # TODO lazy default
-    # TODO lazy value set
     context "with a basic attribute with no type" do
       let(:struct_class) do
         make_struct_class do

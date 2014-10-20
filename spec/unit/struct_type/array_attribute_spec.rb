@@ -6,19 +6,6 @@ module ArrayAttributeTests
 end
 
 describe Moduler do
-  # Works in:
-  # - a module
-  # - a class
-  # - a module or class with an initializer
-  # -
-  # Supports:
-  # - hashes in everything
-  # - singular form
-  # - validators
-  # - setters
-  # - call_proc
-  # - specialize_from
-
   context "With a struct class" do
     def make_struct_class(&block)
       ArrayAttributeTests.module_eval do
@@ -281,6 +268,59 @@ describe Moduler do
 
         it "struct == struct{:foo => [ 10 ]} returns false" do
           expect(struct == struct_class.new({ :foo => [ 10 ] })).to be_falsey
+        end
+      end
+    end
+
+    context "Nested attributes" do
+
+      context "And a nested array attribute" do
+        let(:struct_class) do
+          make_struct_class do
+            attribute :foo, Array[Array]
+          end
+        end
+
+        it "Defaults to empty array" do
+          expect(struct.foo).to eq []
+        end
+
+        it ".foo = [ [ 10 ] ] setter works" do
+          expect(struct.foo = [[ 10 ]]).to eq [[ 10 ]]
+          expect(struct.foo).to eq [[ 10 ]]
+        end
+
+        it ".foo = [ 10 ] setter yields [ [ 10 ] ]" do
+          expect(struct.foo = [ 10 ]).to eq [ 10 ]
+          expect(struct.foo).to eq [[ 10 ]]
+        end
+
+        it ".foo = 10 setter yields [ [ 10 ] ]" do
+          expect(struct.foo = 10).to eq 10
+          expect(struct.foo).to eq [[ 10 ]]
+        end
+
+        it ".foo [ [ 10 ] ] setter works" do
+          expect(struct.foo [ 10 ]).to eq [[ 10 ]]
+          expect(struct.foo).to eq [[ 10 ]]
+        end
+
+        it ".foo [ 10 ], [ 20 ], [ 30 ] raises an exception" do
+          expect { struct.foo [10], [20], [30] }.to raise_error(ArgumentError)
+        end
+
+        it ".foo [ 10, 20, 30 ] works" do
+          expect(struct.foo [ 10, 20, 30 ]).to eq [[10],[20],[30]]
+        end
+
+        it ".foo 10, 20, 30 fails" do
+          expect(struct.foo 10, 20, 30).to eq [[10], [20], [30]]
+        end
+
+        it ".foo nil yields nil" do
+          expect(struct.foo nil).to be_nil
+          expect(struct.is_set?(:foo)).to be_truthy
+          expect(struct.foo).to be_nil
         end
       end
     end

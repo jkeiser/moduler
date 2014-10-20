@@ -44,19 +44,6 @@ module Moduler
         end
       end
 
-      def construct_raw(*values)
-        if values.size == 1
-          if values[0].is_a?(Lazy) || values[0].respond_to?(:to_a) || values[0].nil?
-            value = values[0]
-          else
-            value = values
-          end
-        else
-          value = values
-        end
-        coerce(value)
-      end
-
       def new_facade(array)
         Facade::ArrayFacade.new(to_raw(array), self)
       end

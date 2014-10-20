@@ -5,6 +5,12 @@ module Moduler
     class ArrayFacade < ValueFacade
       include Enumerable
 
+      def to_s
+        "ArrayFacade#{raw}"
+      end
+      def inspect
+        "ArrayFacade:#{raw.inspect}"
+      end
       def size
         raw.size
       end

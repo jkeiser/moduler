@@ -6,19 +6,6 @@ module HashAttributeTests
 end
 
 describe Moduler do
-  # Works in:
-  # - a module
-  # - a class
-  # - a module or class with an initializer
-  # -
-  # Supports:
-  # - hashes in everything
-  # - singular form
-  # - validators
-  # - setters
-  # - call_proc
-  # - specialize_from
-
   context "With a struct class" do
     def make_struct_class(&block)
       HashAttributeTests.module_eval do
