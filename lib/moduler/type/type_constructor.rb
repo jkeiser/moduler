@@ -41,7 +41,7 @@ module Moduler
         if type.size == 0
           SetType.new(options, &block)
         elsif type.size == 1
-          item_type = Type.new(type[0].key)
+          item_type = Type.new(type.first)
           SetType.new(options.merge(item_type: item_type), &block)
         end
 

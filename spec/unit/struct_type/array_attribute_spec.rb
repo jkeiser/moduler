@@ -305,7 +305,7 @@ describe Moduler do
           expect(struct.foo).to eq [[ 10 ]]
         end
 
-        it ".foo [ 10 ], [ 20 ], [ 30 ] raises an exception" do
+        it ".foo [ 10 ], [ 20 ], [ 30 ] yields [[10],[20],[30]]" do
           expect(struct.foo [10], [20], [30]).to eq [[10],[20],[30]]
         end
 

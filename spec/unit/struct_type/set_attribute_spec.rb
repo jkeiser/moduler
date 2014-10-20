@@ -271,5 +271,214 @@ describe Moduler do
         end
       end
     end
+
+    context "Nested attributes" do
+
+      context "And a Set[Array] attribute" do
+        let(:struct_class) do
+          make_struct_class do
+            attribute :foo, Set[Array]
+          end
+        end
+
+        it "Defaults to empty set" do
+          expect(struct.foo).to eq Set[]
+        end
+
+        it ".foo = [ [ 10 ] ] setter works" do
+          expect(struct.foo = [ [ 10 ] ]).to eq [ [ 10 ] ]
+          expect(struct.foo).to eq Set[ [ 10 ] ]
+        end
+
+        it ".foo = Set[ [ 10 ] ] setter works" do
+          expect(struct.foo = Set[ [ 10 ] ]).to eq Set[ [ 10 ] ]
+          expect(struct.foo).to eq Set[ [ 10 ] ]
+        end
+
+        it ".foo = [ 10 ] setter yields Set[ [ 10 ] ]" do
+          expect(struct.foo = [ 10 ]).to eq [ 10 ]
+          expect(struct.foo).to eq Set[ [ 10 ] ]
+        end
+
+        it ".foo = 10 setter yields Set[ [ 10 ] ]" do
+          expect(struct.foo = 10).to eq 10
+          expect(struct.foo).to eq Set[ [ 10 ] ]
+        end
+
+        it ".foo [ [ 10 ] ] setter works" do
+          expect(struct.foo [ [ 10 ] ]).to eq Set[ [ 10 ] ]
+          expect(struct.foo).to eq Set[ [ 10 ] ]
+        end
+
+        it ".foo Set[ [ 10 ] ] setter works" do
+          expect(struct.foo Set[ [ 10 ] ]).to eq Set[ [ 10 ] ]
+          expect(struct.foo).to eq Set[ [ 10 ] ]
+        end
+
+        it ".foo [ 10 ], [ 20 ], [ 30 ] yields Set[[10],[20],[30]]" do
+          expect(struct.foo [10], [20], [30]).to eq Set[[10],[20],[30]]
+        end
+
+        it ".foo [ 10, 20, 30 ] yields Set[[10],[20],[30]]" do
+          expect(struct.foo [ 10, 20, 30 ]).to eq Set[[10],[20],[30]]
+        end
+
+        it ".foo 10, 20, 30 yields Set[[10],[20],[30]]" do
+          expect(struct.foo 10, 20, 30).to eq Set[[10], [20], [30]]
+        end
+
+        it ".foo nil yields nil" do
+          expect(struct.foo nil).to be_nil
+          expect(struct.is_set?(:foo)).to be_truthy
+          expect(struct.foo).to be_nil
+        end
+      end
+
+      context "And a Set[Hash] attribute" do
+        let(:struct_class) do
+          make_struct_class do
+            attribute :foo, Set[Hash]
+          end
+        end
+
+        it "Defaults to empty set" do
+          expect(struct.foo).to eq Set[]
+        end
+
+        it ".foo = [ {a: 1} ] setter works" do
+          expect(struct.foo = [{a: 1}]).to eq [{a: 1}]
+          expect(struct.foo).to eq Set[{a: 1}]
+        end
+
+        it ".foo = {a: 1} setter raises an error" do
+          expect { struct.foo = {a: 1} }.to raise_error(Moduler::ValidationFailed)
+        end
+
+        it ".foo = [ 10 ] setter raises an error" do
+          expect { struct.foo = [ 10 ] }.to raise_error(Moduler::ValidationFailed)
+        end
+
+        it ".foo [ {a: 1} ] setter works" do
+          expect(struct.foo([{a: 1}])).to eq Set[{a: 1}]
+          expect(struct.foo).to eq Set[{a: 1}]
+        end
+
+        it ".foo {a: 1} setter raises an error" do
+          expect { struct.foo = {a: 1} }.to raise_error(Moduler::ValidationFailed)
+        end
+
+        it ".foo [ {a: 1} ], [ { b: 1 } ], [ {c: 1} ] raises an error" do
+          expect { struct.foo [{a: 1}], [{b: 1}], [{c: 1}] }.to raise_error(Moduler::ValidationFailed)
+        end
+
+        it ".foo [ {a: 1}, {b: 1}, {c: 1} ] works" do
+          expect(struct.foo [ {a: 1}, {b: 1}, {c: 1} ]).to eq Set[{a: 1}, {b: 1}, {c: 1}]
+        end
+
+        it ".foo {a: 1}, {b: 1}, {c: 1} yields Set[{a: 1}, {b: 1}, {c: 1}]" do
+          expect(struct.foo({a: 1}, {b: 1}, {c: 1})).to eq Set[{a: 1}, {b: 1}, {c: 1}]
+        end
+
+        it ".foo nil yields nil" do
+          expect(struct.foo nil).to be_nil
+          expect(struct.is_set?(:foo)).to be_truthy
+          expect(struct.foo).to be_nil
+        end
+      end
+
+      context "And a Set[Set] attribute" do
+        let(:struct_class) do
+          make_struct_class do
+            attribute :foo, Set[Set]
+          end
+        end
+
+        it "Defaults to empty set" do
+          expect(struct.foo).to eq Set[]
+        end
+
+        it ".foo = [ [10] ] setter works" do
+          expect(struct.foo = [[10]]).to eq [[10]]
+          expect(struct.foo).to eq Set[Set[10]]
+        end
+
+        it ".foo = [ Set[10] ] setter works" do
+          expect(struct.foo = [Set[10]]).to eq [Set[10]]
+          expect(struct.foo).to eq Set[Set[10]]
+        end
+
+        it ".foo = Set[ [10] ] setter works" do
+          expect(struct.foo = Set[[10]]).to eq Set[[10]]
+          expect(struct.foo).to eq Set[Set[10]]
+        end
+
+        it ".foo = Set[ Set[10] ] setter works" do
+          expect(struct.foo = Set[Set[10]]).to eq Set[Set[10]]
+          expect(struct.foo).to eq Set[Set[10]]
+        end
+
+        it ".foo = Set[10] setter yields Set[ Set[10] ]" do
+          expect(struct.foo = Set[10]).to eq Set[10]
+          expect(struct.foo).to eq Set[Set[10]]
+        end
+
+        it ".foo = 10 setter yields Set[ Set[10] ]" do
+          expect(struct.foo = 10).to eq 10
+          expect(struct.foo).to eq Set[Set[10]]
+        end
+
+        it ".foo [ [10] ] setter works" do
+          expect(struct.foo [[10]]).to eq Set[Set[10]]
+          expect(struct.foo).to eq Set[Set[10]]
+        end
+
+        it ".foo [ Set[10] ] setter works" do
+          expect(struct.foo [Set[10]]).to eq Set[Set[10]]
+          expect(struct.foo).to eq Set[Set[10]]
+        end
+
+        it ".foo Set[ [10] ] setter works" do
+          expect(struct.foo Set[[10]]).to eq Set[Set[10]]
+          expect(struct.foo).to eq Set[Set[10]]
+        end
+
+        it ".foo Set[ Set[10] ] setter works" do
+          expect(struct.foo Set[Set[10]]).to eq Set[Set[10]]
+          expect(struct.foo).to eq Set[Set[10]]
+        end
+
+        it ".foo Set[10] setter yields Set[ Set[10] ]" do
+          expect(struct.foo Set[10]).to eq Set[ Set[10] ]
+          expect(struct.foo).to eq Set[Set[10]]
+        end
+
+        it ".foo 10 setter yields Set[ Set[10] ]" do
+          expect(struct.foo = 10).to eq 10
+          expect(struct.foo).to eq Set[Set[10]]
+        end
+
+        it ".foo Set[10], [20], Set[30] yields Set[Set[10], Set[20], Set[30]]" do
+          expect(struct.foo Set[10], Set[20], Set[30]).to eq Set[Set[10],Set[20],Set[30]]
+        end
+
+        it ".foo [ 10, 20, 30 ] yields Set[Set[10],Set[20],Set[30]]" do
+          expect(struct.foo [ 10, 20, 30 ]).to eq Set[Set[10],Set[20],Set[30]]
+        end
+
+        it ".foo Set[ 10, 20, 30 ] yields Set[Set[10],Set[20],Set[30]]" do
+          expect(struct.foo [ 10, 20, 30 ]).to eq Set[Set[10],Set[20],Set[30]]
+        end
+
+        it ".foo 10, 20, 30 yields Set[Set[10],Set[20],Set[30]]" do
+          expect(struct.foo 10, 20, 30).to eq Set[Set[10], Set[20], Set[30]]
+        end
+
+        it ".foo nil yields nil" do
+          expect(struct.foo nil).to be_nil
+          expect(struct.is_set?(:foo)).to be_truthy
+          expect(struct.foo).to be_nil
+        end
+      end
+    end
   end
 end
