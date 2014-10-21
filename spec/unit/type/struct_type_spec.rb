@@ -103,13 +103,13 @@ describe Moduler::Type::StructType do
     it "The resulting class has the field getter and setter" do
       expect(foo_struct.instance_methods(false)).to eq [ :foo, :foo= ]
     end
-    it "The default getter returns nil" do
-      expect(instance.foo).to eq nil
+    it "The default getter returns {}" do
+      expect(instance.foo).to eq({})
     end
     it "Set to a foo_struct value works" do
       value = struct.new(bar: 10)
       instance.foo = value
-      expect(instance.foo.object_id).to eq value.object_id
+      expect(instance.foo).to eq value
     end
     it "The setter and getter work" do
       instance.foo = { bar: 10 }

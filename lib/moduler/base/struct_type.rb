@@ -30,20 +30,37 @@ module Moduler
         end
       end
 
+      def raw_default
+        if store_in_hash
+          defined?(@default) ? @default : {}
+        else
+          @default
+        end
+      end
+
       #
       # We store structs internally with the actual hash class.
       #
-      def coerce(struct)
-        if struct.is_a?(Hash)
-          result = target.new({})
-          result.set_attributes(struct)
-          struct = result
-        elsif struct.is_a?(Proc)
-          result = target.new({})
-          result.set_attributes(&struct)
-          struct = result
+      def coerce(value)
+        if store_in_hash && !value.nil?
+          if !value.respond_to?(:to_hash)
+            raise ValidationFailed.new(["#{value} must be a hash"])
+          end
+          value.to_hash
+        elsif value.is_a?(Hash)
+          value = target.new(value)
+        elsif value.is_a?(Proc)
+          value = target.new(&value)
         end
-        super(struct)
+        super(value)
+      end
+
+      def coerce_out(value)
+        if store_in_hash && !value.nil?
+          target.new(value, self)
+        else
+          super
+        end
       end
 
       def inline(*args, &block)
@@ -109,7 +126,7 @@ module Moduler
           end
 
           if args[0] == nil
-            return type.coerce(args[0])
+            return coerce(args[0])
           end
         end
 

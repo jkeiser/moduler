@@ -50,24 +50,24 @@ module Moduler
       end
 
       def ==(other)
-        if other.class != self.class
-          return false
-        end
-        self.class.type.attributes.each_pair do |key,type|
-          # Don't pull defaults unless you have to
-          var_defined = raw.has_key?(key)
-          other_defined = other.raw.has_key?(key)
-          next if !var_defined && !other_defined
+        if other.class == self.class
+          self.class.type.attributes.each_pair do |key,type|
+            # Don't pull defaults unless you have to
+            var_defined = raw.has_key?(key)
+            other_defined = other.raw.has_key?(key)
+            next if !var_defined && !other_defined
 
-          value = var_defined ? type.to_raw(raw[key]) : type.raw_default
-          value = value.get_for_read if value.is_a?(Lazy)
-          other_value = other_defined ? type.to_raw(other.raw[key]) : type.raw_default
-          other_value = other_value.get_for_read if other_value.is_a?(Lazy)
-          if value != other_value
-            return false
+            value = var_defined ? type.to_raw(raw[key]) : type.raw_default
+            value = value.get_for_read if value.is_a?(Lazy)
+            other_value = other_defined ? type.to_raw(other.raw[key]) : type.raw_default
+            other_value = other_value.get_for_read if other_value.is_a?(Lazy)
+            if value != other_value
+              return false
+            end
           end
+        elsif other.respond_to?(:to_hash)
+          to_hash == other.to_hash
         end
-        true
       end
 
       def to_hash(include_defaults = false)
@@ -104,6 +104,7 @@ module Moduler
 
       def [](name)
         if type.attributes.has_key?(name)
+
           attribute_type = type.attributes[name]
 
           if attribute_type

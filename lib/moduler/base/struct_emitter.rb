@@ -114,7 +114,7 @@ module Moduler
                 # user tries to write to them.  Frozen defaults (like an int)
                 # we don't store at all.
                 raw_default = #{type_ref}.raw_default
-                if raw_default.frozen?
+                if raw_default.frozen? || raw_default.nil?
                   raw_value = raw_default
                 else
                   raw_value = Lazy::ForReadValue.new(raw_default) do

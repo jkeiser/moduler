@@ -19,7 +19,7 @@ describe Moduler do
       struct_class.new
     end
 
-    context "with an array attribute" do
+    context "with a hash attribute" do
       let(:struct_class) do
         make_struct_class do
           attribute :foo, Hash
