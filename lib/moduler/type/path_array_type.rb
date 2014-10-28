@@ -14,22 +14,36 @@ module Moduler
       attribute :element_type, PathType
       attribute :relative_to, Array[Path]
 
+      def path_separator
+        element_type.path_class <= Path::Base ? element_type.path_class.const_get(:PATH_SEPARATOR) : File::PATH_SEPARATOR
+      end
+
       def coerce(value)
         if value.nil?
           return super(value)
         end
         # If the value is a single path string, split it by path separator
         if !value.is_a?(Array)
-          value = value.to_s.split(File::PATH_SEPARATOR)
+          value = value.to_s.split(path_separator)
+        end
+        relative_to = self.relative_to
+        if relative_to
+          if relative_to.empty?
+            relative_to = nil
+          else
+            relative_to = relative_to.flat_map do |r|
+              r.to_s.split(path_separator).map { |r| element_type.path_class.new(r) }
+            end
+          end
         end
         # Get the array of Pathnames and apply relative_to
         value = value.flat_map do |value|
-          value = Path.new(value.to_s) if !value.is_a?(Pathname)
+          value = element_type.path_class.new(value.to_s) if !value.is_a?(Pathname)
           if value.relative? && element_type.relative_to
             value = element_type.relative_to + value
           end
-          if value.relative? && relative_to && !relative_to.empty?
-            value = relative_to.map { |relative_to| relative_to + value }
+          if relative_to && value.relative?
+            value = relative_to.map { |relative_to| element_type.path_class.new(relative_to.to_s) + value }
           end
           value
         end

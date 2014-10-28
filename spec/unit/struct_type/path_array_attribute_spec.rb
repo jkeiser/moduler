@@ -247,5 +247,85 @@ describe Moduler do
         expect(struct.foo).to be_nil
       end
     end
+
+    context "with a Windows path array attribute with relative_to: 'foo/bar;baz'" do
+      let(:struct_class) do
+        make_struct_class do
+          attribute :foo, Array[Path::Windows], relative_to: 'foo/bar;baz'
+        end
+      end
+
+      it "Defaults to []" do
+        expect(struct.foo).to eq []
+      end
+
+      it ".foo = String works" do
+        expect(struct.foo = 'a/b/c').to eq 'a/b/c'
+        expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c')]
+      end
+
+      it ".foo = a/b/c;d/e/f sets both paths" do
+        expect(struct.foo = 'a/b/c;d/e/f').to eq 'a/b/c;d/e/f'
+        expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
+      end
+
+      it ".foo = [a/b/c, d/e/f] sets both paths" do
+        expect(struct.foo = ['a/b/c', 'd/e/f']).to eq [ 'a/b/c', 'd/e/f' ]
+        expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
+      end
+
+      it ".foo = Pathname works" do
+        value = Pathname.new('a/b/c')
+        expect(struct.foo = value).to eq value
+        expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c')]
+      end
+
+      it ".foo = nil works" do
+        expect(struct.foo = nil).to be_nil
+        expect(struct.foo).to be_nil
+      end
+
+      it ".foo String works" do
+        expect(struct.foo('a/b/c')).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c')]
+        expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c')]
+      end
+
+      it ".foo = a/b/c;d/e/f sets both paths" do
+        expect(struct.foo 'a/b/c;d/e/f').to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
+        expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
+      end
+
+      it ".foo(Pathname) works" do
+        value = Pathname.new('a/b/c')
+        expect(struct.foo value).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c')]
+        expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c')]
+      end
+
+      it ".foo [a/b/c, d/e/f] sets both paths" do
+        expect(struct.foo ['a/b/c', 'd/e/f']).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
+        expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
+      end
+
+      it ".foo a/b/c, d/e/f sets both paths" do
+        expect(struct.foo 'a/b/c', 'd/e/f').to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
+        expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
+      end
+
+      it ".foo 'a/b/c;d/e/f', 'g/h/i;j/k/l' sets all paths" do
+        expect(struct.foo 'a/b/c;d/e/f', 'g/h/i;j/k/l').to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f'), Path::Windows.new('foo/bar\\g/h/i'), Path::Windows.new('baz\\g/h/i'), Path::Windows.new('foo/bar\\j/k/l'), Path::Windows.new('baz\\j/k/l')]
+        expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f'), Path::Windows.new('foo/bar\\g/h/i'), Path::Windows.new('baz\\g/h/i'), Path::Windows.new('foo/bar\\j/k/l'), Path::Windows.new('baz\\j/k/l')]
+      end
+
+      it ".foo '/a/b/c;d/e/f', 'g/h/i;/j/k/l' sets all paths without relatives for absolutes" do
+        expect(struct.foo '/a/b/c;d/e/f', 'g/h/i;/j/k/l').to eq [Path::Windows.new('/a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f'), Path::Windows.new('foo/bar\\g/h/i'), Path::Windows.new('baz\\g/h/i'), Path::Windows.new('/j/k/l')]
+        expect(struct.foo).to eq [Path::Windows.new('/a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f'), Path::Windows.new('foo/bar\\g/h/i'), Path::Windows.new('baz\\g/h/i'), Path::Windows.new('/j/k/l')]
+      end
+
+      it ".foo nil works" do
+        expect(struct.foo nil).to be_nil
+        expect(struct.foo).to be_nil
+      end
+    end
+
   end
 end

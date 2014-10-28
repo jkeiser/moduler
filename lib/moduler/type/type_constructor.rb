@@ -68,8 +68,8 @@ module Moduler
           StructType.new({ store_in_hash: true }.merge(options), &block)
         elsif type == Base::Boolean
           BasicType.new({ equal_to: [true,false] }.merge(options), &block)
-        elsif type <= Path
-          PathType.new(options, &block)
+        elsif type == Path || type <= Pathname
+          PathType.new({ store_as: type }.merge(options), &block)
         else
           BasicType.new({ kind_of: type }.merge(options), &block)
         end
