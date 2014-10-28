@@ -237,6 +237,11 @@ describe Moduler do
         expect(struct.foo).to eq ['foo/bar/a/b/c', 'baz/a/b/c', 'foo/bar/d/e/f', 'baz/d/e/f', 'foo/bar/g/h/i', 'baz/g/h/i', 'foo/bar/j/k/l', 'baz/j/k/l']
       end
 
+      it ".foo '/a/b/c:d/e/f', 'g/h/i:/j/k/l' sets all paths without relatives for absolutes" do
+        expect(struct.foo '/a/b/c:d/e/f', 'g/h/i:/j/k/l').to eq ['/a/b/c', 'foo/bar/d/e/f', 'baz/d/e/f', 'foo/bar/g/h/i', 'baz/g/h/i', '/j/k/l']
+        expect(struct.foo).to eq ['/a/b/c', 'foo/bar/d/e/f', 'baz/d/e/f', 'foo/bar/g/h/i', 'baz/g/h/i', '/j/k/l']
+      end
+
       it ".foo nil works" do
         expect(struct.foo nil).to be_nil
         expect(struct.foo).to be_nil

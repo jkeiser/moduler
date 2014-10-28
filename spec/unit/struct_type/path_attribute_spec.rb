@@ -144,6 +144,11 @@ describe Moduler do
         expect(struct.foo.to_s).to eq "foo/bar#{path_sep}a/b/c"
       end
 
+      it ".foo = /a/b/c does not add relative" do
+        expect(struct.foo = '/a/b/c').to eq '/a/b/c'
+        expect(struct.foo.to_s).to eq "/a/b/c"
+      end
+
       it ".foo = Pathname works" do
         value = Pathname.new('a/b/c')
         expect(struct.foo = value).to eq value
@@ -158,6 +163,11 @@ describe Moduler do
       it ".foo String works" do
         expect(struct.foo('a/b/c').to_s).to eq "foo/bar#{path_sep}a/b/c"
         expect(struct.foo.to_s).to eq "foo/bar#{path_sep}a/b/c"
+      end
+
+      it ".foo /a/b/c does not add relative" do
+        expect(struct.foo('/a/b/c').to_s).to eq '/a/b/c'
+        expect(struct.foo.to_s).to eq "/a/b/c"
       end
 
       it ".foo(Pathname) works" do
@@ -198,6 +208,11 @@ describe Moduler do
         expect(struct.foo.to_s).to eq 'foo/bar/a/b/c'
       end
 
+      it ".foo /a/b/c does not add relative" do
+        expect(struct.foo = '/a/b/c').to eq '/a/b/c'
+        expect(struct.foo.to_s).to eq "/a/b/c"
+      end
+
       it ".foo = Pathname works" do
         value = Pathname.new('a/b/c')
         expect(struct.foo = value).to eq value
@@ -212,6 +227,11 @@ describe Moduler do
       it ".foo String works" do
         expect(struct.foo('a/b/c').to_s).to eq 'foo/bar/a/b/c'
         expect(struct.foo.to_s).to eq 'foo/bar/a/b/c'
+      end
+
+      it ".foo /a/b/c does not add relative" do
+        expect(struct.foo('/a/b/c').to_s).to eq '/a/b/c'
+        expect(struct.foo.to_s).to eq "/a/b/c"
       end
 
       it ".foo(Pathname) works" do
