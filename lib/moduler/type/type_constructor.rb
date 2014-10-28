@@ -1,5 +1,10 @@
+require 'moduler/path'
+
 module Moduler
   module Type
+    class PathType < Moduler::Type::BasicType
+    end
+
     def self.inline(type=nil, options=nil, &block)
       Type.new(type, options, StructType).inline(&block)
     end
@@ -25,9 +30,14 @@ module Moduler
       when ::Array
         if type.size == 0
           ArrayType.new(options, &block)
-        elsif type.size == 1
-          element_type = Type.new(type[0])
-          ArrayType.new(options.merge(element_type: element_type), &block)
+        elsif type.size == 1 || (type.size == 2 && !is_options?(type[0]) && is_options?(type[1]))
+          element_type = Type.new(*type)
+          case element_type
+          when PathType
+            PathArrayType.new(options.merge(element_type: element_type), &block)
+          else
+            ArrayType.new(options.merge(element_type: element_type), &block)
+          end
         end
 
       when ::Hash
@@ -58,6 +68,8 @@ module Moduler
           StructType.new({ store_in_hash: true }.merge(options), &block)
         elsif type == Base::Boolean
           BasicType.new({ equal_to: [true,false] }.merge(options), &block)
+        elsif type <= Path
+          PathType.new(options, &block)
         else
           BasicType.new({ kind_of: type }.merge(options), &block)
         end
@@ -82,3 +94,10 @@ module Moduler
 end
 
 require 'moduler/type'
+# require 'moduler/type/array_type'
+# require 'moduler/type/hash_type'
+# require 'moduler/type/set_type'
+# require 'moduler/type/struct_type'
+# require 'moduler/type/basic_type'
+# require 'moduler/type/path_type'
+# require 'moduler/type/path_array_type'

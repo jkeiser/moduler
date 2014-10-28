@@ -14,6 +14,9 @@ module Moduler
       def size
         raw.size
       end
+      def empty?
+        raw.empty?
+      end
       def each
         if block_given?
           raw.each { |value| yield from_raw(value) }

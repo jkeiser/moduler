@@ -1,12 +1,7 @@
-class X
-  def hi
-    @foo = 10
-  end
-  def lo
-    remove_instance_variable(:@foo)
-  end
-end
+require 'moduler/path'
 
-x = X.new
-puts x.hi
-puts x.lo
+x = Moduler::Path::Windows.new('a')
+puts x
+y = x + 'b'
+puts y
+puts Moduler::Path::Windows.new('//a/b/c/d').cleanpath
