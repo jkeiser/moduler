@@ -421,7 +421,7 @@ describe Moduler do
         expect(struct.to_hash).to eq({})
       end
 
-      it "Retrieving a frozen, raw value from a default hash does not affect is_set" do
+      it "Retrieving a frozen, raw value from a default hash does not affect is_set", :pending => RUBY_VERSION.to_f < 2.0 do
         expect(struct.foo[:a]).to eq 1
         expect(struct.is_set?(:foo)).to be_falsey
         expect(struct.to_hash).to eq({})

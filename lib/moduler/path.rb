@@ -565,30 +565,6 @@ module Moduler
             end
           end
 
-          #
-          # Iterates over the directory tree in a depth first manner, yielding a
-          # Pathname for each file under "this" directory.
-          #
-          # Returns an Enumerator if no block is given.
-          #
-          # Since it is implemented by the standard library module Find, Find.prune can
-          # be used to control the traversal.
-          #
-          # If +self+ is +.+, yielded pathnames begin with a filename in the
-          # current directory, not +./+.
-          #
-          # See Find.find
-          #
-          def find(ignore_error: true) # :yield: pathname
-            return to_enum(__method__, ignore_error: ignore_error) unless block_given?
-            require 'find'
-            if @path == '.'
-              Find.find(@path, ignore_error: ignore_error) {|f| yield self.class.new(f.sub(%r{\A\./}, '')) }
-            else
-              Find.find(@path, ignore_error: ignore_error) {|f| yield self.class.new(f) }
-            end
-          end
-
           # Creates a full path, including any intermediate directories that don't yet
           # exist.
           #
@@ -609,7 +585,47 @@ module Moduler
             FileUtils.rm_r(@path)
             nil
           end
+
+          #
+          # Iterates over the directory tree in a depth first manner, yielding a
+          # Pathname for each file under "this" directory.
+          #
+          # Returns an Enumerator if no block is given.
+          #
+          # Since it is implemented by the standard library module Find, Find.prune can
+          # be used to control the traversal.
+          #
+          # If +self+ is +.+, yielded pathnames begin with a filename in the
+          # current directory, not +./+.
+          #
+          # See Find.find
+          #
         EOM
+
+        if RUBY_VERSION.to_f >= 2.0
+          self.module_eval <<-'EOM', __FILE__, __LINE__+1
+            def find(ignore_error: true) # :yield: pathname
+              return to_enum(__method__, ignore_error: ignore_error) unless block_given?
+              require 'find'
+              if @path == '.'
+                Find.find(@path, ignore_error: ignore_error) {|f| yield self.class.new(f.sub(%r{\A\./}, '')) }
+              else
+                Find.find(@path, ignore_error: ignore_error) {|f| yield self.class.new(f) }
+              end
+            end
+          EOM
+        else
+          self.module_eval <<-'EOM', __FILE__, __LINE__+1
+            def find(&block) # :yield: pathname
+              require 'find'
+              if @path == '.'
+                Find.find(@path) {|f| yield self.class.new(f.sub(%r{\A\./}, '')) }
+              else
+                Find.find(@path) {|f| yield self.class.new(f) }
+              end
+            end
+          EOM
+        end
 
         self.module_eval <<-'EOM', __FILE__, __LINE__+1
           if ALT_SEPARATOR
