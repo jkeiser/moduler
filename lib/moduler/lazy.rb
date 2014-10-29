@@ -21,5 +21,12 @@ module Moduler
     def get_for_read
       get
     end
+
+    #
+    # Return a new Lazy just like the current one, except targeted at the new context.
+    #
+    def in_context(context)
+      raise NotImplementedError.new
+    end
   end
 end

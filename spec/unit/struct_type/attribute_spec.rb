@@ -671,5 +671,23 @@ describe Moduler do
         expect(struct.to_hash).to eq({:foo => 'hi you'})
       end
     end
+
+    context "with a basic attribute with a default of lazy { bar*2 }" do
+      let(:struct_class) do
+        make_struct_class do
+          attribute :foo, :default => Moduler::Lazy::Value.new { bar*2 }
+          attribute :bar, :default => 100
+        end
+      end
+
+      it ".foo yields 200" do
+        expect(struct.foo).to eq 200
+      end
+
+      it ".bar = 10; .foo yields 20" do
+        struct.bar = 10
+        expect(struct.foo).to eq 20
+      end
+    end
   end
 end

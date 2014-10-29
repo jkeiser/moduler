@@ -114,6 +114,7 @@ module Moduler
                 # user tries to write to them.  Frozen defaults (like an int)
                 # we don't store at all.
                 raw_default = #{type_ref}.raw_default
+                raw_default = raw_default.in_context(self) if raw_default.is_a?(Lazy)
                 if raw_default.frozen? || raw_default.nil?
                   raw_value = raw_default
                 else
@@ -129,12 +130,15 @@ module Moduler
               #{type_ref}.from_raw(raw_value)
             else
               raw_value = #{type_ref}.construct_raw(*args, &block)
+              raw_value = raw_value.in_context(self) if raw_value.is_a?(Lazy)
               #{attribute_write(name)} = raw_value
               raw_value.is_a?(Lazy) ? raw_value : #{type_ref}.from_raw(raw_value)
             end
           end
           def #{name}=(value)
-            #{attribute_write(name)} = #{type_ref}.to_raw(value)
+            value = #{type_ref}.to_raw(value)
+            value = value.in_context(self) if value.is_a?(Lazy)
+            #{attribute_write(name)} = value
             # NOTE: Ruby doesn't let you return a value here anyway--it will always
             # return the passed-in value to the user.
           end
@@ -176,7 +180,8 @@ module Moduler
               value_type = #{type_ref}.value_type
               if value_type
                 value = value_type.construct_raw(*args, &block)
-                #{attribute_write(attribute_name)}.raw_write[key] = value
+                value = value.in_context(self) if value.is_a?(Lazy)
+                #{attribute_write(attribute_name)}[key] = value
                 value_type.from_raw(value)
               elsif args.size == 1 && !block
                 #{attribute_write(attribute_name)}[key] = args[0]

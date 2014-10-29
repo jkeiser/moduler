@@ -20,12 +20,12 @@ class MultiplyCoercer < Moduler::Type::BasicType
   end
 
   def coerce_out(value)
-    value = super(value)
+    value = super
     case value
     when Proc
       proc { v = super(value.call); v ? v*out_val : v }
     else
-      v = super(value)
+      v = super
       v ? (v*out_val).to_i : v
     end
   end
@@ -41,6 +41,6 @@ class OneBasedArray < Moduler::Type::BasicType
     end
   end
   def coerce_out(value)
-    super(value)+1
+    super+1
   end
 end

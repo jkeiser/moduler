@@ -10,18 +10,12 @@ class Chef
   class Config
     extend Moduler::Type::InlineStruct
 
-    PathString = PathType.new(store_as: String)
-    Paths = PathArrayType.new(element_type: PathString)
+    Path = Moduler::Type::PathType.new(store_as: String)
 
     # Config file to load (client.rb, knife.rb, etc. defaults set differently in knife, chef-client, etc.)
-    attribute :config_file, PathString, relative_to: lazy { config_dir }
-    attribute :config_dir, PathString, relative_to: config_file, default: ".."lazy do
-      if config_file
-        PathHelper.dirname(config_file)
-      else
-        PathHelper.join(user_home, ".chef", "")
-      end
-    end
+    attribute :config_file, Path, relative_to: lazy { config_dir }
+    attribute :config_dir,  Path, relative_to: lazy { config_file },
+                                  default:     lazy { is_set?(:config_file) ? '..' : [user_home, '.chef', '']}
     attribute :formatters, Array[Chef::Formatters::Base]
     attribute :chef_server, Struct do
       # Override the config dispatch to set the value of multiple server options simultaneously
@@ -29,11 +23,11 @@ class Chef
       # === Parameters
       # url<String>:: String to be set for all of the chef-server-api URL's
       #
-      attribute :chef_server_url, URI, :default => "https://localhost:443"
+      attribute :chef_server_url, URI, default: "https://localhost:443"
       attribute :node_name, String
-      attribute :client_key, Pathname
-      attribute :http_retry_count, Fixnum, :default => 5
-      attribute :http_retry_delay, Fixnum, :default => 5
+      attribute :client_key, Path, relative_to: lazy { [ config_dir, 'keys' ] }
+      attribute :http_retry_count, Fixnum, default: 5
+      attribute :http_retry_delay, Fixnum, default: 5
     end
 
     attribute :client, Struct do
@@ -45,7 +39,7 @@ class Chef
       # If your `file_cache_path` resides on a NFS (or non-flock()-supporting
       # fs), it's recommended to set this to something like
       # '/tmp/chef-client-running.pid'
-      attribute :lockfile, { PathHelper.join(file_cache_path, "chef-client-running.pid") }
+      attribute :lockfile, Path, relative_to: lazy { file_cache_path }, default: "chef-client-running.pid"
 
       ## Daemonization Settings ##
       # What user should Chef run as?
@@ -55,85 +49,65 @@ class Chef
 
       attribute :interval, Fixnum
       attribute :once, Boolean
-      attribute :json_attribs, Hash, :default => nil
+      attribute :json_attribs, Hash, default: nil
       attribute :splay, Fixnum
-      attribute :client_fork, Boolean, :default => true
+      attribute :client_fork, Boolean, default: true
     end
 
-    attribute :chef_repo, Struct do
-      # The root where all local chef object data is stored.  cookbooks, data bags,
-      # environments are all assumed to be in separate directories under this.
-      # chef-solo uses these directories for input data.  knife commands
-      # that upload or download files (such as knife upload, knife role from file,
-      # etc.) work.
-      attribute :path, Array[Path] do
-        default do
-          if self.configuration[:cookbook_path]
-            if self.configuration[:cookbook_path].kind_of?(String)
-              File.expand_path('..', self.configuration[:cookbook_path])
-            else
-              self.configuration[:cookbook_path].map do |path|
-                File.expand_path('..', path)
-              end
-            end
-          else
-            cache_path
-          end
-        end
-      end
+    # The root where all local chef object data is stored.  cookbooks, data bags,
+    # environments are all assumed to be in separate directories under this.
+    # chef-solo uses these directories for input data.  knife commands
+    # that upload or download files (such as knife upload, knife role from file,
+    # etc.) work.
+    attribute :chef_repo_path, Array[Path], relative_to: lazy { cache_path },
+                                            default: lazy { is_set?(:cookbook_path) ? [ cookbook_path, '..' ] : '.' }
 
-      # Location of acls on disk. String or array of strings.
-      # Defaults to <chef_repo_path>/acls.
-      # Only applies to Enterprise Chef commands.
-      attribute :acl_path, Array[Path], :default => proc { derive_path_from_chef_repo_path('acls') }
+    # Location of acls on disk. String or array of strings.
+    # Defaults to <chef_repo_path>/acls.
+    # Only applies to Enterprise Chef commands.
+    attribute :acl_path, Array[Path], relative_to: lazy { chef_repo_path }, default: 'acls'
 
-      # Location of clients on disk. String or array of strings.
-      # Defaults to <chef_repo_path>/acls.
-      attribute :client_path, Array[Path], :default => proc { derive_path_from_chef_repo_path('clients') }
+    # Location of clients on disk. String or array of strings.
+    # Defaults to <chef_repo_path>/acls.
+    attribute :client_path, Array[Path], relative_to: lazy { chef_repo_path }, default: 'clients'
 
-      # Location of cookbooks on disk. String or array of strings.
-      # Defaults to <chef_repo_path>/cookbooks.  If chef_repo_path
-      # is not specified, this is set to [/var/chef/cookbooks, /var/chef/site-cookbooks]).
-      attribute :cookbook_path, Array[Path], :default => proc do
-        if self.configuration[:chef_repo_path]
-          derive_path_from_chef_repo_path('cookbooks')
-        else
-          Array(derive_path_from_chef_repo_path('cookbooks')).flatten +
-            Array(derive_path_from_chef_repo_path('site-cookbooks')).flatten
-        end
-      end
-
-      # Location of containers on disk. String or array of strings.
-      # Defaults to <chef_repo_path>/containers.
-      # Only applies to Enterprise Chef commands.
-      attribute :container_path, Array[Path], :default => proc { derive_path_from_chef_repo_path('containers') }
-
-      # Location of data bags on disk. String or array of strings.
-      # Defaults to <chef_repo_path>/data_bags.
-      attribute :data_bag_path, Array[Path], :default => proc { derive_path_from_chef_repo_path('data_bags') }
-
-      # Location of environments on disk. String or array of strings.
-      # Defaults to <chef_repo_path>/environments.
-      attribute :environment_path, Array[Path], :default => proc { derive_path_from_chef_repo_path('environments') }
-
-      # Location of groups on disk. String or array of strings.
-      # Defaults to <chef_repo_path>/groups.
-      # Only applies to Enterprise Chef commands.
-      attribute :group_path, Array[Path], :default => proc { derive_path_from_chef_repo_path('groups') }
-
-      # Location of nodes on disk. String or array of strings.
-      # Defaults to <chef_repo_path>/nodes.
-      attribute :node_path, Array[Path], :default => proc { derive_path_from_chef_repo_path('nodes') }
-
-      # Location of roles on disk. String or array of strings.
-      # Defaults to <chef_repo_path>/roles.
-      attribute :role_path, Array[Path], :default => proc { derive_path_from_chef_repo_path('roles') }
-
-      # Location of users on disk. String or array of strings.
-      # Defaults to <chef_repo_path>/users.
-      # Does not apply to Enterprise Chef commands.
-      attribute :user_path, Array[Path], :default => proc { derive_path_from_chef_repo_path('users') }
+    # Location of cookbooks on disk. String or array of strings.
+    # Defaults to <chef_repo_path>/cookbooks.  If chef_repo_path
+    # is not specified, this is set to [/var/chef/cookbooks, /var/chef/site-cookbooks]).
+    attribute :cookbook_path, Array[Path], relative_to: lazy { chef_repo_path }, default: lazy do
+      is_set?(:chef_repo_path) ? 'cookbooks' : [ 'cookbooks', 'site-cookbooks' ]
     end
+
+    # Location of containers on disk. String or array of strings.
+    # Defaults to <chef_repo_path>/containers.
+    # Only applies to Enterprise Chef commands.
+    attribute :container_path, Array[Path], relative_to: lazy { chef_repo_path }, default: 'containers'
+
+    # Location of data bags on disk. String or array of strings.
+    # Defaults to <chef_repo_path>/data_bags.
+    attribute :data_bag_path, Array[Path], relative_to: lazy { chef_repo_path }, default: 'data'
+
+    # Location of environments on disk. String or array of strings.
+    # Defaults to <chef_repo_path>/environments.
+    attribute :environment_path, Array[Path], relative_to: lazy { chef_repo_path }, default: 'environments'
+
+    # Location of groups on disk. String or array of strings.
+    # Defaults to <chef_repo_path>/groups.
+    # Only applies to Enterprise Chef commands.
+    attribute :group_path, Array[Path], relative_to: lazy { chef_repo_path }, default: 'groups'
+
+    # Location of nodes on disk. String or array of strings.
+    # Defaults to <chef_repo_path>/nodes.
+    attribute :node_path, Array[Path], relative_to: lazy { chef_repo_path }, default: 'nodes'
+
+    # Location of roles on disk. String or array of strings.
+    # Defaults to <chef_repo_path>/roles.
+    attribute :role_path, Array[Path], relative_to: lazy { chef_repo_path }, default: 'roles'
+
+    # Location of users on disk. String or array of strings.
+    # Defaults to <chef_repo_path>/users.
+    # Does not apply to Enterprise Chef commands.
+    attribute :user_path, Array[Path], relative_to: lazy { chef_repo_path }, default: 'users'
 
     def self.find_chef_repo_path(cwd)
       # In local mode, we auto-discover the repo root by looking for a path with "cookbooks" under it.
@@ -151,57 +125,49 @@ class Chef
       path
     end
 
-    def self.derive_path_from_chef_repo_path(child_path)
-      if chef_repo_path.kind_of?(String)
-        PathHelper.join(chef_repo_path, child_path)
-      else
-        chef_repo_path.map { |path| PathHelper.join(path, child_path)}
-      end
-    end
-
     # Turn on "path sanity" by default. See also: http://wiki.opscode.com/display/chef/User+Environment+PATH+Sanity
-    attribute :enforce_path_sanity, Boolean, :default => true
+    attribute :enforce_path_sanity, Boolean, default: true
 
     # Formatted Chef Client output is a beta feature, disabled by default:
-    attribute :formatter, String, "null"
+    attribute :formatter, String, default: "null"
 
     attribute :knife, Struct do
       # An array of paths to search for knife exec scripts if they aren't in the current directory
-      attribute :script_path, Array[Pathname], []
+      attribute :script_path, Array[Path]
     end
 
-    attribute :cache, Struct do
-      # The root of all caches (checksums, cache and backup).  If local mode is on,
-      # this is under the user's home directory.
-      attribute :cache_path, Path do
-        if local_mode
-          PathHelper.join(config_dir, 'local-mode-cache')
+    attribute :windows_chef_root, Path, :default => 'C:\\chef'
+
+    # The root of all caches (checksums, cache and backup).  If local mode is on,
+    # this is under the user's home directory.
+    attribute :cache_path, Path, default: lazy do
+      if local_mode
+        PathHelper.join(config_dir, 'local-mode-cache')
+      else
+        primary_cache_root = Chef::Platform.is_windows? ? "/var" : 'C:'
+        primary_cache_path = (Path.new(primary_cache_root) / 'chef').to_s
+        # Use /var/chef as the cache path only if that folder exists and we can read and write
+        # into it, or /var exists and we can read and write into it (we'll create /var/chef later).
+        # Otherwise, we'll create .chef under the user's home directory and use that as
+        # the cache path.
+        unless path_accessible?(primary_cache_path) || path_accessible?(primary_cache_root)
+          secondary_cache_path = (Path.new(user_home) / '.chef').to_s
+          Chef::Log.info("Unable to access cache at #{primary_cache_path}. Switching cache to #{secondary_cache_path}")
+          secondary_cache_path
         else
-          primary_cache_root = platform_specific_path("/var")
-          primary_cache_path = platform_specific_path("/var/chef")
-          # Use /var/chef as the cache path only if that folder exists and we can read and write
-          # into it, or /var exists and we can read and write into it (we'll create /var/chef later).
-          # Otherwise, we'll create .chef under the user's home directory and use that as
-          # the cache path.
-          unless path_accessible?(primary_cache_path) || path_accessible?(primary_cache_root)
-            secondary_cache_path = PathHelper.join(user_home, '.chef')
-            Chef::Log.info("Unable to access cache at #{primary_cache_path}. Switching cache to #{secondary_cache_path}")
-            secondary_cache_path
-          else
-            primary_cache_path
-          end
+          primary_cache_path
         end
       end
-
-      # Where cookbook files are stored on the server (by content checksum)
-      attribute :checksum_path, Path, :relative_to => lazy { cache_path }, :default => "checksums"
-
-      # Where chef's cache files should be stored
-      attribute :file_cache_path, Path, :relative_to => lazy { cache_path }, :default => "cache"
-
-      # Where backups of chef-managed files should go
-      attribute :file_backup_path, Path, :relative_to => lazy { cache_path }, :default => "backup"
     end
+
+    # Where cookbook files are stored on the server (by content checksum)
+    attribute :checksum_path, Path, :relative_to => lazy { cache_path }, :default => "checksums"
+
+    # Where chef's cache files should be stored
+    attribute :file_cache_path, Path, :relative_to => lazy { cache_path }, :default => "cache"
+
+    # Where backups of chef-managed files should go
+    attribute :file_backup_path, Path, :relative_to => lazy { cache_path }, :default => "backup"
 
     # Returns true only if the path exists and is readable and writeable for the user.
     def self.path_accessible?(path)
@@ -219,10 +185,10 @@ class Chef
     # in a console), the log level is set to :warn, and output formatters are
     # used as the primary mode of output. When a tty is not available, the
     # logger is the primary mode of output, and the log level is set to :info
-    attribute :log_level, Symbol, :equal_to => [ :debug, :info, :warn, :fatal, :auto], :default => :auto
+    attribute :log_level, Symbol, equal_to: [ :debug, :info, :warn, :fatal, :auto ], default: :auto
 
     # Logging location as either an IO stream or string representing log file path
-    attribute :log_location, IO, default => STDOUT
+    attribute :log_location, IO, default: STDOUT
 
     # Using `force_formatter` causes chef to default to formatter output when STDOUT is not a tty
     attribute :force_formatter, Boolean
@@ -231,11 +197,11 @@ class Chef
     attribute :force_logger, Boolean
 
     # toggle info level log items that can create a lot of output
-    attribute :verbose_logging, true
+    attribute :verbose_logging, Boolean, default: true
 
     attribute :diff_disabled, Boolean
-    attribute :diff_filesize_threshold, Fixnum, :default => 10000000
-    attribute :diff_output_threshold, Fixnum, :default => 1000000
+    attribute :diff_filesize_threshold, Fixnum, default: 10000000
+    attribute :diff_output_threshold, Fixnum, default: 1000000
     attribute :local_mode, Boolean
 
     attribute :pid_file, Path
@@ -276,20 +242,20 @@ class Chef
     # :verify_peer (default), all HTTPS requests will be validated regardless of other
     # SSL verification settings. When set to :verify_none no HTTPS requests will
     # be validated.
-    attribute :ssl_verify_mode, Boolean, :equal_to => [ :verify_peer, :verify_none ], :default => :verify_peer
+    attribute :ssl_verify_mode, Boolean, equal_to: [ :verify_peer, :verify_none ], default: :verify_peer
 
     # Whether or not to verify the SSL cert for HTTPS requests to the Chef
     # server API. If set to `true`, the server's cert will be validated
     # regardless of the :ssl_verify_mode setting. This is set to `true` when
     # running in local-mode.
     # NOTE: This is a workaround until verify_peer is enabled by default.
-    attribute :verify_api_cert, Boolean, :default => lazy { Chef::Config.local_mode }
+    attribute :verify_api_cert, Boolean, default: lazy { Chef::Config.local_mode }
 
     # Path to the default CA bundle files.
     attribute :ssl_ca_path, Path
-    attribute :ssl_ca_file, Path, :default => lazy do
+    attribute :ssl_ca_file, Path, default: lazy do
       if Chef::Platform.windows? and embedded_path = embedded_dir
-        cacert_path = File.join(embedded_path, "ssl/certs/cacert.pem")
+        cacert_path = Path.new(embedded_path).join(%w(ssl certs cacert.pem)).to_s
         cacert_path if File.exist?(cacert_path)
       else
         nil
@@ -300,7 +266,7 @@ class Chef
     # certificates in this directory will be added to whatever CA bundle ruby
     # is using. Use this to add self-signed certs for your Chef Server or local
     # HTTP file servers.
-    attribute :trusted_certs_dir, Path, :relative_to => lazy { config_dir }, :default => "trusted_certs"
+    attribute :trusted_certs_dir, Path, relative_to: lazy { config_dir }, default: "trusted_certs"
 
     # Where should chef-solo download recipes from?
     attribute :recipe_url, URI
@@ -376,7 +342,7 @@ class Chef
     #
     # The default value is `true`. Set to `false` to disable client-side key
     # generation (server generates client keys).
-    attribute :local_key_generation, Boolean, :default => true
+    attribute :local_key_generation, Boolean, default: true
 
     # Zypper package provider gpg checks. Set to true to enable package
     # gpg signature checking. This will be default in the
@@ -401,13 +367,13 @@ class Chef
     # the new (and preferred) configuration setting. If not set, knife will
     # fall back to using cache_options[:path], which is deprecated but exists in
     # many client configs generated by pre-Chef-11 bootstrappers.
-    attribute :syntax_check_cache_path, Path, :default => lazy { cache_options[:path] }
+    attribute :syntax_check_cache_path, Path, default: lazy { cache_options[:path] }
 
     # Deprecated:
-    attribute :cache_options, :default => lazy { { :path => PathHelper.join(file_cache_path, "checksums") } }
+    attribute :cache_options, default: lazy { { :path => Path.new(file_cache_path) / "checksums") } }
 
     # Set to false to silence Chef 11 deprecation warnings:
-    attribute :chef11_deprecation_warnings, :default => true
+    attribute :chef11_deprecation_warnings, default: true
 
     # knife configuration data
     attribute :knife, Struct do
@@ -417,7 +383,7 @@ class Chef
       attribute :ssh_gateway,         URI
       attribute :bootstrap_version,   String
       attribute :bootstrap_proxy,     URI
-      attribute :bootstrap_template,  String, :default => "chef-full"
+      attribute :bootstrap_template,  String, default: "chef-full"
       attribute :secret,              String
       attribute :secret_file,         Path
       attribute :identity_file,       Path
@@ -432,8 +398,8 @@ class Chef
       # valid user and group name
       # From http://technet.microsoft.com/en-us/library/cc776019(WS.10).aspx
       principal_valid_regex_part = '[^"\/\\\\\[\]\:;|=,+*?<>]+'
-      attribute :user_valid_regex, Array[Regexp], :default => [ /^(#{principal_valid_regex_part}\\)?#{principal_valid_regex_part}$/ ]
-      attribute :group_valid_regex, Array[Regexp], :default => [ /^(#{principal_valid_regex_part}\\)?#{principal_valid_regex_part}$/ ]
+      attribute :user_valid_regex,  Array[Regexp], default: [ /^(#{principal_valid_regex_part}\\)?#{principal_valid_regex_part}$/ ]
+      attribute :group_valid_regex, Array[Regexp], default: [ /^(#{principal_valid_regex_part}\\)?#{principal_valid_regex_part}$/ ]
 
       attribute :fatal_windows_admin_check, Boolean
     end
@@ -446,7 +412,7 @@ class Chef
       # user/group cannot contain ':', ',' or non-space-whitespace or null byte
       # everything else is allowed (UTF-8, spaces, etc) and we delegate to your O/S useradd program to barf or not
       # copies: http://anonscm.debian.org/viewvc/pkg-shadow/debian/trunk/debian/patches/506_relaxed_usernames?view=markup
-      attribute :user_valid_regex, Array[Regexp], :default => [ /^[^-+~:,\t\r\n\f\0]+[^:,\t\r\n\f\0]*$/ ]
+      attribute :user_valid_regex,  Array[Regexp], :default => [ /^[^-+~:,\t\r\n\f\0]+[^:,\t\r\n\f\0]*$/ ]
       attribute :group_valid_regex, Array[Regexp], :default => [ /^[^-+~:,\t\r\n\f\0]+[^:,\t\r\n\f\0]*$/ ]
     end
 
@@ -469,21 +435,21 @@ class Chef
     end
 
     # returns a platform specific path to the user home dir if set, otherwise default to current directory.
-    attribute :user_home, :default => lazy { env['HOME'] || windows_home_path || env['USERPROFILE'] || Dir.pwd }
+    attribute :user_home, default: lazy { env['HOME'] || windows_home_path || env['USERPROFILE'] || Dir.pwd }
 
     # Enable file permission fixup for selinux. Fixup will be done
     # only if selinux is enabled in the system.
-    attribute :enable_selinux_file_permission_fixup, Boolean, :default => true
+    attribute :enable_selinux_file_permission_fixup, Boolean, default: true
 
     # Use atomic updates (i.e. move operation) while updating contents
     # of the files resources. When set to false copy operation is
     # used to update files.
-    attribute :file_atomic_update, Boolean, :default => true
+    attribute :file_atomic_update, Boolean, default: true
 
     # If false file staging is will be done via tempfiles that are
     # created under ENV['TMP'] otherwise tempfiles will be created in
     # the directory that files are going to reside.
-    attribute :file_staging_uses_destdir, Boolean, :default => true
+    attribute :file_staging_uses_destdir, Boolean, default: true
 
     # Exit if another run is in progress and the chef-client is unable to
     # get the lock before time expires. If nil, no timeout is enforced. (Exits
@@ -494,7 +460,7 @@ class Chef
     # this number can result in gateway errors from the server (namely 503 and 504).
     # If you are seeing this behavior while using the default setting, reducing
     # the number of threads will help.
-    attribute :cookbook_sync_threads, Fixnum, :default => 10
+    attribute :cookbook_sync_threads, Fixnum, default: 10
 
     # At the beginning of the Chef Client run, the cookbook manifests are downloaded which
     # contain URLs for every file in every relevant cookbook.  Most of the files
@@ -518,16 +484,16 @@ class Chef
     # out on long Chef runs before the resource that uses the file is converged
     # (leading to many confusing 403 errors on template/cookbook_file resources).
     #
-    attribute :no_lazy_load, Boolean, :default => true
+    attribute :no_lazy_load, Boolean, default: true
 
     # A whitelisted array of attributes you want sent over the wire when node
     # data is saved.
     # The default setting is nil, which collects all data. Setting to [] will not
     # collect any data for save.
-    attribute :automatic_attribute_whitelist, Array[String], :default => nil
-    attribute :default_attribute_whitelist, Array[String], :default => nil
-    attribute :normal_attribute_whitelist, Array[String], :default => nil
-    attribute :override_attribute_whitelist, Array[String], :default => nil
+    attribute :automatic_attribute_whitelist, Array[String], default: nil
+    attribute :default_attribute_whitelist,   Array[String], default: nil
+    attribute :normal_attribute_whitelist,    Array[String], default: nil
+    attribute :override_attribute_whitelist,  Array[String], default: nil
 
     # Chef requires an English-language UTF-8 locale to function properly.  We attempt
     # to use the 'locale -a' command and search through a list of preferences until we
@@ -543,7 +509,7 @@ class Chef
     #
     # If there is no 'locale -a' then we return 'en_US.UTF-8' since that is the most commonly
     # available English UTF-8 locale.  However, all modern POSIXen should support 'locale -a'.
-    attribute :internal_locale, String, :default => lazy do
+    attribute :internal_locale, String, default: lazy do
       begin
         locales = `locale -a`.split
         case
@@ -572,7 +538,7 @@ class Chef
     # able to upload Shift_JIS or ISO-8859-1 files needs to mark *those* files explicitly with
     # magic tags to make ruby correctly identify the encoding being used.  Changing this default will
     # break Chef community cookbooks and is very highly discouraged.
-    attribute :ruby_encoding, Encoding, :default => Encoding::UTF_8
+    attribute :ruby_encoding, Encoding, default: Encoding::UTF_8
 
     # If installed via an omnibus installer, this gives the path to the
     # "embedded" directory which contains all of the software packaged with

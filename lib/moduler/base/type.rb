@@ -65,9 +65,9 @@ module Moduler
       def default(*args, &block)
         # Short circuit "no default value for default" so we don't loop
         if args.size != 0 || block
-          default = construct_raw(*args, &block)
+          @default = construct_raw(*args, &block)
         end
-        from_raw(@default)
+        from_raw(raw_default)
       end
       def default=(value)
         @default = to_raw(value)
