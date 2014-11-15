@@ -1,5 +1,5 @@
 require 'support/spec_support'
-require 'moduler/lazy/value'
+require 'moduler/value/lazy'
 require 'moduler/type/set_type'
 
 describe Moduler::Type::SetType do
@@ -62,7 +62,7 @@ describe Moduler::Type::SetType do
     end
   end
 
-  let(:instance) { type.new_facade([1,2,3]) }
+  let(:instance) { type.from_raw(type.to_raw([1,2,3], nil), nil) }
   context "With an empty type" do
     let(:type) { Moduler::Type::SetType.new }
     include_context "it behaves exactly like a normal set" do
@@ -75,11 +75,11 @@ describe Moduler::Type::SetType do
 
     include_context "it behaves exactly like a normal set" do
       let(:set) { instance }
-      after { set.raw.each { |v| v%2 == 0 } }
+      after { set.raw_read.each { |v| v%2 == 0 } }
     end
 
     it "Stores coerced values" do
-      set.raw == Set[2,4,6]
+      set.raw_read == Set[2,4,6]
     end
   end
 end

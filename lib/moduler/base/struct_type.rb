@@ -41,7 +41,7 @@ module Moduler
       #
       # We store structs internally with the actual hash class.
       #
-      def coerce(value)
+      def coerce(value, context)
         if store_in_hash && !value.nil?
           if !value.respond_to?(:to_hash)
             raise ValidationFailed.new(["#{value} must be a hash"])
@@ -52,12 +52,12 @@ module Moduler
         elsif value.is_a?(Proc)
           value = target.new(&value)
         end
-        super(value)
+        super
       end
 
-      def coerce_out(value)
+      def coerce_out(value, context)
         if store_in_hash && !value.nil?
-          target.new(value, self)
+          target.new(value, context, true)
         else
           super
         end
@@ -114,23 +114,30 @@ module Moduler
       #   When reopens_on_call is true
       #   address *args, &block -> (current_value || default).specialize(*args, &block)
       #
-      def construct_raw(*args, &block)
+      def construct_raw(context, *args, &block)
         if args.size == 0 && !block
           # If we're doing a simple get, we just do the get.
           return super
         end
 
         if args.size == 1 && !block
-          if args[0].is_a?(Lazy)
+          if args[0].is_a?(Value)
             return args[0]
           end
 
           if args[0] == nil
-            return coerce(args[0])
+            return coerce(args[0], context)
           end
         end
 
-        (default_class || target).new(*args, &block)
+        if store_in_hash
+          if args.size > 1
+            raise ArgumentError.new("Cannot create a hash struct with more than one argument")
+          end
+          (default_class || target).new(args[0], context, false, &block)
+        else
+          (default_class || target).new(*args, &block)
+        end
       end
 
       attr_accessor :supertype

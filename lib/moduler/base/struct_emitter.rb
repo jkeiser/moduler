@@ -1,8 +1,9 @@
 require 'moduler/facade/struct'
-require 'moduler/facade/hash_struct'
+require 'moduler/facade/hash_struct_facade'
+require 'moduler/value/typed'
 require 'moduler/base/type'
 require 'moduler/base/hash_type'
-require 'moduler/lazy/for_read_value'
+require 'moduler/value/default'
 
 module Moduler
   module Base
@@ -38,16 +39,11 @@ module Moduler
       def emit_target_class_type
         # Create the target class if asked
         if target.is_a?(Hash)
-          target[:superclass] ||= Facade::ValueFacade if store_in_hash
           @target = eval <<-EOM, binding, __FILE__, __LINE__+1
             class target[:parent]::#{to_camel_case(target[:name])}#{target[:superclass] ? " < target[:superclass]" : ""}
               self
             end
           EOM
-        end
-
-        if store_in_hash && !(target < Facade::ValueFacade)
-          raise "Struct with store_in_hash=true must have superclass \"Moduler::Facade::ValueFacade\""
         end
 
         # Set the type on the class
@@ -66,7 +62,7 @@ module Moduler
         end
 
         if store_in_hash
-          target.class_eval "include Moduler::Facade::HashStruct"
+          target.class_eval "include Moduler::Facade::HashStructFacade"
         else
           target.class_eval "include Moduler::Facade::Struct"
         end
@@ -92,15 +88,20 @@ module Moduler
       end
 
       def is_set_expr(name)
-        store_in_hash ? "raw.has_key?(#{name.inspect})" : "defined?(@#{name})"
+        store_in_hash ? "raw_read.has_key?(#{name.inspect})" : "defined?(@#{name})"
+      end
+
+      def context_expr
+        # Right now, top level structs are store_in_hash, all else are hashes
+        store_in_hash ? "context" : "self"
       end
 
       def attribute_read(name)
-        store_in_hash ? "raw[#{name.inspect}]" : "@#{name}"
+        store_in_hash ? "raw_read[#{name.inspect}]" : "@#{name}"
       end
 
       def attribute_write(name)
-        store_in_hash ? "raw_write[#{name.inspect}]" : "@#{name}"
+        store_in_hash ? "raw[#{name.inspect}]" : "@#{name}"
       end
 
       def emit_get_set_field(name, type_ref)
@@ -114,11 +115,11 @@ module Moduler
                 # user tries to write to them.  Frozen defaults (like an int)
                 # we don't store at all.
                 raw_default = #{type_ref}.raw_default
-                raw_default = raw_default.in_context(self) if raw_default.is_a?(Lazy)
+
                 if raw_default.frozen? || raw_default.nil?
                   raw_value = raw_default
                 else
-                  raw_value = Lazy::ForReadValue.new(raw_default) do
+                  raw_value = Value::Default.new(raw_default) do
                     if #{is_set_expr(name)}
                       raise "#{name} was defined by someone else: race!"
                     else
@@ -127,17 +128,15 @@ module Moduler
                   end
                 end
               end
-              #{type_ref}.from_raw(raw_value)
+              #{type_ref}.from_raw(raw_value, #{context_expr})
             else
-              raw_value = #{type_ref}.construct_raw(*args, &block)
-              raw_value = raw_value.in_context(self) if raw_value.is_a?(Lazy)
+              raw_value = #{type_ref}.construct_raw(#{context_expr}, *args, &block)
               #{attribute_write(name)} = raw_value
-              raw_value.is_a?(Lazy) ? raw_value : #{type_ref}.from_raw(raw_value)
+              raw_value.is_a?(Value) ? raw_value : #{type_ref}.from_raw(raw_value, #{context_expr})
             end
           end
           def #{name}=(value)
-            value = #{type_ref}.to_raw(value)
-            value = value.in_context(self) if value.is_a?(Lazy)
+            value = #{type_ref}.to_raw(value, #{context_expr})
             #{attribute_write(name)} = value
             # NOTE: Ruby doesn't let you return a value here anyway--it will always
             # return the passed-in value to the user.
@@ -152,6 +151,7 @@ module Moduler
               if block
                 #{attribute_write(name)} = block
               else
+                puts "Getting a" if #{name.inspect} == :a
                 #{attribute_read(name)}
               end
             else
@@ -179,10 +179,9 @@ module Moduler
               key = args.shift
               value_type = #{type_ref}.value_type
               if value_type
-                value = value_type.construct_raw(*args, &block)
-                value = value.in_context(self) if value.is_a?(Lazy)
+                value = value_type.construct_raw(#{context_expr}, *args, &block)
                 #{attribute_write(attribute_name)}[key] = value
-                value_type.from_raw(value)
+                value_type.from_raw(value, #{context_expr})
               elsif args.size == 1 && !block
                 #{attribute_write(attribute_name)}[key] = args[0]
               elsif args.size == 0 && block

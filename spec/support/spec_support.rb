@@ -9,18 +9,17 @@ class MultiplyCoercer < Moduler::Type::BasicType
   attribute :in_val, Numeric, :default => 1
   attribute :out_val, Numeric, :default => 1
 
-  def coerce(value)
+  def coerce(value, context)
     case value
     when Proc
-      proc { v = super(value.call); v ? v*in_val : v }
+      proc { v = super(value.call, context); v ? v*in_val : v }
     else
-      v = super(value)
+      v = super
       v ? v*in_val : v
     end
   end
 
-  def coerce_out(value)
-    value = super
+  def coerce_out(value, context)
     case value
     when Proc
       proc { v = super(value.call); v ? v*out_val : v }
@@ -32,15 +31,15 @@ class MultiplyCoercer < Moduler::Type::BasicType
 end
 
 class OneBasedArray < Moduler::Type::BasicType
-  def coerce(value)
-    value = super(value)
+  def coerce(value, context)
+    value = super
     if value <= 0
       value
     else
       value-1
     end
   end
-  def coerce_out(value)
+  def coerce_out(value, context)
     super+1
   end
 end

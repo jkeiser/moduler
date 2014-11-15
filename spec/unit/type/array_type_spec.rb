@@ -1,5 +1,5 @@
 require 'support/spec_support'
-require 'moduler/lazy/value'
+require 'moduler/value/lazy'
 require 'moduler/type/array_type'
 
 describe Moduler::Type::ArrayType do
@@ -277,7 +277,7 @@ describe Moduler::Type::ArrayType do
     end
   end
 
-  let(:instance) { type.new_facade([1,2,3]) }
+  let(:instance) { type.from_raw(type.to_raw([1,2,3], nil), nil) }
   context "With an empty type" do
     let(:type) { Moduler::Type::ArrayType.new }
 

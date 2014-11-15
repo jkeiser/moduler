@@ -196,7 +196,7 @@ describe Moduler do
       end
 
       context "when foo is set to lazy { { :a => 1 } }" do
-        before { struct.foo = Moduler::Lazy::Value.new { { :a => 1 } } }
+        before { struct.foo = Moduler::Value::Lazy.new { { :a => 1 } } }
 
         it ".foo is { :a => 1 }" do
           expect(struct.foo).to eq({ :a => 1 })

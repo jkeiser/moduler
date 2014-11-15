@@ -246,7 +246,7 @@ describe Moduler do
       end
 
       context "when foo is set to lazy { 10 }" do
-        before { struct.foo = Moduler::Lazy::Value.new { 10 } }
+        before { struct.foo = Moduler::Value::Lazy.new { 10 } }
 
         it ".foo is 10" do
           expect(struct.foo).to eq 10
@@ -473,7 +473,7 @@ describe Moduler do
     context "with a basic attribute with a default of lazy { 10 }" do
       let(:struct_class) do
         make_struct_class do
-          attribute :foo, :default => Moduler::Lazy::Value.new { 10 }
+          attribute :foo, :default => Moduler::Value::Lazy.new { 10 }
         end
       end
 
@@ -675,7 +675,7 @@ describe Moduler do
     context "with a basic attribute with a default of lazy { bar*2 }" do
       let(:struct_class) do
         make_struct_class do
-          attribute :foo, :default => Moduler::Lazy::Value.new { bar*2 }
+          attribute :foo, :default => Moduler::Value::Lazy.new { bar*2 }
           attribute :bar, :default => 100
         end
       end

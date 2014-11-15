@@ -12,12 +12,12 @@ module Moduler
       # We store hashes internally as hashes, and slap facades on them when the
       # user requests them.
       #
-      def coerce(value)
+      def coerce(value, context)
         if value.is_a?(Moduler::Facade::HashFacade)
           if value.type != self && (key_type || value_type)
-            value = Facade::HashFacade.new({}, self).merge!(value).raw_write
+            value = Facade::HashFacade.new({}, self).merge!(value).raw(context)
           else
-            value = value.raw_write
+            value = value.raw(context)
           end
         elsif !value.nil?
           if value.respond_to?(:to_hash)
@@ -26,26 +26,26 @@ module Moduler
             raise ValidationFailed.new([ "Hash field must be set to a hash value: #{value.inspect} is not a hash value." ])
           end
           if key_type || value_type
-            value = Facade::HashFacade.new({}, self).merge!(value).raw_write
+            value = Facade::HashFacade.new({}, self, context).merge!(value).raw(context)
           end
         end
-        super(value)
+        super
       end
 
       #
       # When the user requests the hash, we give them a facade to protect the
       # values, assuming there is any index_type or element_type to protect.
       #
-      def coerce_out(value)
-        if value.is_a?(Lazy) || (value && (key_type || value_type))
-          Facade::HashFacade.new(value, self)
+      def coerce_out(value, context)
+        if value.is_a?(Value) || (value && (key_type || value_type))
+          Facade::HashFacade.new(value, self, context)
         else
           value
         end
       end
 
       def new_facade(hash)
-        Facade::HashFacade.new(to_raw(hash), self)
+        Facade::HashFacade.new(to_raw(hash, context), self)
       end
 
       def clone_value(value)

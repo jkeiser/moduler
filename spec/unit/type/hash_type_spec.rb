@@ -1,5 +1,5 @@
 require 'support/spec_support'
-require 'moduler/lazy/value'
+require 'moduler/value/lazy'
 require 'moduler/type/hash_type'
 
 describe Moduler::Type::HashType do
@@ -84,7 +84,7 @@ describe Moduler::Type::HashType do
     end
   end
 
-  let(:instance) { type.new_facade(a:1,b:2,c:3) }
+  let(:instance) { type.from_raw(type.to_raw({a:1,b:2,c:3}, nil), nil) }
   context "With an empty type" do
     let(:type) { Moduler::Type::HashType.new }
 
@@ -94,10 +94,10 @@ describe Moduler::Type::HashType do
   end
 
   class HashStringCoercer < Moduler::Type::BasicType
-    def coerce(value)
+    def coerce(value, context)
       value.to_s
     end
-    def coerce_out(value)
+    def coerce_out(value, context)
       value.to_sym
     end
   end
@@ -107,11 +107,12 @@ describe Moduler::Type::HashType do
 
     include_context "it behaves exactly like a normal hash" do
       let(:hash) { instance }
-      after { hash.raw.each_key { |k| expect(k).to be_kind_of(String) } }
+      after { hash.raw_read.each_key { |k| expect(k).to be_kind_of(String) } }
+      after { hash.each_key { |k| expect(k).to be_kind_of(Symbol) } }
     end
 
     it "Stores keys internally modified" do
-      expect(hash.raw).to eq({ 'a' => 1, 'b' => 2, 'c' => 3 })
+      expect(hash.raw_read).to eq({ 'a' => 1, 'b' => 2, 'c' => 3 })
     end
   end
 
@@ -120,11 +121,11 @@ describe Moduler::Type::HashType do
 
     include_context "it behaves exactly like a normal hash" do
       let(:hash) { instance }
-      after { hash.raw.each_value { |v| expect(v%2).to eq 0 } }
+      after { hash.raw_read.each_value { |v| expect(v%2).to eq 0 } }
     end
 
     it "Stores values internally modified" do
-      expect(hash.raw).to eq({ :a => 2, :b => 4, :c => 6 })
+      expect(hash.raw_read).to eq({ :a => 2, :b => 4, :c => 6 })
     end
   end
 
@@ -133,12 +134,13 @@ describe Moduler::Type::HashType do
 
     include_context "it behaves exactly like a normal hash" do
       let(:hash) { instance }
-      after { hash.raw.each_key { |k| expect(k).to be_kind_of(String) } }
-      after { hash.raw.each_value { |v| expect(v%2).to eq 0 } }
+      after { hash.raw_read.each_key { |k| expect(k).to be_kind_of(String) } }
+      after { hash.each_key { |k| expect(k).to be_kind_of(Symbol) } }
+      after { hash.raw_read.each_value { |v| expect(v%2).to eq 0 } }
     end
 
     it "Stores keys internally modified" do
-      expect(hash.raw).to eq({ 'a' => 2, 'b' => 4, 'c' => 6 })
+      expect(hash.raw_read).to eq({ 'a' => 2, 'b' => 4, 'c' => 6 })
     end
   end
 end

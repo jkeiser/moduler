@@ -13,12 +13,12 @@ module Moduler
       # We store sets internally as Sets, and slap facades on them when the
       # user requests them.
       #
-      def coerce(value)
+      def coerce(value, context)
         if value.is_a?(Moduler::Facade::SetFacade)
           if value.type != self && item_type
-            value = value.map { |item| item_type.to_raw(item) }.to_set
+            value = value.map { |item| item_type.to_raw(item, context) }.to_set
           else
-            value = value.raw_write
+            value = value.raw(context)
           end
         elsif !value.nil?
           if value.respond_to?(:to_set)
@@ -27,27 +27,27 @@ module Moduler
             value = Set.new([ value ])
           end
           if item_type
-            value = value.map { |item| item_type.to_raw(item) }.to_set
+            value = value.map { |item| item_type.to_raw(item, context) }.to_set
           end
         end
-        super(value)
+        super
       end
 
       #
       # When the user requests the set, we give them a facade to protect the
       # values, assuming there is any item_type to protect.
       #
-      def coerce_out(value)
-        if value.is_a?(Lazy) || (value && item_type)
-          Facade::SetFacade.new(value, self)
+      def coerce_out(value, context)
+        if value.is_a?(Value) || (value && item_type)
+          Facade::SetFacade.new(value, self, context)
         else
           value
         end
       end
 
-      def construct_raw(*values)
+      def construct_raw(context, *values)
         if values.size == 1
-          if values[0].is_a?(Lazy) || values[0].respond_to?(:to_set) || values[0].nil?
+          if values[0].is_a?(Value) || values[0].respond_to?(:to_set) || values[0].nil?
             value = values[0]
           else
             value = values
@@ -55,11 +55,7 @@ module Moduler
         else
           value = values
         end
-        coerce(value)
-      end
-
-      def new_facade(set)
-        Facade::SetFacade.new(to_raw(set), self)
+        coerce(value, context)
       end
 
       def clone_value(value)

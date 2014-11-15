@@ -10,10 +10,13 @@ module Moduler
 
       def type
         @type ||= begin
-          if superclass.respond_to?(:type) && (supertype = super)
-            StructType.new(supertype: supertype, target: self)
+          superclass = self.class.superclass
+          if superclass.respond_to?(:type) && (supertype = superclass.type)
+            supertype.specialize(target: self)
           else
-            StructType.new(target: self)
+            type = StructType.new
+            type.target = self
+            type
           end
         end
       end
@@ -29,7 +32,15 @@ module Moduler
       def included(target)
         super
         target.extend(InlineStruct)
-        subclass.emitter.emit
+      end
+
+      def lazy(cache=true, &block)
+        Moduler::Value::Lazy.new(cache, nil, &block)
+      end
+
+      def attribute(name, *args, &block)
+        self.type.attributes[name] = Type.new(*args, &block)
+        type.emit_field(name)
       end
     end
   end

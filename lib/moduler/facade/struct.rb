@@ -54,10 +54,10 @@ module Moduler
           other_defined = other.instance_variable_defined?(var)
           next if !var_defined && !other_defined
 
-          value = var_defined ? type.to_raw(instance_variable_get(var)) : type.raw_default
-          value = value.get_for_read if value.is_a?(Lazy)
-          other_value = other_defined ? type.to_raw(other.instance_variable_get(var)) : type.raw_default
-          other_value = other_value.get_for_read if other_value.is_a?(Lazy)
+          value = var_defined ? type.to_raw(instance_variable_get(var), self) : type.raw_default
+          value = value.raw_read(self) if value.is_a?(Value)
+          other_value = other_defined ? type.to_raw(other.instance_variable_get(var), self) : type.raw_default
+          other_value = other_value.raw_read(self) if other_value.is_a?(Value)
           if value != other_value
             return false
           end
@@ -70,9 +70,9 @@ module Moduler
         self.class.type.attributes.each_pair do |name,type|
           var = :"@#{name}"
           if instance_variable_defined?(var)
-            result[name] = type.from_raw(instance_variable_get(var))
+            result[name] = type.from_raw(instance_variable_get(var), self)
           elsif include_defaults
-            result[name] = type.from_raw(type.raw_default)
+            result[name] = type.from_raw(type.raw_default, self)
           end
         end
         result
@@ -87,7 +87,7 @@ module Moduler
           if instance_variable_defined?("@#{name}")
             result = remove_instance_variable("@#{name}")
             field_type = self.class.type.attributes[name]
-            field_type ? field_type.from_raw(result) : result
+            field_type ? field_type.from_raw(result, self) : result
           end
         else
           self.class.type.attributes.each_key do |name|

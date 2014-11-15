@@ -18,9 +18,9 @@ module Moduler
         element_type.path_class <= Path::Base ? element_type.path_class.const_get(:PATH_SEPARATOR) : File::PATH_SEPARATOR
       end
 
-      def coerce(value)
+      def coerce(value, context)
         if value.nil?
-          return super(value)
+          return super(value, context)
         end
         # If the value is a single path string, split it by path separator
         if !value.is_a?(Array)
@@ -47,15 +47,15 @@ module Moduler
           end
           value
         end
-        super(value)
+        super
       end
 
-      def construct_raw(*args)
+      def construct_raw(context, *args)
         if args.size == 1 && args[0].nil?
           super
         else
           args.flat_map do |arg|
-            coerce(arg)
+            coerce(arg, context)
           end
         end
       end

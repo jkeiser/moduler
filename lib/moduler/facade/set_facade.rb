@@ -1,4 +1,4 @@
-require 'moduler/facade/value_facade'
+require 'moduler/facade'
 
 module Moduler
   module Facade
@@ -6,7 +6,8 @@ module Moduler
     # Slaps a set interface on top of the set value (which subclasses can
     # override).
     #
-    class SetFacade < ValueFacade
+    class SetFacade
+      include Facade
       include Enumerable
 
       def ==(other)
@@ -20,38 +21,38 @@ module Moduler
         each.to_set
       end
       def size
-        raw.size
+        raw_read.size
       end
       def to_a
-        raw.map { |item| from_raw(item) }
+        raw_read.map { |item| from_raw(item) }
       end
       def include?(item)
-        raw.include?(to_raw(item))
+        raw_read.include?(to_raw(item))
       end
       def member?(item)
-        raw.member?(to_raw(item))
+        raw_read.member?(to_raw(item))
       end
       def add(item)
-        raw_write.add(to_raw(item))
+        raw.add(to_raw(item))
         self
       end
       def add?(item)
-        raw_write.add?(to_raw(item)) ? self : nil
+        raw.add?(to_raw(item)) ? self : nil
       end
       def <<(item)
-        raw_write << to_raw(item)
+        raw << to_raw(item)
         self
       end
       def delete(item)
-        raw_write.delete(to_raw(item))
+        raw.delete(to_raw(item))
         self
       end
       def each
         if block_given?
-          raw.each { |item| yield from_raw(item) }
+          raw_read.each { |item| yield from_raw(item) }
         else
           Enumerator.new do |y|
-            raw.each { |item| y.yield from_raw(item) }
+            raw_read.each { |item| y.yield from_raw(item) }
           end
         end
       end
@@ -59,11 +60,11 @@ module Moduler
       protected
 
       def to_raw(item)
-        type.item_type ? type.item_type.to_raw(item)   : item
+        type.item_type ? type.item_type.to_raw(item, context)   : item
       end
 
       def from_raw(item)
-        type.item_type ? type.item_type.from_raw(item) : item
+        type.item_type ? type.item_type.from_raw(item, context) : item
       end
     end
   end

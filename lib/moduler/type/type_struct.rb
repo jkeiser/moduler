@@ -6,7 +6,7 @@ module Moduler
       end
 
       def lazy(cache=true, &block)
-        Moduler::Lazy::Value.new(cache, &block)
+        Moduler::Value::Lazy.new(cache, nil, &block)
       end
 
       def attribute(name, *args, &block)

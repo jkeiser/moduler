@@ -2,6 +2,8 @@ require 'moduler/path'
 
 module Moduler
   module Type
+    class BasicType < Moduler::Base::Type
+    end
     class PathType < Moduler::Type::BasicType
     end
 

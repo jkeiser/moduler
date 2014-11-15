@@ -1,4 +1,4 @@
-require 'moduler/lazy/value'
+require 'moduler/value'
 require 'moduler/constants'
 
 module Moduler
@@ -12,12 +12,13 @@ module Moduler
         end
       end
 
-      def to_raw(value)
-        value.is_a?(Lazy) ? value : coerce(value)
+      def to_raw(value, context)
+        value.is_a?(Value) ? value : coerce(value, context)
       end
 
-      def from_raw(value)
-        coerce_out(value)
+      def from_raw(value, context)
+        result = coerce_out(value, context)
+        result
       end
 
       def raw_default
@@ -27,7 +28,7 @@ module Moduler
       #
       # Transform or validate the value before setting its raw value.
       #
-      def coerce(value)
+      def coerce(value, context)
         value
       end
 
@@ -37,11 +38,17 @@ module Moduler
       # ==== Returns
       # The output value.
       #
-      def coerce_out(value)
-        value.is_a?(Lazy) ? coerce(value.get) : value
+      # TODO make this coerce_out lazy values, or don't unwrap at all ...
+      def coerce_out(value, context)
+        # By default, we unwrap lazy values and return a writeable raw value
+        if value.is_a?(Value)
+          coerce(value.raw(context), context)
+        else
+          value
+        end
       end
 
-      def construct_raw(value=NOT_PASSED, &block)
+      def construct_raw(context, value=NOT_PASSED, &block)
         if value == NOT_PASSED
           if block
             value = block
@@ -52,8 +59,8 @@ module Moduler
           raise ArgumentError, "Both value and block passed to construct attribute!  Only one at a time accepted."
         end
 
-        if !value.is_a?(Lazy)
-          value = coerce(value)
+        if !value.is_a?(Value)
+          value = coerce(value, context)
         end
         value
       end
@@ -62,15 +69,18 @@ module Moduler
       # The default value gets set the same way as the value would--you can use
       # the same expressions you would otherwise.
       #
+      # TODO this is likely wrong.  Get rid of it and make an actual DefaultType
+      # that understands context
+      #
       def default(*args, &block)
         # Short circuit "no default value for default" so we don't loop
         if args.size != 0 || block
-          @default = construct_raw(*args, &block)
+          @default = construct_raw(self, *args, &block)
         end
-        from_raw(raw_default)
+        from_raw(raw_default, self)
       end
       def default=(value)
-        @default = to_raw(value)
+        @default = to_raw(value, self)
       end
 
       def emit(parent=nil, name=nil)

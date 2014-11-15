@@ -12,12 +12,12 @@ module Moduler
       # We store arrays internally as arrays, and slap facades on them when the
       # user requests them.
       #
-      def coerce(value)
+      def coerce(value, context)
         if value.is_a?(Moduler::Facade::ArrayFacade)
           if value.type != self && element_type
-            value = value.map { |value| element_type.to_raw(value) }
+            value = value.map { |value| element_type.to_raw(value, context) }
           else
-            value = value.raw_write
+            value = value.raw(context)
           end
         elsif !value.nil?
           if value.respond_to?(:to_a)
@@ -26,26 +26,22 @@ module Moduler
             value = [ value ]
           end
           if element_type
-            value = value.map { |value| element_type.to_raw(value) }
+            value = value.map { |value| element_type.to_raw(value, context) }
           end
         end
-        super(value)
+        super
       end
 
       #
       # When the user requests the array, we give them a facade to protect the
       # values, assuming there is any index_type or element_type to protect.
       #
-      def coerce_out(value)
-        if value.is_a?(Lazy) || (value && (index_type || element_type))
-          Facade::ArrayFacade.new(value, self)
+      def coerce_out(value, context)
+        if value.is_a?(Value) || (value && (index_type || element_type))
+          Facade::ArrayFacade.new(value, self, context)
         else
           value
         end
-      end
-
-      def new_facade(array)
-        Facade::ArrayFacade.new(to_raw(array), self)
       end
 
       def clone_value(value)

@@ -25,10 +25,10 @@ module Moduler
         Pathname.new(*args, &block)
       end
       def self.split_path_list(path_list)
-        path_list.empty? ? [] : path_list.split(File::PATH_SEPARATOR)
+        Path::Ruby.split_path_list(path_list)
       end
       def self.join_path_list(*paths)
-        paths.flatten.join(File::PATH_SEPARATOR)
+        Path::Ruby.join_path_list(*paths)
       end
     end
 
@@ -768,7 +768,11 @@ module Moduler
     end
 
     class Unix < Base
-      FNM_SYSCASE = nil
+      File = self
+      Pathname = self
+      Dir = self
+
+      FNM_SYSCASE = 1 # TODO not sure if this is right
       SEPARATOR = '/'
       ALT_SEPARATOR = nil
       PATH_SEPARATOR = ':'

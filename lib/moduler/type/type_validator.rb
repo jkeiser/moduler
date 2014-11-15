@@ -2,8 +2,8 @@ require 'moduler/errors'
 
 module Moduler
   module Type
-    def coerce(value)
-      value = super(value)
+    def coerce(value, context)
+      value = super
       validate(value)
       value
     end

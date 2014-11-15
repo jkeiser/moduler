@@ -125,14 +125,14 @@ module Moduler
       @call_other_scope ||= proc do |*args, &block|
         # Find out which scope has it.
         size = @__scopes__.size
-        @__scopes__.each_with_index do |scope, index|
+        @__scopes__[0..-2].each do |scope|
           # We find the first proxy module that defines the method (or if we are
           # at the last proxy, we assume that is the one that defined it).
-          if index == size-1 ||
-             scope.class.proxy_module.public_method_defined?(__method__)
+          if scope.class.proxy_module.public_method_defined?(__method__)
             return scope.public_send(__method__, *args, &block)
           end
         end
+        @__scopes__[-1].public_send(__method__, *args, &block)
       end
     end
 

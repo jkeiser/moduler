@@ -1,13 +1,17 @@
+require 'moduler/facade'
+
 module Moduler
   module Facade
-    module HashStruct
-      def initialize(attributes=nil, is_raw=false, &block)
+    module HashStructFacade
+      include Facade
+
+      def initialize(raw={}, context=nil, is_raw=false, &block)
         if is_raw
-          super(attributes, nil)
+          super(raw, nil, context)
           instance_eval(&block) if block
         else
-          super({}, nil)
-          set_attributes(attributes, is_raw, &block)
+          super({}, nil, context)
+          set_attributes(raw, is_raw, &block)
         end
       end
 
@@ -18,7 +22,7 @@ module Moduler
       def set_attributes(attributes=nil, is_raw=false, &block)
         if attributes
           if is_raw
-            raw.merge!(attributes)
+            raw_read.merge!(attributes)
           else
             attributes.each do |key, value|
               setter = :"#{key}="
@@ -36,8 +40,8 @@ module Moduler
       def clone
         other = self.dup
         self.class.type.attributes.each_pair do |key,type|
-          if raw.has_key?(key)
-            other.raw[key] = type.clone_value(raw[key])
+          if raw_read.has_key?(key)
+            other.raw_read(context)[key] = type.clone_value(raw_read(context)[key])
           end
         end
         other
@@ -53,14 +57,14 @@ module Moduler
         if other.class == self.class
           self.class.type.attributes.each_pair do |key,type|
             # Don't pull defaults unless you have to
-            var_defined = raw.has_key?(key)
-            other_defined = other.raw.has_key?(key)
+            var_defined = raw_read.has_key?(key)
+            other_defined = other.raw_read(context).has_key?(key)
             next if !var_defined && !other_defined
 
-            value = var_defined ? type.to_raw(raw[key]) : type.raw_default
-            value = value.get_for_read if value.is_a?(Lazy)
-            other_value = other_defined ? type.to_raw(other.raw[key]) : type.raw_default
-            other_value = other_value.get_for_read if other_value.is_a?(Lazy)
+            value = var_defined ? type.to_raw(raw_read[key], context) : type.raw_default
+            value = value.raw_read(context) if value.is_a?(Value)
+            other_value = other_defined ? type.to_raw(other.raw_read(context)[key], context) : type.raw_default
+            other_value = other_value.raw_read(context) if other_value.is_a?(Value)
             if value != other_value
               return false
             end
@@ -74,32 +78,32 @@ module Moduler
         if include_defaults
           result = {}
           self.class.type.attributes.each_pair do |key,type|
-            result[key] = type.from_raw(raw.has_key?(key) ? raw[key] : type.raw_default)
+            result[key] = type.from_raw(raw_read.has_key?(key) ? raw_read[key] : type.raw_default, context)
           end
           result
         else
-          raw
+          raw_read
         end
       end
 
       def is_set?(name)
-        raw.has_key?(name)
+        raw_read.has_key?(name)
       end
 
       def reset(name=nil)
         if name
-          if raw.has_key?(name)
-            result = raw_write.delete(name)
+          if raw_read.has_key?(name)
+            result = raw.delete(name)
             field_type = self.class.type.attributes[name]
-            field_type ? field_type.from_raw(result) : result
+            field_type ? field_type.from_raw(result, context) : result
           end
-        elsif raw.size > 0
-          raw_write.clear
+        elsif raw_read.size > 0
+          raw.clear
         end
       end
 
       def has_key?(name)
-        raw.has_key?(name) || self.type.attributes.has_key?(name)
+        raw_read.has_key?(name) || self.type.attributes.has_key?(name)
       end
 
       def [](name)
@@ -108,8 +112,8 @@ module Moduler
           attribute_type = type.attributes[name]
 
           if attribute_type
-            if raw.has_key?(name)
-              attribute_type.from_raw(raw[name])
+            if raw_read.has_key?(name)
+              attribute_type.from_raw(raw_read[name], context)
 
             else
               # We don't have a key; return the default.
@@ -121,19 +125,19 @@ module Moduler
               if raw_default.frozen?
                 raw_value = raw_default
               else
-                raw_value = Lazy::ForReadValue.new(raw_default) do
-                  if raw.has_key?(name)
+                raw_value = Value::Default.new(raw_default) do
+                  if raw_read.has_key?(name)
                     raise "#{name} was defined by someone else: race!"
                   else
-                    raw_write[name] = raw_default
+                    raw[name] = raw_default
                   end
                 end
               end
 
-              attribute_type.from_raw(raw_value)
+              attribute_type.from_raw(raw_value, context)
             end
           else
-            raw[name]
+            raw_read[name]
           end
         else
           raise "Invalid key #{}"
@@ -143,9 +147,9 @@ module Moduler
       def []=(name, value)
         if type.attributes.has_key?(name)
           attribute_type = type.attributes[name]
-          raw_write[name] = attribute_type ? attribute_type.to_raw(value) : value
+          raw[name] = attribute_type ? attribute_type.to_raw(value, context) : value
         else
-          raw_write[name] = value
+          raw[name] = value
         end
       end
     end

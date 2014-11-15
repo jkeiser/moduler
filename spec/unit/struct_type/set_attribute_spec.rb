@@ -19,7 +19,7 @@ describe Moduler do
       struct_class.new
     end
 
-    context "with an set attribute" do
+    context "with a set attribute" do
       let(:struct_class) do
         make_struct_class do
           attribute :foo, Set
@@ -198,7 +198,7 @@ describe Moduler do
       end
 
       context "when foo is set to lazy { Set.new([ 10 ]) }" do
-        before { struct.foo = Moduler::Lazy::Value.new { Set.new([ 10 ]) } }
+        before { struct.foo = Moduler::Value::Lazy.new { Set.new([ 10 ]) } }
 
         it ".foo is Set.new([ 10 ])" do
           expect(struct.foo).to eq Set.new([ 10 ])

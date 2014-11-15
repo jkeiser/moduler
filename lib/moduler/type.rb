@@ -1,6 +1,7 @@
 require 'moduler/base/type'
 require 'moduler/base/boolean'
-require 'moduler/lazy/value'
+require 'moduler/value'
+require 'moduler/value/lazy'
 require 'moduler/type/type_constructor'
 require 'moduler/type/type_validator'
 
@@ -9,7 +10,7 @@ module Moduler
     Boolean = Moduler::Base::Boolean
 
     def lazy(cache=true, &block)
-      Moduler::Lazy::Value.new(cache, &block)
+      Moduler::Value::Lazy.new(cache, nil, &block)
     end
 
     require 'moduler/base/inline_struct'
@@ -23,14 +24,14 @@ module Moduler
 
     require 'moduler/type/array_type'
 
-    attribute :kind_of,    Array[kind_of: [ Module ]]
-    attribute :equal_to,   Array
-    attribute :nullable,   Boolean, :default => true
-    attribute :regexes,    Array[kind_of: [ Regexp, String ]]
-    attribute :cannot_be,  Array[Symbol]
-    attribute :respond_to, Array[kind_of: [ Symbol, String ]]
-    attribute :validators, Array[Proc]
-    attribute :required,   Boolean
+    attribute :kind_of,     Array[kind_of: [ Module ]]
+    attribute :equal_to,    Array
+    attribute :nullable,    Boolean, :default => true
+    attribute :regexes,     Array[kind_of: [ Regexp, String ]]
+    attribute :cannot_be,   Array[Symbol]
+    attribute :respond_to,  Array[kind_of: [ Symbol, String ]]
+    attribute :validators,  Array[Proc]
+    attribute :required,    Boolean
   end
 end
 

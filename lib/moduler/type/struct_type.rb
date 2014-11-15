@@ -7,9 +7,9 @@ module Moduler
     class StructType < Moduler::Base::StructType
       extend TypeStruct
 
-      def coerce(value)
-        value = super(value)
-        if !value.is_a?(Lazy)
+      def coerce(value, context)
+        value = super
+        if !value.is_a?(Value)
           errors = []
           attributes.each do |name,type|
             if type.required && !value.is_set?(name)

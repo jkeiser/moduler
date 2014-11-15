@@ -197,7 +197,7 @@ describe Moduler do
       end
 
       context "when foo is set to lazy { [ 10 ] }" do
-        before { struct.foo = Moduler::Lazy::Value.new { [ 10 ] } }
+        before { struct.foo = Moduler::Value::Lazy.new { [ 10 ] } }
 
         it ".foo is [ 10 ]" do
           expect(struct.foo).to eq [ 10 ]

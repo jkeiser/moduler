@@ -1,6 +1,6 @@
 require 'moduler/base/type'
 require 'moduler/base/boolean'
-require 'moduler/lazy/value'
+require 'moduler/value'
 
 module Moduler
   module Type

@@ -35,8 +35,8 @@ describe Moduler do
       it "Default struct doesn't affect is_set" do
         expect(struct.is_set?(:foo)).to be_falsey
         expect(struct.foo).to eq(struct_class.new)
-        expect(struct.is_set?(:foo)).to be_falsey
         expect(struct.to_hash).to eq({})
+        expect(struct.is_set?(:foo)).to be_falsey
 
         expect(struct.foo.a).to be_nil
         expect(struct.is_set?(:foo)).to be_falsey
@@ -59,12 +59,12 @@ describe Moduler do
         expect(struct.foo).to eq({ :a => 1 })
       end
 
-      it ".foo {a:1}, true yields :a => 1 (raw setter)" do
-        expect(struct.foo({a:1}, true)).to eq({ :a => 1 })
+      it ".foo {a:1}, true raises an error" do
+        expect { struct.foo({a:1}, true) }.to raise_error(ArgumentError)
       end
 
       it ".foo {a:1}, {b:2}, {c:3} raises an error" do
-        expect { struct.foo({a:1}, {b:2}, {c:3}) }.to raise_error { ArgumentError }
+        expect { struct.foo({a:1}, {b:2}, {c:3}) }.to raise_error(ArgumentError)
       end
 
       it ".foo = 10 throws an exception" do
