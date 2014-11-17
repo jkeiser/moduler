@@ -20,10 +20,15 @@ module Moduler
         end
       end
 
-      def inherited(subclass)
-        super
-        subclass.type.emit
+      def has_type?
+        defined?(@type)
       end
+
+      #
+      # def inherited(subclass)
+      #   super
+      #   subclass.type.emit
+      # end
 
       #
       # If an InlineStruct class is *included*, the includer becomes an InlineStruct as well.

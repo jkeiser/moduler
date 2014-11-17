@@ -38,6 +38,7 @@ module Moduler
       end
 
       def specialize(*args, &block)
+        # TODO use overlays to make this a-nice.
         other = clone
         other.set_attributes(*args, &block)
         other
@@ -53,11 +54,18 @@ module Moduler
           var_defined = instance_variable_defined?(var)
           other_defined = other.instance_variable_defined?(var)
           next if !var_defined && !other_defined
-
-          value = var_defined ? type.to_raw(instance_variable_get(var), self) : type.raw_default
-          value = value.raw_read(self) if value.is_a?(Value)
-          other_value = other_defined ? type.to_raw(other.instance_variable_get(var), self) : type.raw_default
-          other_value = other_value.raw_read(self) if other_value.is_a?(Value)
+          if type
+            value = var_defined ? type.to_raw(instance_variable_get(var), self) : type.raw_default
+            value = value.raw_read(self) if value.is_a?(Value)
+          else
+            value = instance_variable_get(var)
+          end
+          if type
+            other_value = other_defined ? type.to_raw(other.instance_variable_get(var), self) : type.raw_default
+            other_value = other_value.raw_read(self) if other_value.is_a?(Value)
+          else
+            other_value = other.instance_variable_get(var)
+          end
           if value != other_value
             return false
           end

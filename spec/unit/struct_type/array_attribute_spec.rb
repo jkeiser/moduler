@@ -49,12 +49,12 @@ describe Moduler do
       end
 
       it ".foo [ 10 ] setter works" do
-        expect(struct.foo [ 10 ]).to eq [ 10 ]
+        struct.foo [ 10 ]
         expect(struct.foo).to eq [ 10 ]
       end
 
       it ".foo 10, 20, 30 works" do
-        expect(struct.foo 10, 20, 30).to eq [10,20,30]
+        struct.foo 10, 20, 30
       end
 
       it ".foo = 10 yields [ 10 ]" do
@@ -63,7 +63,7 @@ describe Moduler do
       end
 
       it ".foo nil yields nil" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.is_set?(:foo)).to be_truthy
         expect(struct.foo).to be_nil
       end
@@ -314,24 +314,24 @@ describe Moduler do
         end
 
         it ".foo [ [ 10 ] ] setter works" do
-          expect(struct.foo [ 10 ]).to eq [[ 10 ]]
+          struct.foo [ 10 ]
           expect(struct.foo).to eq [[ 10 ]]
         end
 
         it ".foo [ 10 ], [ 20 ], [ 30 ] yields [[10],[20],[30]]" do
-          expect(struct.foo [10], [20], [30]).to eq [[10],[20],[30]]
+          struct.foo [10], [20], [30]
         end
 
         it ".foo [ 10, 20, 30 ] yields [[10],[20],[30]]" do
-          expect(struct.foo [ 10, 20, 30 ]).to eq [[10],[20],[30]]
+          struct.foo [ 10, 20, 30 ]
         end
 
         it ".foo 10, 20, 30 yields [[10],[20],[30]]" do
-          expect(struct.foo 10, 20, 30).to eq [[10], [20], [30]]
+          struct.foo 10, 20, 30
         end
 
         it ".foo nil yields nil" do
-          expect(struct.foo nil).to be_nil
+          struct.foo nil
           expect(struct.is_set?(:foo)).to be_truthy
           expect(struct.foo).to be_nil
         end
@@ -362,7 +362,7 @@ describe Moduler do
         end
 
         it ".foo [ {a: 1} ] setter works" do
-          expect(struct.foo([{a: 1}])).to eq [{a: 1}]
+          struct.foo([{a: 1}])
           expect(struct.foo).to eq [{a: 1}]
         end
 
@@ -375,15 +375,15 @@ describe Moduler do
         end
 
         it ".foo [ {a: 1}, {b: 1}, {c: 1} ] works" do
-          expect(struct.foo [ {a: 1}, {b: 1}, {c: 1} ]).to eq [{a: 1}, {b: 1}, {c: 1}]
+          struct.foo [ {a: 1}, {b: 1}, {c: 1} ]
         end
 
         it ".foo {a: 1}, {b: 1}, {c: 1} yields [{a: 1}, {b: 1}, {c: 1}]" do
-          expect(struct.foo({a: 1}, {b: 1}, {c: 1})).to eq [{a: 1}, {b: 1}, {c: 1}]
+          struct.foo({a: 1}, {b: 1}, {c: 1})
         end
 
         it ".foo nil yields nil" do
-          expect(struct.foo nil).to be_nil
+          struct.foo nil
           expect(struct.is_set?(:foo)).to be_truthy
           expect(struct.foo).to be_nil
         end
@@ -416,24 +416,24 @@ describe Moduler do
         end
 
         it ".foo [ Set[10] ] setter works" do
-          expect(struct.foo Set[10]).to eq [Set[10]]
+          struct.foo Set[10]
           expect(struct.foo).to eq [Set[10]]
         end
 
         it ".foo Set[10], Set[20], Set[30] raises an exception" do
-          expect(struct.foo Set[10], Set[20], Set[30]).to eq [Set[10],Set[20],Set[30]]
+          struct.foo Set[10], Set[20], Set[30]
         end
 
         it ".foo [ 10, 20, 30 ] yields [Set[10],Set[20],Set[30]]" do
-          expect(struct.foo [ 10, 20, 30 ]).to eq [Set[10],Set[20],Set[30]]
+          struct.foo [ 10, 20, 30 ]
         end
 
         it ".foo 10, 20, 30 yields [Set[10],Set[20],Set[30]]" do
-          expect(struct.foo 10, 20, 30).to eq [Set[10], Set[20], Set[30]]
+          struct.foo 10, 20, 30
         end
 
         it ".foo nil yields nil" do
-          expect(struct.foo nil).to be_nil
+          struct.foo nil
           expect(struct.is_set?(:foo)).to be_truthy
           expect(struct.foo).to be_nil
         end

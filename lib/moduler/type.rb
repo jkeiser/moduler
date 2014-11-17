@@ -10,7 +10,7 @@ module Moduler
     Boolean = Moduler::Base::Boolean
 
     def lazy(cache=true, &block)
-      Moduler::Value::Lazy.new(cache, nil, &block)
+      Moduler::Value::Lazy.new(cache, &block)
     end
 
     require 'moduler/base/inline_struct'

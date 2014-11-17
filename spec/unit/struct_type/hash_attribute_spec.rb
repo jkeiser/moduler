@@ -49,7 +49,7 @@ describe Moduler do
       end
 
       it ".foo :a => 1 setter works" do
-        expect(struct.foo :a => 1).to eq({ :a => 1 })
+        struct.foo :a => 1
         expect(struct.foo).to eq({ :a => 1 })
       end
 
@@ -62,7 +62,7 @@ describe Moduler do
       end
 
       it ".foo nil yields nil" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.is_set?(:foo)).to be_truthy
         expect(struct.foo).to be_nil
       end
@@ -311,7 +311,7 @@ describe Moduler do
         end
 
         it ".foo {a: {x: 1}} setter works" do
-          expect(struct.foo({a: {x: 1}})).to eq({a: {x: 1}})
+          struct.foo({a: {x: 1}})
           expect(struct.foo).to eq({a: {x: 1}})
         end
 
@@ -320,7 +320,7 @@ describe Moduler do
         end
 
         it ".foo nil yields nil" do
-          expect(struct.foo nil).to be_nil
+          struct.foo nil
           expect(struct.is_set?(:foo)).to be_truthy
           expect(struct.foo).to be_nil
         end
@@ -351,7 +351,7 @@ describe Moduler do
         end
 
         it ".foo {a: [10]} setter works" do
-          expect(struct.foo({a: [10]})).to eq({a: [10]})
+          struct.foo({a: [10]})
           expect(struct.foo).to eq({a: [10]})
         end
 
@@ -360,7 +360,7 @@ describe Moduler do
         end
 
         it ".foo nil yields nil" do
-          expect(struct.foo nil).to be_nil
+          struct.foo nil
           expect(struct.is_set?(:foo)).to be_truthy
           expect(struct.foo).to be_nil
         end
@@ -391,7 +391,7 @@ describe Moduler do
         end
 
         it ".foo {a: Set[10]} setter works" do
-          expect(struct.foo({a: Set[10]})).to eq({a: Set[10]})
+          struct.foo({a: Set[10]})
           expect(struct.foo).to eq({a: Set[10]})
         end
 
@@ -400,7 +400,7 @@ describe Moduler do
         end
 
         it ".foo nil yields nil" do
-          expect(struct.foo nil).to be_nil
+          struct.foo nil
           expect(struct.is_set?(:foo)).to be_truthy
           expect(struct.foo).to be_nil
         end

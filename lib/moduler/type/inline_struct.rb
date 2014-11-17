@@ -8,6 +8,10 @@ module Moduler
         target.type.emit
       end
 
+      def has_type?
+        defined?(@type)
+      end
+
       def type
         @type ||= begin
           superclass = self.class.superclass
@@ -20,11 +24,11 @@ module Moduler
           end
         end
       end
-
-      def inherited(subclass)
-        super
-        subclass.type.emit
-      end
+      #
+      # def inherited(subclass)
+      #   super
+      #   subclass.type.emit
+      # end
 
       #
       # If an InlineStruct class is *included*, the includer becomes an InlineStruct as well.
@@ -35,7 +39,7 @@ module Moduler
       end
 
       def lazy(cache=true, &block)
-        Moduler::Value::Lazy.new(cache, nil, &block)
+        Moduler::Value::Lazy.new(cache, &block)
       end
 
       def attribute(name, *args, &block)

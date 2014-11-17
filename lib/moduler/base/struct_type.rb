@@ -5,10 +5,10 @@ module Moduler
     end
     class StructType < Type
       def specialize(*args, &block)
-        result = self.class.new
-        result.supertype = self
-        result.set_attributes(*args, &block)
-        result
+        # Create the basic type
+        subtype = self.class.new(*args, &block)
+        subtype.supertype = self
+        subtype
       end
 
       def attributes(value = NO_VALUE)
@@ -72,7 +72,10 @@ module Moduler
           type = target.type
           type.set_attributes(*args, &block)
         else
-          type = self.specialize(*args, &block)
+          type = self.specialize(*args) do
+            self.target = target
+            instance_eval(&block)
+          end
         end
 
         # Write it out!

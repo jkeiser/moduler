@@ -11,6 +11,16 @@ module Moduler
       def emit(parent=nil, name=nil)
         if !target && parent && name
           self.target = { parent: parent, name: name }
+          if supertype && supertype.target
+            # TODO fix this messiness ASAP and apply to *everything*
+            if !supertype.target.name.start_with?("Moduler")
+              if supertype.target.is_a?(Class)
+                self.target[:superclass] = supertype.target
+              else
+                self.target[:include] = [ supertype.target ]
+              end
+            end
+          end
         end
         emit_target_class_type
         attributes.map do |name,field_type|
@@ -39,15 +49,26 @@ module Moduler
       def emit_target_class_type
         # Create the target class if asked
         if target.is_a?(Hash)
+          includees = target[:include]
           @target = eval <<-EOM, binding, __FILE__, __LINE__+1
             class target[:parent]::#{to_camel_case(target[:name])}#{target[:superclass] ? " < target[:superclass]" : ""}
               self
             end
           EOM
+          if includees
+            includees.each do |includee|
+              @target.send(:include, includee)
+            end
+          end
         end
 
         # Set the type on the class
-        if target.respond_to?(:type) && target.type
+        if target.respond_to?(:has_type?)
+          has_type = target.has_type?
+        else
+          has_type = target.respond_to?(:type) && target.type && target.type.target == target
+        end
+        if has_type
           if target.type != self
             raise "Tried to emit #{self} to #{target}, but #{target.type} is already being emitted there!"
           end
@@ -132,7 +153,7 @@ module Moduler
             else
               raw_value = #{type_ref}.construct_raw(#{context_expr}, *args, &block)
               #{attribute_write(name)} = raw_value
-              raw_value.is_a?(Value) ? raw_value : #{type_ref}.from_raw(raw_value, #{context_expr})
+              nil
             end
           end
           def #{name}=(value)

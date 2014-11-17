@@ -26,16 +26,16 @@ describe Moduler::Type::StructType do
       expect(instance.foo).to eq 10
     end
     it "The method setter works" do
-      expect(instance.foo 10).to eq 10
+      instance.foo 10
       expect(instance.foo).to eq 10
     end
     it "Lazy value set works" do
-      expect(instance.foo Moduler::Value::Lazy.new { 100 }).to be_kind_of(Moduler::Value)
+      instance.foo Moduler::Value::Lazy.new { 100 }
       expect(instance.foo).to eq 100
     end
     it "Default block setter works" do
       block = proc { 100 }
-      expect(instance.foo(&block)).to eq block
+      instance.foo(&block)
       expect(instance.foo.call).to eq 100
     end
     it "Sending both a value and a block throws an exception" do
@@ -64,11 +64,11 @@ describe Moduler::Type::StructType do
       expect(instance.foo).to eq 60
     end
     it "The method setter works" do
-      expect(instance.foo 10).to eq 60
+      instance.foo 10
       expect(instance.foo).to eq 60
     end
     it "Lazy value set works" do
-      expect(instance.foo Moduler::Value::Lazy.new { 100 }).to be_kind_of(Moduler::Value)
+      instance.foo Moduler::Value::Lazy.new { 100 }
       expect(instance.foo).to eq 600
     end
     # it "Default block setter works" do
@@ -118,19 +118,19 @@ describe Moduler::Type::StructType do
     end
     it "The method setter works" do
       instance.foo bar: 10
-      expect(instance.foo bar: 10).to eq struct.new(bar: 10)
       expect(instance.foo).to eq struct.new(bar: 10)
     end
     it "Lazy value set works" do
-      expect(instance.foo Moduler::Value::Lazy.new { { bar: 10 } }).to be_kind_of(Moduler::Value)
+      instance.foo Moduler::Value::Lazy.new { { bar: 10 } }
       expect(instance.foo).to eq struct.new(bar: 10)
     end
     it "Default block setter sets struct properties" do
-      expect(instance.foo { bar 10 }).to eq struct.new(bar: 10)
+      instance.foo { bar 10 }
       expect(instance.foo).to eq struct.new(bar: 10)
     end
     it "Setter with both a value and a block works" do
-      expect(instance.foo(bar: 10) { bar bar * 2 }).to eq struct.new(bar: 20)
+      instance.foo(bar: 10) { bar bar * 2 }
+      expect(instance.foo).to eq struct.new(bar: 20)
     end
     it "Sending multiple values throws an exception" do
       expect { instance.foo({bar: 10}, {bar: 20}, {wah: 30}) }.to raise_error ArgumentError

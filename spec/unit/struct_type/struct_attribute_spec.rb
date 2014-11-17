@@ -55,7 +55,7 @@ describe Moduler do
       end
 
       it ".foo :a => 1 setter works" do
-        expect(struct.foo :a => 1).to eq({ :a => 1 })
+        struct.foo :a => 1
         expect(struct.foo).to eq({ :a => 1 })
       end
 

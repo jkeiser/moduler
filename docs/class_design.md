@@ -101,3 +101,79 @@ class Lazy
   end
 end
 ```
+
+
+Specialization and Inheritance
+------------------------------
+
+Types can be specialized, creating a new type that is an amalgam of the old with some things added and modified.
+
+When you inherit a type, the new type becomes an *overlay* of the old.  You can specify your own overlay rules for type attributes.  As a type is a Struct, standard struct overlay rules apply: new attribute values overlay the old attribute values according to their own rules (arrays append, sets merge, hashes merge and overwrite common values, structs merge and overlay common values).
+
+The `supertype` attribute will be set to the old type.  The `target` attribute will be set to `nil`.
+
+### Classes
+
+The `target` attribute of Struct classes refers to the Ruby class associated with the type.  `target`
+
+### InlineStruct
+
+An InlineStruct is a struct tightly associated with a type.  `target` for an InlineStruct is always known; when an InlineStruct is included into a class or inherited, it gains a new `type` whose supertype is the parent `type`.
+
+### Inline Types
+
+Inline types cause specialization:
+
+```ruby
+class Person < InlineStruct
+  attribute :name, String
+end
+class Blah < InlineStruct
+  attribute :x, Person do
+    attribute :loveable, default: true
+  end
+end
+```
+
+Specialized types always have their own class; these classes are defined inline inside the defining type's class.  Any *new* attributes are declared as methods in the new class.  In the above case, the automatically-created Person subclass looks like:
+
+```ruby
+class Person
+  def name(value = NOT_PASSED)
+    if value != NOT_PASSED
+      @name = value
+    else
+      @name
+    end
+  end
+  def x=(value)
+    @name = value
+  end
+end
+
+class Blah
+  def x(*args, &block)
+    if args.size > 0 || block
+      @x = X.new(*args, &block)
+    else
+      @x
+    end
+  end
+  def x=(value)
+    @x = value
+  end
+
+  class X < Person
+    def loveable(value = NOT_PASSED)
+      if value != NOT_PASSED
+        @loveable = value
+      else
+        @loveable
+      end
+    end
+    def loveable=(value)
+      @loveable = value
+    end
+  end
+end
+```

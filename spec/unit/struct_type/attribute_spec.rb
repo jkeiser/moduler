@@ -88,12 +88,12 @@ describe Moduler do
       end
 
       it ".foo <value> setter works" do
-        expect(struct.foo 10).to eq 10
+        struct.foo 10
         expect(struct.foo).to eq 10
       end
 
       it ".foo { <proc> } setter works" do
-        expect(struct.foo { 10 }).to be_kind_of(Proc)
+        struct.foo { 10 }
         expect(struct.foo.call).to eq 10
       end
 
@@ -311,12 +311,12 @@ describe Moduler do
       end
 
       it ".foo <value> setter works" do
-        expect(struct.foo 10).to eq 10
+        struct.foo 10
         expect(struct.foo).to eq 10
       end
 
       it ".foo { <proc> } setter works" do
-        expect(struct.foo { 10 }).to be_kind_of(Proc)
+        struct.foo { 10 }
         expect(struct.foo.call).to eq 10
       end
 
@@ -483,12 +483,12 @@ describe Moduler do
       end
 
       it ".foo <value> setter works" do
-        expect(struct.foo 10).to eq 10
+        struct.foo 10
         expect(struct.foo).to eq 10
       end
 
       it ".foo { <proc> } setter works" do
-        expect(struct.foo { 10 }).to be_kind_of(Proc)
+        struct.foo { 10 }
         expect(struct.foo.call).to eq 10
       end
 

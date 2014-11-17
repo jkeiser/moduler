@@ -49,28 +49,28 @@ describe Moduler do
       end
 
       it ".foo String works" do
-        expect(struct.foo('a/b/c').to_s).to eq 'a/b/c'
+        struct.foo('a/b/c')
         expect(struct.foo.to_s).to eq 'a/b/c'
       end
 
       it ".foo(Pathname) works" do
         value = Pathname.new('a/b/c')
-        expect(struct.foo value).to eq value
+        struct.foo value
         expect(struct.foo).to eq value
       end
 
       it ".foo nil works" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.foo).to be_nil
       end
 
       it ".foo %w(a b c d) sets to a/b/c/d" do
-        expect(struct.foo(*%w(a b c d)).to_s).to eq 'a/b/c/d'
+        struct.foo(*%w(a b c d))
         expect(struct.foo.to_s).to eq 'a/b/c/d'
       end
 
       it ".foo Pathname.new('a'), %w(b c d) sets to a/b/c/d" do
-        expect(struct.foo(Pathname.new('a'), *%w(b c d)).to_s).to eq 'a/b/c/d'
+        struct.foo(Pathname.new('a'), *%w(b c d))
         expect(struct.foo.to_s).to eq 'a/b/c/d'
       end
     end
@@ -103,28 +103,28 @@ describe Moduler do
       end
 
       it ".foo String works" do
-        expect(struct.foo('a/b/c').to_s).to eq 'a/b/c'
+        struct.foo('a/b/c')
         expect(struct.foo.to_s).to eq 'a/b/c'
       end
 
       it ".foo(Pathname) works" do
         value = Pathname.new('a/b/c')
-        expect(struct.foo value).to eq value
+        struct.foo value
         expect(struct.foo).to eq value
       end
 
       it ".foo nil works" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.foo).to be_nil
       end
 
       it ".foo %w(a b c d) sets to a/b/c/d" do
-        expect(struct.foo(*%w(a b c d)).to_s).to eq 'a/b/c/d'
+        struct.foo(*%w(a b c d))
         expect(struct.foo.to_s).to eq 'a/b/c/d'
       end
 
       it ".foo Pathname.new('a'), %w(b c d) sets to a/b/c/d" do
-        expect(struct.foo(Pathname.new('a'), *%w(b c d)).to_s).to eq 'a/b/c/d'
+        struct.foo(Pathname.new('a'), *%w(b c d))
         expect(struct.foo.to_s).to eq 'a/b/c/d'
       end
     end
@@ -157,28 +157,28 @@ describe Moduler do
       end
 
       it ".foo String works" do
-        expect(struct.foo('a/b/c').to_s).to eq 'a/b/c'
+        struct.foo('a/b/c')
         expect(struct.foo.to_s).to eq 'a/b/c'
       end
 
       it ".foo(Pathname) works" do
         value = Pathname.new('a/b/c')
-        expect(struct.foo value).to eq value
+        struct.foo value
         expect(struct.foo).to eq value
       end
 
       it ".foo nil works" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.foo).to be_nil
       end
 
       it ".foo %w(a b c d) sets to a\\b\\c\\d" do
-        expect(struct.foo(*%w(a b c d)).to_s).to eq 'a\\b\\c\\d'
+        struct.foo(*%w(a b c d))
         expect(struct.foo.to_s).to eq 'a\\b\\c\\d'
       end
 
       it ".foo Pathname.new('a'), %w(b c d) sets to a/b/c/d" do
-        expect(struct.foo(Pathname.new('a'), *%w(b c d)).to_s).to eq 'a/b/c/d'
+        struct.foo(Pathname.new('a'), *%w(b c d))
         expect(struct.foo.to_s).to eq 'a/b/c/d'
       end
     end
@@ -211,28 +211,28 @@ describe Moduler do
       end
 
       it ".foo String works" do
-        expect(struct.foo('a/b/c')).to eq 'a/b/c'
+        struct.foo('a/b/c')
         expect(struct.foo).to eq 'a/b/c'
       end
 
       it ".foo(Pathname) works" do
         value = Pathname.new('a/b/c')
-        expect(struct.foo value).to eq 'a/b/c'
+        struct.foo value
         expect(struct.foo).to eq 'a/b/c'
       end
 
       it ".foo nil works" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.foo).to be_nil
       end
 
       it ".foo %w(a b c d) sets to a/b/c/d" do
-        expect(struct.foo(*%w(a b c d))).to eq 'a/b/c/d'
+        struct.foo(*%w(a b c d))
         expect(struct.foo).to eq 'a/b/c/d'
       end
 
       it ".foo Pathname.new('a'), %w(b c d) sets to a/b/c/d" do
-        expect(struct.foo(Pathname.new('a'), *%w(b c d))).to eq 'a/b/c/d'
+        struct.foo(Pathname.new('a'), *%w(b c d))
         expect(struct.foo).to eq 'a/b/c/d'
       end
     end
@@ -271,33 +271,33 @@ describe Moduler do
       end
 
       it ".foo String works" do
-        expect(struct.foo('a/b/c').to_s).to eq "foo/bar#{path_sep}a/b/c"
+        struct.foo('a/b/c')
         expect(struct.foo.to_s).to eq "foo/bar#{path_sep}a/b/c"
       end
 
       it ".foo /a/b/c does not add relative" do
-        expect(struct.foo('/a/b/c').to_s).to eq '/a/b/c'
+        struct.foo('/a/b/c')
         expect(struct.foo.to_s).to eq "/a/b/c"
       end
 
       it ".foo(Pathname) works" do
         value = Pathname.new('a/b/c')
-        expect(struct.foo value).to eq Path.new("foo/bar#{path_sep}a/b/c")
+        struct.foo value
         expect(struct.foo).to eq Path.new("foo/bar#{path_sep}a/b/c")
       end
 
       it ".foo nil works" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.foo).to be_nil
       end
 
       it ".foo %w(a b c d) sets to a/b/c/d" do
-        expect(struct.foo(*%w(a b c d)).to_s).to eq 'foo/bar/a/b/c/d'
+        struct.foo(*%w(a b c d))
         expect(struct.foo.to_s).to eq 'foo/bar/a/b/c/d'
       end
 
       it ".foo Pathname.new('a'), %w(b c d) sets to a/b/c/d" do
-        expect(struct.foo(Pathname.new('a'), *%w(b c d)).to_s).to eq 'foo/bar/a/b/c/d'
+        struct.foo(Pathname.new('a'), *%w(b c d))
         expect(struct.foo.to_s).to eq 'foo/bar/a/b/c/d'
       end
     end
@@ -335,33 +335,33 @@ describe Moduler do
       end
 
       it ".foo String works" do
-        expect(struct.foo('a/b/c').to_s).to eq 'foo/bar/a/b/c'
+        struct.foo('a/b/c')
         expect(struct.foo.to_s).to eq 'foo/bar/a/b/c'
       end
 
       it ".foo /a/b/c does not add relative" do
-        expect(struct.foo('/a/b/c').to_s).to eq '/a/b/c'
+        struct.foo('/a/b/c')
         expect(struct.foo.to_s).to eq "/a/b/c"
       end
 
       it ".foo(Pathname) works" do
         value = Pathname.new('a/b/c')
-        expect(struct.foo value).to eq Path.new('foo/bar/a/b/c')
+        struct.foo value
         expect(struct.foo).to eq Path.new('foo/bar/a/b/c')
       end
 
       it ".foo nil works" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.foo).to be_nil
       end
 
       it ".foo %w(a b c d) sets to a/b/c/d" do
-        expect(struct.foo(*%w(a b c d)).to_s).to eq 'foo/bar/a/b/c/d'
+        struct.foo(*%w(a b c d))
         expect(struct.foo.to_s).to eq 'foo/bar/a/b/c/d'
       end
 
       it ".foo Pathname.new('a'), %w(b c d) sets to a/b/c/d" do
-        expect(struct.foo(Pathname.new('a'), *%w(b c d)).to_s).to eq 'foo/bar/a/b/c/d'
+        struct.foo(Pathname.new('a'), *%w(b c d))
         expect(struct.foo.to_s).to eq 'foo/bar/a/b/c/d'
       end
     end
@@ -399,33 +399,33 @@ describe Moduler do
       end
 
       it ".foo String works" do
-        expect(struct.foo('a/b/c').to_s).to eq "foo/bar\\a/b/c"
+        struct.foo('a/b/c')
         expect(struct.foo.to_s).to eq "foo/bar\\a/b/c"
       end
 
       it ".foo /a/b/c does not add relative" do
-        expect(struct.foo('/a/b/c').to_s).to eq '/a/b/c'
+        struct.foo('/a/b/c')
         expect(struct.foo.to_s).to eq "/a/b/c"
       end
 
       it ".foo(Pathname) works" do
         value = Pathname.new('a/b/c')
-        expect(struct.foo value).to eq Path.new("foo/bar\\a/b/c")
+        struct.foo value
         expect(struct.foo).to eq Path.new("foo/bar\\a/b/c")
       end
 
       it ".foo nil works" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.foo).to be_nil
       end
 
       it ".foo %w(a b c d) sets to foo/bar\\a\\b\\c\\d" do
-        expect(struct.foo(*%w(a b c d)).to_s).to eq 'foo/bar\\a\\b\\c\\d'
+        struct.foo(*%w(a b c d))
         expect(struct.foo.to_s).to eq 'foo/bar\\a\\b\\c\\d'
       end
 
       it ".foo Pathname.new('a'), %w(b c d) sets to foo/bar\\a/b/c/d" do
-        expect(struct.foo(Pathname.new('a'), *%w(b c d)).to_s).to eq 'foo/bar\\a/b/c/d'
+        struct.foo(Pathname.new('a'), *%w(b c d))
         expect(struct.foo.to_s).to eq 'foo/bar\\a/b/c/d'
       end
     end
@@ -463,33 +463,33 @@ describe Moduler do
       end
 
       it ".foo String works" do
-        expect(struct.foo('a/b/c').to_s).to eq 'foo/bar\\a/b/c'
+        struct.foo('a/b/c')
         expect(struct.foo.to_s).to eq 'foo/bar\\a/b/c'
       end
 
       it ".foo /a/b/c does not add relative" do
-        expect(struct.foo('/a/b/c').to_s).to eq '/a/b/c'
+        struct.foo('/a/b/c')
         expect(struct.foo.to_s).to eq "/a/b/c"
       end
 
       it ".foo(Pathname) works" do
         value = Pathname.new('a/b/c')
-        expect(struct.foo value).to eq Path.new('foo/bar\\a/b/c')
+        struct.foo value
         expect(struct.foo).to eq Path.new('foo/bar\\a/b/c')
       end
 
       it ".foo nil works" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.foo).to be_nil
       end
 
       it ".foo %w(a b c d) sets to a/b/c/d" do
-        expect(struct.foo(*%w(a b c d)).to_s).to eq 'foo/bar\\a\\b\\c\\d'
+        struct.foo(*%w(a b c d))
         expect(struct.foo.to_s).to eq 'foo/bar\\a\\b\\c\\d'
       end
 
       it ".foo Pathname.new('a'), %w(b c d) sets to a/b/c/d" do
-        expect(struct.foo(Pathname.new('a'), *%w(b c d)).to_s).to eq 'foo/bar\\a/b/c/d'
+        struct.foo(Pathname.new('a'), *%w(b c d))
         expect(struct.foo.to_s).to eq 'foo/bar\\a/b/c/d'
       end
     end

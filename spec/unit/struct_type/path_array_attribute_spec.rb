@@ -59,38 +59,38 @@ describe Moduler do
       end
 
       it ".foo String works" do
-        expect(struct.foo('a/b/c')).to eq [Pathname.new('a/b/c')]
+        struct.foo('a/b/c')
         expect(struct.foo).to eq [Pathname.new('a/b/c')]
       end
 
       it ".foo(Pathname) works" do
         value = Pathname.new('a/b/c')
-        expect(struct.foo value).to eq [value]
+        struct.foo value
         expect(struct.foo).to eq [value]
       end
 
       it ".foo a/b/c:d/e/f sets both" do
-        expect(struct.foo('a/b/c:d/e/f')).to eq [Pathname.new('a/b/c'), Pathname.new('d/e/f')]
+        struct.foo('a/b/c:d/e/f')
         expect(struct.foo).to eq [Pathname.new('a/b/c'), Pathname.new('d/e/f')]
       end
 
       it ".foo [a/b/c, d/e/f] sets both paths" do
-        expect(struct.foo ['a/b/c', 'd/e/f']).to eq [ Pathname.new('a/b/c'), Pathname.new('d/e/f') ]
+        struct.foo ['a/b/c', 'd/e/f']
         expect(struct.foo).to eq [ Pathname.new('a/b/c'), Pathname.new('d/e/f') ]
       end
 
       it ".foo a/b/c, d/e/f sets both paths" do
-        expect(struct.foo 'a/b/c', 'd/e/f').to eq [ Pathname.new('a/b/c'), Pathname.new('d/e/f') ]
+        struct.foo 'a/b/c', 'd/e/f'
         expect(struct.foo).to eq [ Pathname.new('a/b/c'), Pathname.new('d/e/f') ]
       end
 
       it ".foo 'a/b/c:d/e/f', 'g/h/i:j/k/l' sets all paths" do
-        expect(struct.foo 'a/b/c:d/e/f', 'g/h/i:j/k/l').to eq [ Pathname.new('a/b/c'), Pathname.new('d/e/f'), Pathname.new('g/h/i'), Pathname.new('j/k/l') ]
+        struct.foo 'a/b/c:d/e/f', 'g/h/i:j/k/l'
         expect(struct.foo).to eq [ Pathname.new('a/b/c'), Pathname.new('d/e/f'), Pathname.new('g/h/i'), Pathname.new('j/k/l') ]
       end
 
       it ".foo nil works" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.foo).to be_nil
       end
     end
@@ -133,38 +133,38 @@ describe Moduler do
       end
 
       it ".foo String works" do
-        expect(struct.foo('a/b/c')).to eq ['a/b/c']
+        struct.foo('a/b/c')
         expect(struct.foo).to eq ['a/b/c']
       end
 
       it ".foo = a/b/c:d/e/f sets both paths" do
-        expect(struct.foo 'a/b/c:d/e/f').to eq [ 'a/b/c', 'd/e/f' ]
+        struct.foo 'a/b/c:d/e/f'
         expect(struct.foo).to eq [ 'a/b/c', 'd/e/f' ]
       end
 
       it ".foo(Pathname) works" do
         value = Pathname.new('a/b/c')
-        expect(struct.foo value).to eq ['a/b/c']
+        struct.foo value
         expect(struct.foo).to eq ['a/b/c']
       end
 
       it ".foo [a/b/c, d/e/f] sets both paths" do
-        expect(struct.foo ['a/b/c', 'd/e/f']).to eq [ 'a/b/c', 'd/e/f' ]
+        struct.foo ['a/b/c', 'd/e/f']
         expect(struct.foo).to eq [ 'a/b/c', 'd/e/f' ]
       end
 
       it ".foo a/b/c, d/e/f sets both paths" do
-        expect(struct.foo 'a/b/c', 'd/e/f').to eq [ 'a/b/c', 'd/e/f' ]
+        struct.foo 'a/b/c', 'd/e/f'
         expect(struct.foo).to eq [ 'a/b/c', 'd/e/f' ]
       end
 
       it ".foo 'a/b/c:d/e/f', 'g/h/i:j/k/l' sets all paths" do
-        expect(struct.foo 'a/b/c:d/e/f', 'g/h/i:j/k/l').to eq [ 'a/b/c', 'd/e/f', 'g/h/i', 'j/k/l' ]
+        struct.foo 'a/b/c:d/e/f', 'g/h/i:j/k/l'
         expect(struct.foo).to eq [ 'a/b/c', 'd/e/f', 'g/h/i', 'j/k/l' ]
       end
 
       it ".foo nil works" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.foo).to be_nil
       end
     end
@@ -207,43 +207,43 @@ describe Moduler do
       end
 
       it ".foo String works" do
-        expect(struct.foo('a/b/c')).to eq ['foo/bar/a/b/c', 'baz/a/b/c']
+        struct.foo('a/b/c')
         expect(struct.foo).to eq ['foo/bar/a/b/c', 'baz/a/b/c']
       end
 
       it ".foo = a/b/c:d/e/f sets both paths" do
-        expect(struct.foo 'a/b/c:d/e/f').to eq ['foo/bar/a/b/c', 'baz/a/b/c', 'foo/bar/d/e/f', 'baz/d/e/f']
+        struct.foo 'a/b/c:d/e/f'
         expect(struct.foo).to eq ['foo/bar/a/b/c', 'baz/a/b/c', 'foo/bar/d/e/f', 'baz/d/e/f']
       end
 
       it ".foo(Pathname) works" do
         value = Pathname.new('a/b/c')
-        expect(struct.foo value).to eq ['foo/bar/a/b/c', 'baz/a/b/c']
+        struct.foo value
         expect(struct.foo).to eq ['foo/bar/a/b/c', 'baz/a/b/c']
       end
 
       it ".foo [a/b/c, d/e/f] sets both paths" do
-        expect(struct.foo ['a/b/c', 'd/e/f']).to eq ['foo/bar/a/b/c', 'baz/a/b/c', 'foo/bar/d/e/f', 'baz/d/e/f']
+        struct.foo ['a/b/c', 'd/e/f']
         expect(struct.foo).to eq ['foo/bar/a/b/c', 'baz/a/b/c', 'foo/bar/d/e/f', 'baz/d/e/f']
       end
 
       it ".foo a/b/c, d/e/f sets both paths" do
-        expect(struct.foo 'a/b/c', 'd/e/f').to eq ['foo/bar/a/b/c', 'baz/a/b/c', 'foo/bar/d/e/f', 'baz/d/e/f']
+        struct.foo 'a/b/c', 'd/e/f'
         expect(struct.foo).to eq ['foo/bar/a/b/c', 'baz/a/b/c', 'foo/bar/d/e/f', 'baz/d/e/f']
       end
 
       it ".foo 'a/b/c:d/e/f', 'g/h/i:j/k/l' sets all paths" do
-        expect(struct.foo 'a/b/c:d/e/f', 'g/h/i:j/k/l').to eq ['foo/bar/a/b/c', 'baz/a/b/c', 'foo/bar/d/e/f', 'baz/d/e/f', 'foo/bar/g/h/i', 'baz/g/h/i', 'foo/bar/j/k/l', 'baz/j/k/l']
+        struct.foo 'a/b/c:d/e/f', 'g/h/i:j/k/l'
         expect(struct.foo).to eq ['foo/bar/a/b/c', 'baz/a/b/c', 'foo/bar/d/e/f', 'baz/d/e/f', 'foo/bar/g/h/i', 'baz/g/h/i', 'foo/bar/j/k/l', 'baz/j/k/l']
       end
 
       it ".foo '/a/b/c:d/e/f', 'g/h/i:/j/k/l' sets all paths without relatives for absolutes" do
-        expect(struct.foo '/a/b/c:d/e/f', 'g/h/i:/j/k/l').to eq ['/a/b/c', 'foo/bar/d/e/f', 'baz/d/e/f', 'foo/bar/g/h/i', 'baz/g/h/i', '/j/k/l']
+        struct.foo '/a/b/c:d/e/f', 'g/h/i:/j/k/l'
         expect(struct.foo).to eq ['/a/b/c', 'foo/bar/d/e/f', 'baz/d/e/f', 'foo/bar/g/h/i', 'baz/g/h/i', '/j/k/l']
       end
 
       it ".foo nil works" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.foo).to be_nil
       end
     end
@@ -286,43 +286,43 @@ describe Moduler do
       end
 
       it ".foo String works" do
-        expect(struct.foo('a/b/c')).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c')]
+        struct.foo('a/b/c')
         expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c')]
       end
 
       it ".foo = a/b/c;d/e/f sets both paths" do
-        expect(struct.foo 'a/b/c;d/e/f').to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
+        struct.foo 'a/b/c;d/e/f'
         expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
       end
 
       it ".foo(Pathname) works" do
         value = Pathname.new('a/b/c')
-        expect(struct.foo value).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c')]
+        struct.foo value
         expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c')]
       end
 
       it ".foo [a/b/c, d/e/f] sets both paths" do
-        expect(struct.foo ['a/b/c', 'd/e/f']).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
+        struct.foo ['a/b/c', 'd/e/f']
         expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
       end
 
       it ".foo a/b/c, d/e/f sets both paths" do
-        expect(struct.foo 'a/b/c', 'd/e/f').to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
+        struct.foo 'a/b/c', 'd/e/f'
         expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f')]
       end
 
       it ".foo 'a/b/c;d/e/f', 'g/h/i;j/k/l' sets all paths" do
-        expect(struct.foo 'a/b/c;d/e/f', 'g/h/i;j/k/l').to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f'), Path::Windows.new('foo/bar\\g/h/i'), Path::Windows.new('baz\\g/h/i'), Path::Windows.new('foo/bar\\j/k/l'), Path::Windows.new('baz\\j/k/l')]
+        struct.foo 'a/b/c;d/e/f', 'g/h/i;j/k/l'
         expect(struct.foo).to eq [Path::Windows.new('foo/bar\\a/b/c'), Path::Windows.new('baz\\a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f'), Path::Windows.new('foo/bar\\g/h/i'), Path::Windows.new('baz\\g/h/i'), Path::Windows.new('foo/bar\\j/k/l'), Path::Windows.new('baz\\j/k/l')]
       end
 
       it ".foo '/a/b/c;d/e/f', 'g/h/i;/j/k/l' sets all paths without relatives for absolutes" do
-        expect(struct.foo '/a/b/c;d/e/f', 'g/h/i;/j/k/l').to eq [Path::Windows.new('/a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f'), Path::Windows.new('foo/bar\\g/h/i'), Path::Windows.new('baz\\g/h/i'), Path::Windows.new('/j/k/l')]
+        struct.foo '/a/b/c;d/e/f', 'g/h/i;/j/k/l'
         expect(struct.foo).to eq [Path::Windows.new('/a/b/c'), Path::Windows.new('foo/bar\\d/e/f'), Path::Windows.new('baz\\d/e/f'), Path::Windows.new('foo/bar\\g/h/i'), Path::Windows.new('baz\\g/h/i'), Path::Windows.new('/j/k/l')]
       end
 
       it ".foo nil works" do
-        expect(struct.foo nil).to be_nil
+        struct.foo nil
         expect(struct.foo).to be_nil
       end
     end

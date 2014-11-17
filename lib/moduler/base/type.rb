@@ -69,15 +69,13 @@ module Moduler
       # The default value gets set the same way as the value would--you can use
       # the same expressions you would otherwise.
       #
-      # TODO this is likely wrong.  Get rid of it and make an actual DefaultType
-      # that understands context
-      #
       def default(*args, &block)
         # Short circuit "no default value for default" so we don't loop
         if args.size != 0 || block
           @default = construct_raw(self, *args, &block)
+        else
+          from_raw(raw_default, self)
         end
-        from_raw(raw_default, self)
       end
       def default=(value)
         @default = to_raw(value, self)

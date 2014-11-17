@@ -12,7 +12,7 @@ module Moduler
   # block was created).
   #
   def self.inline(*args, &block)
-    Moduler::Type::StructType.inline(*args, &block)
+    Moduler::Type::StructType.new.inline(*args, &block)
   end
 
   #
